@@ -44,18 +44,12 @@ steps:
       mergeTestResults: true
       testRunTitle: 'C# Unit Tests'
 
-  - script: |
-      dotnet tool install -g dotnet-reportgenerator-globaltool
-      reportgenerator -reports:$(Build.SourcesDirectory)/tests/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:Cobertura
-    condition: succeededOrFailed()
-    displayName: 'Create Code coverage report'
-
   - task: PublishCodeCoverageResults@1
     displayName: 'publish .NET coverage results'
     condition: succeededOrFailed()
     inputs:
       codeCoverageTool: 'cobertura'
-      summaryFileLocation: '$(Build.SourcesDirectory)/CodeCoverage/Cobertura.xml'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
 
   - task: TwineAuthenticate@0
     inputs:
