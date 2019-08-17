@@ -104,7 +104,7 @@ Task("Build-Samples")
         {
             Configuration = configuration,
         };
-	DotNetCoreBuild("samples/c#/Cmdty.Curves.Samples.sln", dotNetCoreSettings);
+	DotNetCoreBuild("samples/csharp/Cmdty.Curves.Samples.sln", dotNetCoreSettings);
 });
 
 Task("Pack-NuGet")
