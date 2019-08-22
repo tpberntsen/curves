@@ -44,7 +44,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     keywords = 'commodities trading curves oil gas power quantitative finance',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha', # TODO update this when properly released
+        'Development Status :: 4 - Beta',
         'Programming Language :: C#',
         'Intended Audience :: Developers',
         'Intended Audience :: Financial and Insurance Industry',
