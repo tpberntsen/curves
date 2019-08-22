@@ -1,6 +1,7 @@
 var target = Argument<string>("Target", "Default");
 var configuration = Argument<string>("Configuration", "Release");
 bool publishWithoutBuild = Argument<bool>("PublishWithoutBuild", false);
+string nugetPrereleaseTextPart = Argument<string>("PrereleaseText", "alpha");
 
 var artifactsDirectory = Directory("./artifacts");
 var testResultDir = "./temp/";
@@ -8,11 +9,22 @@ var isRunningOnBuildServer = !BuildSystem.IsLocalBuild;
 
 var msBuildSettings = new DotNetCoreMSBuildSettings();
 
+// Maps text used in prerelease part in NuGet package to PyPI package
+var prereleaseVersionTextMapping = new Dictionary<string, string>
+{
+	{"alpha", "a"},
+	{"beta", "b"},
+	{"rc", "rc"}
+};
+
+string pythonPrereleaseTextPart = prereleaseVersionTextMapping[nugetPrereleaseTextPart];
+
+msBuildSettings.WithProperty("PythonPreReleaseTextPart", pythonPrereleaseTextPart);
 
 if (HasArgument("BuildNumber"))
 {
     msBuildSettings.WithProperty("BuildNumber", Argument<string>("BuildNumber"));
-    msBuildSettings.WithProperty("VersionSuffix", "alpha" + Argument<string>("BuildNumber"));
+    msBuildSettings.WithProperty("VersionSuffix", nugetPrereleaseTextPart + Argument<string>("BuildNumber"));
 }
 
 if (HasArgument("VersionPrefix"))
