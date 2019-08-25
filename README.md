@@ -30,7 +30,7 @@ This is a necessary to ensure that there are no arbitrage opportunities introduc
 ### Installing
 For use from a C# install the NuGet package Cmdty.Curves.
 ```
-PM> Install-Package Cmdty.Curves
+PM> Install-Package Cmdty.Curves -Version 0.1.0-beta1
 ```
 
 For use from Python install the curves package from PyPI.
