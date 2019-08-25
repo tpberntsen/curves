@@ -230,7 +230,7 @@ var publishPyPiTask = Task("Publish-PyPI")
 var publishNuGetTask = Task("Publish-NuGet")
     .Does(() =>
 {
-    string nugetApiKey = GetEnvironmentVariable("CURVES_NUGET_API_KEY");
+    string nugetApiKey = GetEnvironmentVariable("NUGET_API_KEY");
 
     var nupkgPath = GetFiles(artifactsDirectory.ToString() + "/*.nupkg").Single();
 
