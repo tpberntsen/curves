@@ -1,6 +1,7 @@
 Commodity Curves
 ================
 [![Build Status](https://dev.azure.com/cmdty/github/_apis/build/status/cmdty.curves?branchName=master)](https://dev.azure.com/cmdty/github/_build/latest?definitionId=1&branchName=master)
+![Azure DevOps coverage](https://img.shields.io/azure-devops/coverage/cmdty/github/1)
 [![NuGet](https://img.shields.io/nuget/v/cmdty.curves.svg)](https://www.nuget.org/packages/Cmdty.Curves/)
 [![PyPI](https://img.shields.io/pypi/v/curves.svg)](https://pypi.org/project/curves/)
 
