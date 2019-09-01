@@ -47,8 +47,8 @@ steps:
   - script: |
       dotnet tool install -g dotnet-reportgenerator-globaltool
       reportgenerator -reports:$(Build.SourcesDirectory)/tests/**/coverage.cobertura.xml -targetdir:$(Build.SourcesDirectory)/CodeCoverage -reporttypes:Cobertura
-        condition: succeededOrFailed()
-        displayName: 'Create Code coverage report'      
+    condition: succeededOrFailed()
+    displayName: 'Create Code coverage report'      
 
   - task: PublishCodeCoverageResults@1
     displayName: 'publish .NET coverage results'
