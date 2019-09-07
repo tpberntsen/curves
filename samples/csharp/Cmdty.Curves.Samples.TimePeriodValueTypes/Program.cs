@@ -31,11 +31,65 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main(
+                    string region = null,
+                    string session = null,
+                    string package = null,
+                    string project = null,
+                    string[] args = null)
         {
+            if (region == null)
+            {
+                Creating();
+                ParsingFormatting();
+                Comparing();
+                Offsetting();
+                OffsetOperators();
+                ConvertingGranularity();
+                Expanding();
+                TimePeriodRanges();
+                ExtensionMethods();
+                Console.ReadKey();
+            }
+            else
+            {
+                switch (region)
+                {
+                    case "creating":
+                        Creating();
+                        break;
+                    case "parsing_formatting":
+                        ParsingFormatting();
+                        break;
+                    case "comparing":
+                        Comparing();
+                        break;
+                    case "offsetting":
+                        Offsetting();
+                        break;
+                    case "offset_operators":
+                        OffsetOperators();
+                        break;
+                    case "converting_granularity":
+                        ConvertingGranularity();
+                        break;
+                    case "expanding":
+                        Expanding();
+                        break;
+                    case "time_period_ranges":
+                        TimePeriodRanges();
+                        break;
+                    case "extension_methods":
+                        ExtensionMethods();
+                        break;
+                }
+            }
+        }
 
+        private static void Creating()
+        {
+            #region creating
             // Creating Time Periods
-
             var mar19 = new Month(2019, 3);
             Console.WriteLine(mar19.ToString());
 
@@ -43,21 +97,30 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
             var aug19 = Month.CreateAugust(2019);
             Console.WriteLine(aug19);
 
-            // Instances can be creating by parsing strings
-            Month dec19 = Month.Parse("2019-12");
-            Console.WriteLine(dec19);
-            Console.WriteLine();
-
             // Or created from DateTimes instances using the FromDateTime
             Day christmas2020 = Day.FromDateTime(new DateTime(2020, 12, 25));
             Console.WriteLine(christmas2020);
+            #endregion
+        }
 
-            // Comparing
+        private static void ParsingFormatting()
+        {
+            #region parsing_formatting
+            // Instances can be creating by parsing strings
+            Month dec19 = Month.Parse("2019-12");
+            Console.WriteLine(dec19);
+            #endregion
+        }
+
+        private static void Comparing()
+        {
+            #region comparing
             // All time periods implement IComparable<T>
             var qu119 = new Quarter(2019, 1);
             var qu219 = Quarter.CreateQuarter2(2019);
 
             Console.WriteLine(qu119.CompareTo(qu219));
+
 
             // Comparison operators are also overloaded
             Console.WriteLine(qu119 < qu219);
@@ -66,7 +129,12 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
             Console.WriteLine(qu119 != qu219);
             Console.WriteLine(qu119 > qu219);
             Console.WriteLine(qu119 >= qu219);
+            #endregion
+        }
 
+        private static void Offsetting()
+        {
+            #region offsetting
             // Methods Offset and OffsetFrom from are used to create relative time periods, and calculate the difference
             // between time periods
             var tenAm = new Hour(2019, 8, 30, 10);
@@ -75,7 +143,13 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
 
             int numHours = midday.OffsetFrom(tenAm);
             Console.WriteLine(numHours);
+            #endregion offsetting
 
+        }
+
+        private static void OffsetOperators()
+        {
+            #region offset_operators
             // The same logic as Offset and Offset from can be called using the + and - operators respectively
             var calYear19 = new CalendarYear(2019);
 
@@ -95,7 +169,7 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
             Console.WriteLine(halfHour);
             halfHour++;
             Console.WriteLine(halfHour);
-            
+
             Console.WriteLine();
             Console.WriteLine("Decrementing Half Hour");
             halfHour--;
@@ -104,25 +178,48 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
             Console.WriteLine(halfHour);
             halfHour--;
             Console.WriteLine(halfHour);
+            #endregion offset_operators
 
-            // Can also convert between different granularity time periods using the methods First, Last and Expand
-            Console.WriteLine();
+        }
+
+        private static void ConvertingGranularity()
+        {
+            #region converting_granularity
+            // Can convert between different granularity time periods using the methods First, Last and Expand
+            var qu119 = Quarter.CreateQuarter1(2019);
             Console.WriteLine("The first month in Q1-19 is " + qu119.First<Month>());
             Console.WriteLine("The last month in Q1-19 is " + qu119.Last<Month>());
             Console.WriteLine();
+            #endregion converting_granularity
 
-            IEnumerable<Month> allMonthsInQ119 = qu119.Expand<Month>();
-            Console.WriteLine("All the months in Q1-19:");
+        }
+
+        private static void Expanding()
+        {
+            #region expanding
+            var qu219 = Quarter.CreateQuarter2(2019);
+            IEnumerable<Month> allMonthsInQ119 = qu219.Expand<Month>();
+            Console.WriteLine("All the months in Q2-19:");
             foreach (Month month in allMonthsInQ119)
             {
                 Console.WriteLine(month);
             }
+            #endregion expanding
+        }
 
+        private static void TimePeriodRanges()
+        {
+            #region time_period_ranges
             // Static properties give information on the valid range for each time period type
             Console.WriteLine();
             Console.WriteLine("Minimum Day: " + Day.MinDay);
             Console.WriteLine("Maximum Day: " + Day.MaxDay);
+            #endregion time_period_ranges
+        }
 
+        private static void ExtensionMethods()
+        {
+            #region extension_methods
             // Extension method provide extra useful functionality
             // E.g. the EnumerateTo extension method
             Console.WriteLine();
@@ -143,8 +240,8 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
             {
                 Console.WriteLine(weekday);
             }
-
-            Console.ReadKey();
+            #endregion extension_methods
         }
+
     }
 }
