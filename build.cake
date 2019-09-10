@@ -1,9 +1,14 @@
+#module nuget:?package=Cake.DotNetTool.Module&version=0.3.1
+#tool dotnet:?package=dotnet-try&version=1.0.26411
+
+
 var target = Argument<string>("Target", "Default");
 var configuration = Argument<string>("Configuration", "Release");
 bool publishWithoutBuild = Argument<bool>("PublishWithoutBuild", false);
 string nugetPrereleaseTextPart = Argument<string>("PrereleaseText", "alpha");
 
 var artifactsDirectory = Directory("./artifacts");
+var samplesDirectory = Directory("./samples/csharp");
 var testResultDir = "./temp/";
 var isRunningOnBuildServer = !BuildSystem.IsLocalBuild;
 
@@ -191,6 +196,16 @@ Task("Push-NuGetToCmdtyFeed")
     });
 });
 
+Task("Verify-TryDotNetDocs")
+	.Does(() =>
+{
+	DotNetCoreTool("try", new DotNetCoreToolSettings 
+	{
+		ArgumentCustomization = args => args.Append("verify"),
+		WorkingDirectory = samplesDirectory
+	});
+});
+
 private void StartProcessThrowOnError(string applicationName, params string[] processArgs)
 {
     var argsBuilder = new ProcessArgumentBuilder();
@@ -254,10 +269,12 @@ else
 
 
 Task("Default")
+	.IsDependentOn("Verify-TryDotNetDocs")
 	.IsDependentOn("Pack-NuGet")
     .IsDependentOn("Pack-Python");
 
 Task("CI")
+	.IsDependentOn("Verify-TryDotNetDocs")
 	.IsDependentOn("Push-NuGetToCmdtyFeed")
     .IsDependentOn("Pack-Python");
 
