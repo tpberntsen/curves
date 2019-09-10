@@ -193,6 +193,7 @@ Task("Push-NuGetToCmdtyFeed")
 });
 
 Task("Verify-TryDotNetDocs")
+    .IsDependentOn("Build-Samples")
 	.Does(() =>
 {
 	StartProcessThrowOnError("dotnet", $"try verify {samplesDirectory}");
