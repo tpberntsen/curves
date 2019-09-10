@@ -18,12 +18,6 @@ steps:
       projectName: 'curves'
 
   - task: PowerShell@2
-    displayName: 'Install Cake Bootstrapper modules'
-    inputs:
-      filePath: 'build.ps1'
-      arguments: '--bootstrap'
-
-  - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
     inputs:
       filePath: 'build.ps1'
