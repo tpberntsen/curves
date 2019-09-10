@@ -1,5 +1,5 @@
 #module nuget:?package=Cake.DotNetTool.Module&version=0.3.1
-#tool dotnet:?package=dotnet-try&version=1.0.19317.5
+#tool dotnet:?package=dotnet-try&version=1.0.19317.5&global
 
 var target = Argument<string>("Target", "Default");
 var configuration = Argument<string>("Configuration", "Release");
