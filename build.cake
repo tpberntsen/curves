@@ -1,6 +1,3 @@
-#module nuget:?package=Cake.DotNetTool.Module&version=0.3.1
-#tool dotnet:?package=dotnet-try&version=1.0.19317.5&global
-
 var target = Argument<string>("Target", "Default");
 var configuration = Argument<string>("Configuration", "Release");
 bool publishWithoutBuild = Argument<bool>("PublishWithoutBuild", false);
@@ -198,11 +195,7 @@ Task("Push-NuGetToCmdtyFeed")
 Task("Verify-TryDotNetDocs")
 	.Does(() =>
 {
-	DotNetCoreTool("try", new DotNetCoreToolSettings 
-	{
-		ArgumentCustomization = args => args.Append("verify"),
-		WorkingDirectory = samplesDirectory
-	});
+	StartProcessThrowOnError("dotnet", $"try verify {samplesDirectory}");
 });
 
 private void StartProcessThrowOnError(string applicationName, params string[] processArgs)

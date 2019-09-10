@@ -17,11 +17,8 @@ steps:
       projectKey: 'curves'
       projectName: 'curves'
 
-  - task: PowerShell@2
-    displayName: 'Install Cake Bootstrapper modules'
-    inputs:
-      filePath: 'build.ps1'
-      arguments: '--bootstrap'
+  - script: 'dotnet tool install --global dotnet-try'
+    displayName: 'Install Try .NET'    
 
   - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
