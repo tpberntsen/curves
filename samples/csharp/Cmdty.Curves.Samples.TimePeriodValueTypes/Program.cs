@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Cmdty.TimePeriodValueTypes;
 
 namespace Cmdty.Curves.Samples.TimePeriodValueTypes
@@ -89,15 +90,14 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void Creating()
         {
             #region creating
-            // Creating Time Periods
             var mar19 = new Month(2019, 3);
-            Console.WriteLine(mar19.ToString());
+            Console.WriteLine(mar19);
 
-            // Some types have convenience static methods for creating instances, e.g. for the Month type
             var aug19 = Month.CreateAugust(2019);
             Console.WriteLine(aug19);
+            var qu119 = Quarter.CreateQuarter1(2019);
+            Console.WriteLine(qu119);
 
-            // Or created from DateTimes instances using the FromDateTime
             Day christmas2020 = Day.FromDateTime(new DateTime(2020, 12, 25));
             Console.WriteLine(christmas2020);
             #endregion
@@ -106,9 +106,15 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void ParsingFormatting()
         {
             #region parsing_formatting
-            // Instances can be creating by parsing strings
-            Month dec19 = Month.Parse("2019-12");
-            Console.WriteLine(dec19);
+            Month dec19Original = Month.CreateDecember(2019);
+            string dec19Text = dec19Original.ToString();
+
+            Month dec19FromText = Month.Parse(dec19Text);
+            Console.WriteLine("Dec-19 parsed from text: " + dec19FromText);
+
+            var hour = new Hour(2019, 9, 11, 12);
+            Console.WriteLine(hour.ToString("dd-MMM-yyyy hh:mm:ss", CultureInfo.InvariantCulture));
+
             #endregion
         }
 
