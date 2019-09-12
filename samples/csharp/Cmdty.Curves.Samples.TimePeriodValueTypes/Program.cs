@@ -121,14 +121,13 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void Comparing()
         {
             #region comparing
-            // All time periods implement IComparable<T>
+            // IComparable<T>.CompareTo
             var qu119 = new Quarter(2019, 1);
             var qu219 = Quarter.CreateQuarter2(2019);
 
             Console.WriteLine(qu119.CompareTo(qu219));
-
-
-            // Comparison operators are also overloaded
+            
+            // Comparison operators
             Console.WriteLine(qu119 < qu219);
             Console.WriteLine(qu119 <= qu219);
             Console.WriteLine(qu119 == qu219);
@@ -141,8 +140,6 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void Offsetting()
         {
             #region offsetting
-            // Methods Offset and OffsetFrom from are used to create relative time periods, and calculate the difference
-            // between time periods
             var tenAm = new Hour(2019, 8, 30, 10);
             Hour midday = tenAm.Offset(2);
             Console.WriteLine(midday);
@@ -156,7 +153,6 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void OffsetOperators()
         {
             #region offset_operators
-            // The same logic as Offset and Offset from can be called using the + and - operators respectively
             var calYear19 = new CalendarYear(2019);
 
             CalendarYear calYear22 = calYear19 + 3;
@@ -191,7 +187,6 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void ConvertingGranularity()
         {
             #region converting_granularity
-            // Can convert between different granularity time periods using the methods First, Last and Expand
             var qu119 = Quarter.CreateQuarter1(2019);
             Console.WriteLine("The first month in Q1-19 is " + qu119.First<Month>());
             Console.WriteLine("The last month in Q1-19 is " + qu119.Last<Month>());
@@ -216,8 +211,6 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void TimePeriodRanges()
         {
             #region time_period_ranges
-            // Static properties give information on the valid range for each time period type
-            Console.WriteLine();
             Console.WriteLine("Minimum Day: " + Day.MinDay);
             Console.WriteLine("Maximum Day: " + Day.MaxDay);
             #endregion time_period_ranges
@@ -226,9 +219,6 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
         private static void ExtensionMethods()
         {
             #region extension_methods
-            // Extension method provide extra useful functionality
-            // E.g. the EnumerateTo extension method
-            Console.WriteLine();
             var quarterStart = Quarter.CreateQuarter3(2020);
             var quarterEnd = Quarter.CreateQuarter2(2021);
             Console.WriteLine($"All the quarters from {quarterStart} to {quarterEnd}");
@@ -237,7 +227,6 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
                 Console.WriteLine(quarter);
             }
 
-            // E.g. EnumerateWeekdaysDays extension method
             Console.WriteLine();
             var dayStart = new Day(2019, 8, 30);
             var dayEnd = new Day(2019, 9, 4);

@@ -74,6 +74,7 @@ namespace Cmdty.TimePeriodValueTypes
             return start.EnumerateTo(inclusiveEnd, timePeriod => true);
         }
 
+        // TODO move method to Day type
         public static IEnumerable<Day> EnumerateBusinessDays([NotNull] this Day start,
                             [NotNull] Day inclusiveEnd, [NotNull] IEnumerable<Day> holidays)
         {
@@ -84,6 +85,7 @@ namespace Cmdty.TimePeriodValueTypes
                                                           !holidays.Contains(day));
         }
 
+        // TODO move method to Day type
         public static IEnumerable<Day> EnumerateWeekdays([NotNull] this Day start, [NotNull] Day inclusiveEnd)
         {
             return start.EnumerateTo(inclusiveEnd, day => day.DayOfWeek != DayOfWeek.Saturday &&
