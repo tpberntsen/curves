@@ -32,12 +32,7 @@ namespace Cmdty.Curves.Samples.TimePeriodValueTypes
 {
     class Program
     {
-        static void Main(
-                    string region = null,
-                    string session = null,
-                    string package = null,
-                    string project = null,
-                    string[] args = null)
+        static void Main(string region = null)
         {
             if (region == null)
             {
