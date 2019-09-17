@@ -24,6 +24,8 @@
 #endregion
 
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
 
@@ -103,17 +105,62 @@ namespace Cmdty.Curves.Samples.TimeSeries
         private static void Properties()
         {
             #region properties
+            TimeSeries<Month, int> timeSeries = new TimeSeries<Month, int>.Builder
+            {
+                {Month.CreateJanuary(2019), 45},
+                {Month.CreateFebruary(2019), 336},
+                {Month.CreateMarch(2019), 846}
+            }.Build();
 
+            Console.WriteLine("TimeSeries Scalar Properties");
+            Console.WriteLine("Count: " + timeSeries.Count);
+            Console.WriteLine("Start: " + timeSeries.Start);
+            Console.WriteLine("End: " + timeSeries.End);
+            Console.WriteLine("IsEmpty: " + timeSeries.IsEmpty);
+            Console.WriteLine();
+
+            Console.WriteLine("TimeSeries Collection Properties");
+            IReadOnlyList<Month> timeSeriesIndices = timeSeries.Indices;
+            Console.WriteLine("Contents of timeSeries.Indices:");
+            foreach (Month month in timeSeriesIndices)
+            {
+                Console.WriteLine(month);
+            }
+            Console.WriteLine();
+
+            IReadOnlyList<int> timeSeriesData = timeSeries.Data;
+            Console.WriteLine("Contents of timeSeries.Data:");
+            foreach (int dataItem in timeSeriesData)
+            {
+                Console.WriteLine(dataItem);
+            }
             
-
             #endregion
         }
 
         private static void AccessingData()
         {
             #region accessing_data
+            TimeSeries<Month, decimal> timeSeries = new TimeSeries<Month, decimal>.Builder
+                        {
+                            {Month.CreateJanuary(2019), 22.53M},
+                            {Month.CreateFebruary(2019), 19.42M},
+                            {Month.CreateMarch(2019), 18.25M}
+                        }.Build();
 
-            
+            decimal itemFromTimePeriodIndexer = timeSeries[Month.CreateFebruary(2019)];
+            Console.WriteLine("Item from Time Period indexer: " + itemFromTimePeriodIndexer);
+
+            decimal itemFromIntegerIndexer = timeSeries[0];
+            Console.WriteLine("Item from int indexer: " + itemFromIntegerIndexer);
+
+            Console.WriteLine();
+
+            Console.WriteLine("Enumerating Over a TimeSeries");
+            foreach (TimeSeriesPoint<Month, decimal> timeSeriesPoint in timeSeries)
+            {
+                Console.WriteLine(timeSeriesPoint);
+            }
 
             #endregion
         }
@@ -121,12 +168,37 @@ namespace Cmdty.Curves.Samples.TimeSeries
         private static void Formatting()
         {
             #region formatting
+            TimeSeries<Month, decimal> monthlyTimeSeries = new TimeSeries<Month, decimal>.Builder
+            {
+                {Month.CreateJanuary(2019), 22.53M},
+                {Month.CreateFebruary(2019), 19.42M},
+                {Month.CreateMarch(2019), 18.25M}
+            }.Build();
 
-            
+            string timeSeriesDefaultFormatting = monthlyTimeSeries.ToString();
+            Console.WriteLine("Default formatting");
+            Console.WriteLine(timeSeriesDefaultFormatting);
+            Console.WriteLine();
+
+            string timeSeriesFormattedWithFormatString = monthlyTimeSeries.FormatData("F5");
+            Console.WriteLine("Formatted with format string and current thread culture");
+            Console.WriteLine(timeSeriesFormattedWithFormatString);
+            Console.WriteLine();
+
+            string timeSeriesFormattedWithFormatStringAndCulture =
+                monthlyTimeSeries.FormatData("F5", new CultureInfo("fr"));
+            Console.WriteLine("Formatted with format string and specified culture");
+            Console.WriteLine(timeSeriesFormattedWithFormatStringAndCulture);
+            Console.WriteLine();
+
+            // TODO specify max printed rows
+            // TODO formatting index
+            // TODO formatting index and data
+
 
             #endregion
         }
-        
+
         private static void DoubleTimeSeries()
         {
             #region doubletimeseries
