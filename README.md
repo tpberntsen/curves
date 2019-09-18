@@ -29,7 +29,7 @@ This is a necessary to ensure that there are no arbitrage opportunities introduc
 ## Getting Started
 
 ### Installing
-For use from a C# install the NuGet package Cmdty.Curves.
+For use from C# install the NuGet package Cmdty.Curves.
 ```
 PM> Install-Package Cmdty.Curves -Version 0.1.0-beta1
 ```
