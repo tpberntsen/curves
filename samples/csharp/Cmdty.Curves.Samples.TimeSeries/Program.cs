@@ -24,7 +24,6 @@
 #endregion
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -218,11 +217,46 @@ namespace Cmdty.Curves.Samples.TimeSeries
         private static void DoubleTimeSeries()
         {
             #region doubletimeseries
+            DoubleTimeSeries<Month> doubleTimeSeries = new DoubleTimeSeries<Month>.Builder()
+                    {
+                        {new Month(2020, 1), 45.67 },
+                        {new Month(2020, 2), 47.01 },
+                        {new Month(2020, 3), 50.34 },
+                    }.Build();
 
-            
+            Console.WriteLine("DoubleTimeSeries");
+            Console.WriteLine(doubleTimeSeries.FormatData("F2"));
+            Console.WriteLine();
+
+            DoubleTimeSeries<Month> doubleTimeSeriesAfterMultiply = doubleTimeSeries * 1.3;
+            Console.WriteLine("DoubleTimeSeries transformed with multiply operator and double");
+            Console.WriteLine(doubleTimeSeriesAfterMultiply.FormatData("F2"));
+            Console.WriteLine();
+
+            DoubleTimeSeries<Month> doubleTimeSeriesAfterAdd = doubleTimeSeries + 5.5;
+            Console.WriteLine("DoubleTimeSeries transformed with add operator and double");
+            Console.WriteLine(doubleTimeSeriesAfterAdd.FormatData("F2"));
+            Console.WriteLine();
+
+            DoubleTimeSeries<Month> otherDoubleTimeSeries = new DoubleTimeSeries<Month>.Builder()
+                    {
+                        {new Month(2020, 1), 1.3 },
+                        {new Month(2020, 2), 1.4 },
+                        {new Month(2020, 3), 1.35 },
+                    }.Build();
+
+            DoubleTimeSeries<Month> timeSeriesSubtracted = doubleTimeSeries - otherDoubleTimeSeries;
+            Console.WriteLine("DoubleTimeSeries transformed with minus operator and other DoubleTimeSeries");
+            Console.WriteLine(timeSeriesSubtracted.FormatData("F2"));
+            Console.WriteLine();
+
+            DoubleTimeSeries<Month> timeSeriesDivided = doubleTimeSeries / otherDoubleTimeSeries;
+            Console.WriteLine("DoubleTimeSeries transformed with divide operator and other DoubleTimeSeries");
+            Console.WriteLine(timeSeriesDivided.FormatData("F2"));
+            Console.WriteLine();
 
             #endregion
         }
-        
+
     }
 }
