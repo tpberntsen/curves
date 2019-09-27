@@ -24,8 +24,10 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
 
@@ -191,10 +193,24 @@ namespace Cmdty.Curves.Samples.TimeSeries
             Console.WriteLine(timeSeriesFormattedWithFormatStringAndCulture);
             Console.WriteLine();
 
-            // TODO specify max printed rows
-            // TODO formatting index
-            // TODO formatting index and data
+            IEnumerable<double> hourlyTimeSeriesData = Enumerable.Range(0, 16).Select(i => i * 0.06 + 25.4);
+            TimeSeries<Hour, double> hourlyTimeSeries =
+                new TimeSeries<Hour, double>(new Hour(2019, 9, 27, 6), hourlyTimeSeriesData);
 
+            string hourlyTimeSeriesFormattedDefaultNumRows = hourlyTimeSeries.ToString("dd/MM/yy hh:mm", "F3");
+            Console.WriteLine("Index and data formatted with format string and truncated to default max rows");
+            Console.WriteLine(hourlyTimeSeriesFormattedDefaultNumRows);
+            Console.WriteLine();
+
+            string hourlyTimeSeriesFormattedFullNumRows = hourlyTimeSeries.ToString("dd/MM/yy hh:mm", "F3", -1);
+            Console.WriteLine("Index and data formatted with format string and no truncation of rows");
+            Console.WriteLine(hourlyTimeSeriesFormattedFullNumRows);
+            Console.WriteLine();
+
+            string hourlyTimeSeriesFormattedSpecificNumRows = hourlyTimeSeries.ToString("dd/MM/yy hh:mm", "F3", 5);
+            Console.WriteLine("Index and formatted with format string and truncation to specified number of rows");
+            Console.WriteLine(hourlyTimeSeriesFormattedSpecificNumRows);
+            Console.WriteLine();
 
             #endregion
         }
