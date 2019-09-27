@@ -34,9 +34,9 @@ namespace Cmdty.Curves.Samples.TimeSeries
 {
     class Program
     {
-        static void Main(string region = null)
+        static void Main(string[] args) // TODO figure out how to use System.CommandLine in this context, or use alternative command line parser
         {
-            if (region == null)
+            if (args.Length == 0)
             {
                 Creating();
                 Console.WriteLine();
@@ -51,7 +51,7 @@ namespace Cmdty.Curves.Samples.TimeSeries
             }
             else
             {
-                switch (region)
+                switch (args[1])
                 {
                     case "creating":
                         Creating();
