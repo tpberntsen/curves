@@ -43,7 +43,7 @@ For use from Python install the curves package from PyPI.
 For examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
 
 ### Using From Python
-See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use the Python API.
+A Python API has been created using [pythonnet](https://github.com/pythonnet/pythonnet). See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use this.
 
 ## Technical Documentation
 The PDF file [max_smoothness_spline.pdf](docs/max_smoothness/max_smoothness_spline.pdf) contains details of the mathematics behind the maximum smoothness algorithm.
