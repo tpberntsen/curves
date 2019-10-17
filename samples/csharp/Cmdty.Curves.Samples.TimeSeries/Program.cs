@@ -78,7 +78,7 @@ namespace Cmdty.Curves.Samples.TimeSeries
             #region creating
             TimeSeries<Quarter, decimal> timeSeriesFromConstructor1 = new TimeSeries<Quarter,decimal>(
                                                         Quarter.CreateQuarter1(2020), 
-                                                        new decimal[]{21.3M, 42.4M, 42.5M});
+                                                        new []{21.3M, 42.4M, 42.5M});
             Console.WriteLine(timeSeriesFromConstructor1);
             Console.WriteLine();
 
@@ -87,13 +87,17 @@ namespace Cmdty.Curves.Samples.TimeSeries
                     new []{242.4, 224.42, 262.04});
             Console.WriteLine(timeSeriesFromConstructor2);
             Console.WriteLine();
-
-            TimeSeries<Month, int> timeSeriesFromBuilder = new TimeSeries<Month, int>.Builder
+            
+            var builder = new TimeSeries<Month, int>.Builder
             {
                 {Month.CreateJanuary(2019), 1},
                 {Month.CreateFebruary(2019), 2},
                 {Month.CreateMarch(2019), 3}
-            }.Build();
+            };
+
+            builder.Add(Month.CreateApril(2019), 4);
+            
+            TimeSeries<Month, int> timeSeriesFromBuilder = builder.Build();
             Console.WriteLine(timeSeriesFromBuilder);
             Console.WriteLine();
 
