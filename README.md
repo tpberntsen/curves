@@ -7,6 +7,15 @@ Commodity Curves
 
 Set of tools written in C# for constructing commodity forward/futures/swap curves with a fluent API. Python API also provided which integrates with the pandas library time series types.
 
+### Table of Contents
+* [Overview](#overview)
+* [Getting Started](#getting-started)
+    * [Installing](#installing)
+    * [Using From C#](#using-from-c)
+    * [Using From Python](#using-from-python)
+* [Technical Documentation](#technical-documentation)
+* [License](#license)
+
 ## Overview
 
 The curves package contains a set of tools for building commodity forward, swaps, and futures curves.
