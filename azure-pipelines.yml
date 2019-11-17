@@ -17,9 +17,9 @@ steps:
       projectKey: 'curves'
       projectName: 'curves'
 
-  - script: 'dotnet tool install --global dotnet-try'
-    displayName: 'Install Try .NET'    
-
+#  - script: 'dotnet tool install --global dotnet-try'
+#    displayName: 'Install Try .NET'    
+  
   - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
     inputs:
