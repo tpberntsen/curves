@@ -55,7 +55,7 @@ For examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree
 A Python API has been created using [pythonnet](https://github.com/pythonnet/pythonnet). See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use this.
 
 ### Using From Python on Linux
-Currently only a small amount of testing has been done for the Python package running on Linux via the Mono runtime, using Python version 3.6.8. The following Linux dependencies have to be installed, as listed on [the pythonnet wiki](https://github.com/pythonnet/pythonnet/wiki/Troubleshooting-on-Windows,-Linux,-and-OSX):
+Currently only a small amount of testing has been done for the Python package running on Linux (Ubuntu 18.04 LTS running in Windows 10 WSL) via the Mono runtime, using Python version 3.6.8. The following Linux dependencies have to be installed, as listed on [the pythonnet wiki](https://github.com/pythonnet/pythonnet/wiki/Troubleshooting-on-Windows,-Linux,-and-OSX):
 * Mono-develop or Mono-complete. Curves was successfully run after installing version 5.20.1.34 of Mono-complete. Note that pythonnet does not work with Mono version 6.x. See [this page](https://www.mono-project.com/docs/getting-started/install/linux/#accessing-older-releases) for instructions on installing older versions of Mono on Linux.
 * clang.
 * libglib2.0-dev.
