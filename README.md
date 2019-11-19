@@ -59,7 +59,7 @@ Currently only a small amount of testing has been done for the Python package ru
 * Mono-develop or Mono-complete. Curves was successfully run after installing version 5.20.1.34 of Mono-complete. Note that pythonnet does not work with Mono version 6.x. See [this page](https://www.mono-project.com/docs/getting-started/install/linux/#accessing-older-releases) for instructions on installing older versions of Mono on Linux.
 * clang.
 * libglib2.0-dev.
-* python-dev.
+* python-dev. Specifically the package python3.6-dev was installed.
 
 It was also found that the PyPI package pycparser had to be installed, in order for the pythonnet PyPI package to install correctly.
 
