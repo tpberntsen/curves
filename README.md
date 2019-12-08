@@ -13,6 +13,7 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
     * [Installing](#installing)
     * [Using From C#](#using-from-c)
     * [Using From Python](#using-from-python)
+        * [Using From Python on Linux](#using-from-python-on-linux)
 * [Technical Documentation](#technical-documentation)
 * [License](#license)
 
