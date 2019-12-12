@@ -206,7 +206,11 @@ namespace Cmdty.TimeSeries.Test
         {
             var timeSeries = new TimeSeries<Month, int>(Month.CreateJanuary(2019), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() => timeSeries.ToString(-3));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -214,7 +218,11 @@ namespace Cmdty.TimeSeries.Test
         {
             var timeSeries = new TimeSeries<Month, int>(Month.CreateJanuary(2019), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() => timeSeries.ToString(0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -223,7 +231,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16) , new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() => 
                 timeSeries.ToString("G", CultureInfo.CurrentCulture, "G", CultureInfo.CurrentCulture,-2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -232,16 +244,24 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.ToString("G", CultureInfo.CurrentCulture, "G", CultureInfo.CurrentCulture, 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
-        
+
         [Test]
         public void ToStringSingleFormatProvider_MaxRowsToPrintLessThanMinusOne_ThrowsArgumentException()
         {
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.ToString("G", "G", CultureInfo.CurrentCulture, -2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -250,7 +270,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.ToString("G", "G", CultureInfo.CurrentCulture, 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -259,7 +283,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.ToString("G", "G", -2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -268,7 +296,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.ToString("G", "G", 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -277,7 +309,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatIndex("G", CultureInfo.CurrentCulture, -2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -286,7 +322,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatIndex("G", CultureInfo.CurrentCulture, 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -295,7 +335,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatIndex("G", -2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -304,7 +348,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatIndex("G", 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -313,7 +361,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatData("G", CultureInfo.CurrentCulture, -2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -322,7 +374,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatData("G", CultureInfo.CurrentCulture, 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -331,7 +387,11 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatData("G", -2));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
 
         [Test]
@@ -340,11 +400,12 @@ namespace Cmdty.TimeSeries.Test
             var timeSeries = new TimeSeries<Hour, int>(new Hour(2019, 5, 30, 16), new[] { 9, 10, 11 });
             ArgumentException exception = Assert.Throws<ArgumentException>(() =>
                 timeSeries.FormatData("G", 0));
+#if NETFRAMEWORK
             Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0\r\nParameter name: maxNumRowsToPrint", exception.Message);
+#else
+            Assert.AreEqual("maxNumRowsToPrint must be either equal to -1, or greater than 0 (Parameter 'maxNumRowsToPrint')", exception.Message);
+#endif
         }
-
-
-
 
         [Test]
         public void ToString_CountBelowMaxRowsToPrint_AsExpected()
