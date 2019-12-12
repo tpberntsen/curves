@@ -11,9 +11,9 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
 * [Overview](#overview)
 * [Getting Started](#getting-started)
     * [Installing](#installing)
+        * [Installing For Python on Linux](#installing-for-python-on-linux)
     * [Using From C#](#using-from-c)
     * [Using From Python](#using-from-python)
-        * [Using From Python on Linux](#using-from-python-on-linux)
 * [Technical Documentation](#technical-documentation)
 * [License](#license)
 
@@ -48,14 +48,7 @@ For use from Python install the curves package from PyPI.
 ```
 > pip install curves
 ```
-
-### Using From C#
-For examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
-
-### Using From Python
-A Python API has been created using [pythonnet](https://github.com/pythonnet/pythonnet). See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use this.
-
-### Using From Python on Linux
+### Installing For Python on Linux
 Currently only a small amount of testing has been done for the Python package running on Linux (Ubuntu 18.04 LTS running in Windows 10 WSL) via the Mono runtime, using Python version 3.6.8. The following Linux dependencies have to be installed, as listed on [the pythonnet wiki](https://github.com/pythonnet/pythonnet/wiki/Troubleshooting-on-Windows,-Linux,-and-OSX):
 * Mono-develop or Mono-complete. Curves was successfully run after installing version 5.20.1.34 of Mono-complete. Note that pythonnet does not work with Mono version 6.x. See [this page](https://www.mono-project.com/docs/getting-started/install/linux/#accessing-older-releases) for instructions on installing older versions of Mono on Linux.
 * clang.
@@ -63,6 +56,13 @@ Currently only a small amount of testing has been done for the Python package ru
 * python-dev. Specifically the package python3.6-dev was installed.
 
 It was also found that the PyPI package pycparser had to be installed, in order for the pythonnet PyPI package to install correctly.
+
+
+### Using From C#
+For examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
+
+### Using From Python
+A Python API has been created using [pythonnet](https://github.com/pythonnet/pythonnet). See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use this.
 
 ## Technical Documentation
 The PDF file [max_smoothness_spline.pdf](docs/max_smoothness/max_smoothness_spline.pdf) contains details of the mathematics behind the maximum smoothness algorithm.
