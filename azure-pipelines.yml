@@ -1,6 +1,6 @@
 name: $(Date:yyyyMMdd)$(Rev:rr)
 pool:
-  vmImage: 'VS2017-Win2016'
+  vmImage: 'windows-2019'
 
 trigger:
   batch: 'true'
@@ -9,6 +9,11 @@ trigger:
     - master
 
 steps:
+  - task: UseDotNet@2
+    inputs:
+      packageType: 'sdk'
+      useGlobalJson: true
+
   - task: SonarCloudPrepare@1
     inputs:
       SonarCloud: 'SonarCloud'
@@ -17,9 +22,6 @@ steps:
       projectKey: 'curves'
       projectName: 'curves'
 
-#  - script: 'dotnet tool install --global dotnet-try'
-#    displayName: 'Install Try .NET'    
-  
   - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
     inputs:
