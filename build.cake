@@ -131,7 +131,6 @@ Task("Pack-NuGet")
                     Configuration = configuration,
                     OutputDirectory = artifactsDirectory,
                     NoRestore = true,
-                    NoBuild = true,
                     MSBuildSettings = msBuildSettings
                 };
 	DotNetCorePack("src/Cmdty.Curves/Cmdty.Curves.csproj", dotNetPackSettings);
@@ -262,12 +261,12 @@ else
 
 
 Task("Default")
-//	.IsDependentOn("Verify-TryDotNetDocs")
+	.IsDependentOn("Verify-TryDotNetDocs")
 	.IsDependentOn("Pack-NuGet")
     .IsDependentOn("Pack-Python");
 
 Task("CI")
-//	.IsDependentOn("Verify-TryDotNetDocs")
+	.IsDependentOn("Verify-TryDotNetDocs")
 	.IsDependentOn("Push-NuGetToCmdtyFeed")
     .IsDependentOn("Pack-Python");
 
