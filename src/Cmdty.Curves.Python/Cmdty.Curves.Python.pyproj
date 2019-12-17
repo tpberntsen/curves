@@ -12,6 +12,7 @@
     <Name>Cmdty.Curves.Python</Name>
     <RootNamespace>Cmdty.Curves.Python</RootNamespace>
     <InterpreterId>MSBuild|curves|$(MSBuildProjectFullPath)</InterpreterId>
+    <TestFramework>Pytest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>

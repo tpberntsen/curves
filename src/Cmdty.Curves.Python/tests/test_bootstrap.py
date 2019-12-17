@@ -60,14 +60,20 @@ class TestBootstrap(unittest.TestCase):
                     (month(2020, 1), month(2020, 2), 0.5),
                 ]
 
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(contracts, freq='D', shaping_ratios=ratios, shaping_spreads=spreads, average_weight=lambda t:1.0)
+        def peakload_weight(period):
+            if period.dayofweek < 5:
+                return 1.0
+            else:
+                return 0.0
+
+        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(contracts, freq='D', shaping_ratios=ratios, shaping_spreads=spreads, average_weight=peakload_weight)
         
         self.assertEqual(16, len(bootstrapped_contracts))
         self.assertEqual(1004, len(piecewise_curve))
 
         for contract in contracts:
             (period, contract_price) = deconstruct_contract(contract)
-            curve_average_price = weighted_average_slice_curve(piecewise_curve, 'D', period)
+            curve_average_price = weighted_average_slice_curve(piecewise_curve, 'D', period, peakload_weight)
             self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-10)
 
             
