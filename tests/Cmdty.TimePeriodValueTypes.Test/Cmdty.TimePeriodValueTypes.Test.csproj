@@ -52,4 +52,8 @@
     </Compile>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="coverage.cobertura.xml"/>
+  </ItemGroup>
+
 </Project>

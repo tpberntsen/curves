@@ -24,4 +24,8 @@
     <ProjectReference Include="..\..\src\Cmdty.TimeSeries\Cmdty.TimeSeries.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="coverage.cobertura.xml"/>
+  </ItemGroup>
+
 </Project>
