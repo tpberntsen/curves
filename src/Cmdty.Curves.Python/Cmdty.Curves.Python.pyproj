@@ -11,7 +11,7 @@
     <OutputPath>.</OutputPath>
     <Name>Cmdty.Curves.Python</Name>
     <RootNamespace>Cmdty.Curves.Python</RootNamespace>
-    <InterpreterId>MSBuild|curves|$(MSBuildProjectFullPath)</InterpreterId>
+    <InterpreterId>MSBuild|curves-venv|$(MSBuildProjectFullPath)</InterpreterId>
     <TestFramework>Pytest</TestFramework>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
@@ -61,10 +61,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
-    <Interpreter Include="..\..\..\..\..\virtualenvs\curves\">
-      <Id>curves</Id>
+    <Interpreter Include="curves-venv\">
+      <Id>curves-venv</Id>
       <Version>3.6</Version>
-      <Description>curves (Python 3.6 (64-bit))</Description>
+      <Description>curves-venv (Python 3.6 (64-bit))</Description>
       <InterpreterPath>Scripts\python.exe</InterpreterPath>
       <WindowsInterpreterPath>Scripts\pythonw.exe</WindowsInterpreterPath>
       <PathEnvironmentVariable>PYTHONPATH</PathEnvironmentVariable>

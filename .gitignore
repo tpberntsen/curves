@@ -341,6 +341,7 @@ src/Cmdty.Curves.Python/dist/*
 src/Cmdty.Curves.Python/curves.egg-info/*
 src/Cmdty.Curves.Python/build/*
 src/Cmdty.Curves.Python/list/*
+src/Cmdty.Curves.Python/curves-venv/*
 
 # Python version file generated during build
 src/Cmdty.Curves.Python/curves/__version__.py
