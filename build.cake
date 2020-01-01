@@ -159,6 +159,7 @@ Task("Install-VirtualEnvDependencies")
 {
     RunCommandInVirtualEnv("python -m pip install --upgrade pip", vEnvActivatePath);
     RunCommandInVirtualEnv("pip install pytest", vEnvActivatePath);
+    RunCommandInVirtualEnv("pip install -r src/Cmdty.Curves.Python/requirements.txt", vEnvActivatePath);
     RunCommandInVirtualEnv("pip install -e src/Cmdty.Curves.Python", vEnvActivatePath);
 });
 
