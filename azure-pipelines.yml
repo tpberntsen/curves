@@ -34,7 +34,8 @@ steps:
         pip install virtualenv
         pip install twine
         pip install setuptools
-    displayName: 'Install Python packages: virtualenv, twine and setuptools'
+        pip install wheel
+    displayName: 'Install Python packages: virtualenv, twine, setuptools and wheel'
 
   - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
