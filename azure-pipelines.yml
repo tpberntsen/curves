@@ -30,6 +30,11 @@ steps:
       versionSpec: '3.6'
     displayName: "Use Python 3.6"
 
+  - script: |
+        pip install virtualenv
+        pip install twine
+    displayName: 'Install Python packages: virtualenv and twine'
+
   - task: PowerShell@2
     displayName: 'Run Cake PowerShell Bootstrapper'
     inputs:
