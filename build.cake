@@ -174,6 +174,7 @@ var testPythonTask = Task("Test-Python")
 
 Task("Pack-Python")
     .IsDependentOn("Test-Python")
+	.IsDependentOn("Clean-Artifacts")
     .Does(setupContext =>
 {
     CleanDirectory("src/Cmdty.Curves.Python/build");
@@ -189,6 +190,9 @@ Task("Pack-Python")
     {
         setupContext.Environment.WorkingDirectory = originalWorkingDir;
     }
+    Information("Python package created");
+    CopyFiles("src/Cmdty.Curves.Python/dist/*", artifactsDirectory);
+    Information("Python package file copied to /artifacts directory");
 });
 
 Task("Verify-TryDotNetDocs")
