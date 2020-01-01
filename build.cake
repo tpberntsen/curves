@@ -191,20 +191,6 @@ Task("Pack-Python")
     }
 });
 
-Task("Push-NuGetToCmdtyFeed")
-    .IsDependentOn("Add-NuGetSource")
-    .IsDependentOn("Pack-NuGet")
-    .Does(() =>
-{
-    var nupkgPath = GetFiles(artifactsDirectory.ToString() + "/*.nupkg").Single();
-    Information($"Pushing NuGetPackage in {nupkgPath} to Cmdty feed");
-    NuGetPush(nupkgPath, new NuGetPushSettings 
-    {
-        Source = "Cmdty",
-        ApiKey = "VSTS"
-    });
-});
-
 Task("Verify-TryDotNetDocs")
     .IsDependentOn("Build-Samples")
 	.Does(() =>
@@ -285,11 +271,6 @@ else
 Task("Default")
 	.IsDependentOn("Verify-TryDotNetDocs")
 	.IsDependentOn("Pack-NuGet")
-    .IsDependentOn("Pack-Python");
-
-Task("CI")
-	.IsDependentOn("Verify-TryDotNetDocs")
-	.IsDependentOn("Push-NuGetToCmdtyFeed")
     .IsDependentOn("Pack-Python");
 
 RunTarget(target);
