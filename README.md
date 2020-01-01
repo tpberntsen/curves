@@ -15,6 +15,11 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
     * [Using From C#](#using-from-c)
     * [Using From Python](#using-from-python)
 * [Technical Documentation](#technical-documentation)
+* [Building](#building)
+    * [Build Prerequisites](#build-prerequisites)
+    * [Running the Build](#running-the-build)
+    * [Build Artifacts](#build-artifacts)
+    * [Building from Linux and macOS](#building-from-linux-and-macos)
 * [License](#license)
 
 ## Overview
@@ -66,6 +71,50 @@ A Python API has been created using [pythonnet](https://github.com/pythonnet/pyt
 
 ## Technical Documentation
 The PDF file [max_smoothness_spline.pdf](docs/max_smoothness/max_smoothness_spline.pdf) contains details of the mathematics behind the maximum smoothness algorithm.
+
+## Building
+This section describes how to run a scripted build on a cloned repo. Visual Studio 2019 is used for development, and can also be used to build the C# and run unit tests on the C# and Python APIs. However, the scripted build process also creates packages (NuGet and Python), builds the C# samples, and verifies the C# interactive documentation. [Cake](https://github.com/cake-build/cake) is used for running scripted builds. This is relevant for running the scripted build on Windows. For running on a non-Windows OS see [Building from Linux and macOS](#building-from-linux-and-macos).
+
+#### Build Prerequisites
+The following are required on the host machine in order for the build to run.
+* The .NET Core SDK. Check [global.json file](global.json) for the version necessary, taking into account [the matching rules used](https://docs.microsoft.com/en-us/dotnet/core/tools/global-json#matching-rules).
+* The Python interpretter, accessible by being in a file location in the PATH environment variable. Version 3.6 is used, although other 3.x versions might work.
+* The following Python packages installed:
+    * virtualenv.
+    * setuptools.
+    * wheel.
+* The [Try .NET](https://dotnet.microsoft.com/platform/try-dotnet) global tool. This can be installed by running the following command.
+```
+> dotnet tool install -g dotnet-try
+```
+
+#### Running the Build
+The build is started by running the PowerShell script build.ps1 from a PowerShell console, ISE, or the Visual Studio Package Manager Console.
+
+```
+PM> .\build.ps1
+```
+
+#### Build Artifacts
+The following results of the build will be saved into the artifacts directory.
+* The NuGet package: Cmdty.Curve.[version].nupkg
+* The Python package files:
+    * curves-[version]-py3-none-any.whl
+    * curves-[version].tar.gz
+
+### Building from Linux and macOS
+Running the full build on non-Windows plaforms is still work in progress- the aim to to make it completely plaform agnostic. However, at the moment only the C# parts of the build are functioning cross-plaform. Using the .NET Core SDK the C# code can be built and unit tested by running the following commands in the clone repo.
+```
+> dotnet build
+> dotnet test
+```
+
+The Cake build can be invoked using the bootstrapper Bash script build.sh. This requires the .NET SDK and mono to be installed. After first granting it execute permissions as below, the "Pack-NuGet" target results in the building and unit testing of the C#, before the creation of the Cmdty.Curves NuGet package.
+```
+> chmod +x build.sh
+> ./build.sh --target=Pack-NuGet.
+```
+
 
 ## License
 
