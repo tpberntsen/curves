@@ -41,7 +41,7 @@ steps:
     displayName: 'Run Cake PowerShell Bootstrapper'
     inputs:
       filePath: 'build.ps1'
-      arguments: '-Verbosity Diagnostic -BuildNumber=$(Build.BuildNumber)'
+      arguments: '-Verbosity Diagnostic -PrereleaseNumber=$(Build.BuildNumber)'
     env:
       SYSTEM_ACCESSTOKEN: $(System.AccessToken)
 

@@ -18,8 +18,8 @@
 
   <PropertyGroup>
     <PythonPreReleaseTextPart>a</PythonPreReleaseTextPart>
-    <PythonVersion Condition="'$(BuildNumber)' == ''">$(VersionPrefix)</PythonVersion>
-    <PythonVersion Condition="'$(BuildNumber)' != ''">$(VersionPrefix)$(PythonPreReleaseTextPart)$(BuildNumber)</PythonVersion>
+    <PythonVersion Condition="'$(PrereleaseNumber)' == ''">$(VersionPrefix)</PythonVersion>
+    <PythonVersion Condition="'$(PrereleaseNumber)' != ''">$(VersionPrefix)$(PythonPreReleaseTextPart)$(PrereleaseNumber)</PythonVersion>
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent" Condition="'$(TargetFramework)' == 'net45'" >
