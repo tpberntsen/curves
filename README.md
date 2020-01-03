@@ -72,19 +72,18 @@ It was also found that the PyPI package pycparser had to be installed, in order 
 #### Bootstrapper
 The C# code below gives an example of user the bootstrapper on overlapping Q1-20 and Jan-20 forward prices.
 ```c#
-            // Bootstrapping 1 quarterly price and 1 monthly price into a monthly curve
-            (DoubleCurve<Month> pieceWiseCurve, IReadOnlyList<Contract<Month>> bootstrappedContracts) = new Bootstrapper<Month>()
-                                .AddContract(Month.CreateJanuary(2020), 19.05)
-                                .AddContract(Quarter.CreateQuarter1(2020), 17.22)
-                                .Bootstrap();
+(DoubleCurve<Month> pieceWiseCurve, IReadOnlyList<Contract<Month>> bootstrappedContracts) = new Bootstrapper<Month>()
+                    .AddContract(Month.CreateJanuary(2020), 19.05)
+                    .AddContract(Quarter.CreateQuarter1(2020), 17.22)
+                    .Bootstrap();
 
-            Console.WriteLine("Derived piecewise flat curve:");
-            Console.WriteLine(pieceWiseCurve.FormatData("F5"));
+Console.WriteLine("Derived piecewise flat curve:");
+Console.WriteLine(pieceWiseCurve.FormatData("F5"));
 
-            Console.WriteLine();
+Console.WriteLine();
 
-            Console.WriteLine("Equivalent bootstrapped contracts:");
-            PrintBootstrapContracts(bootstrappedContracts);
+Console.WriteLine("Equivalent bootstrapped contracts:");
+PrintBootstrapContracts(bootstrappedContracts);
 ```
 
 For more sophisticated examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
