@@ -23,7 +23,7 @@ Some basic examples of both of these function are given below. Both of these met
 the pandas.Series type used to represent forward curves, and pandas.Period for the delivery period of an input forward contract
 or derived forward curve.
 
-For details of more advanced usage, view the docstrings for either of these functions and the Jupyter Notebook [curves_quick_start_tutorial](https://github.com/cmdty/curves/blob/master/samples/python/curves_quick_start_tutorial.ipynb).
+For details of more advanced usage, view the docstrings for either of these functions and the Jupyter Notebook [curves_tutorial](https://github.com/cmdty/curves/blob/master/samples/python/curves_tutorial.ipynb).
 
 ### Bootstrapper
 The basic functionality of the method bootstrap_contracts is to take a set of forward prices, for contracts with overlapping 

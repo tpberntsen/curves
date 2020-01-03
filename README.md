@@ -158,7 +158,7 @@ See [Program.cs](https://github.com/cmdty/curves/tree/master/samples/csharp/Cmdt
 
 ### Using From Python
 This section gives same basic example of using the Python package.
-See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for a more thorough introduction.
+See the Jupyter Notebook [curves_tutorial](samples/python/curves_tutorial.ipynb) for a more thorough introduction.
 
 #### Bootstrapper
 Below is a basic example showing prices for January and Q1 delivery period periods being bootstrapped into consistent January, February and March forward prices.
