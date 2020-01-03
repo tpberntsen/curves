@@ -47,8 +47,8 @@ This is a necessary to ensure that there are no arbitrage opportunities introduc
 
 The core of the curves package essentially consists of two models; the bootstrapper and the spline.
 
-* The **bootstrapper** model takes a set of forward prices, for contracts with overlapping delivery/fixing periods, and returns a curve with overlapping periods removed, but with prices consistent with the original inputs. In addition the bootstrapper can be used to apply shaping to the forward prices by applying a predefined spread or ratios between two contract prices.
-* The **spline** model allows the creation of a smooth curve with higher granularity than the input contracts. This uses a maximum smoothness algorithm to interpolate input contracts with a fourth-order spline, whilst maintaining the average price constraints inherent in the input contract prices.
+* The **bootstrapper** model takes a set of forward prices, for contracts with overlapping delivery/fixing periods, and returns a curve with overlapping periods removed, but with prices consistent with the original inputs. In addition the bootstrapper can be used to apply shaping to the forward prices by applying a predefined spread or ratios between pairs of contract prices.
+* The **spline** model allows the creation of a smooth curve, with higher granularity than the input contracts. This uses a [maximum smoothness algorithm](docs/max_smoothness/max_smoothness_spline.pdf) to interpolate input contracts with a fourth-order spline, whilst maintaining the average price constraints inherent in the input contract prices.
 
 See [Getting Started](#getting-started) below for more details on how to use these two model from both C# and Python.
 
@@ -114,7 +114,7 @@ See [Program.cs](https://github.com/cmdty/curves/tree/master/samples/csharp/Cmdt
 #### Spline
 The following C# code shows how to use the spline to derive a smooth daily curve
 from monthly and quarterly granularity input contract prices. Also demonstrated is
-the optional seasonal adjustment factor, in this case used to apply day-of-week
+the optional application of a seasonal adjustment factor, in this case used to apply day-of-week
 seasonality.
 
 ```c#
@@ -190,9 +190,7 @@ Period('2019-02', 'M'), Period('2019-03', 'M'), 19.103
 ```
 #### Spline
 The example below creates a daily granularity curve, from input contracts of various granularities. As would usually be the case in a practical scenario, 
-the bootstrap_contracts method is first used to remove the overlaps from the contracts. The example below also shows how the input contracts can have gaps 
-between them, which the spline will interpolate over, filling in the gaps in the final smooth curve. It also demonstrates the different ways of representing 
-the contract delivery period in the contract tuples and use of the helper module contract_period.
+the bootstrap_contracts method is first used to remove the overlaps from the contracts.
 ```python
 from curves import max_smooth_interp
 from curves import contract_period as cp
@@ -255,7 +253,7 @@ This section describes how to run a scripted build on a cloned repo. Visual Stud
 
 #### Build Prerequisites
 The following are required on the host machine in order for the build to run.
-* The .NET Core SDK. Check [global.json file](global.json) for the version necessary, taking into account [the matching rules used](https://docs.microsoft.com/en-us/dotnet/core/tools/global-json#matching-rules).
+* The .NET Core SDK. Check the [global.json file](global.json) for the version necessary, taking into account [the matching rules used](https://docs.microsoft.com/en-us/dotnet/core/tools/global-json#matching-rules).
 * The Python interpretter, accessible by being in a file location in the PATH environment variable. Version 3.6 is used, although other 3.x versions might work.
 * The following Python packages installed:
     * virtualenv.
@@ -274,8 +272,8 @@ PM> .\build.ps1
 ```
 
 #### Build Artifacts
-The following results of the build will be saved into the artifacts directory.
-* The NuGet package: Cmdty.Curve.[version].nupkg
+The following results of the build will be saved into the artifacts directory (which itelf will be created in the top directory of the repo).
+* The NuGet package: Cmdty.Curves.[version].nupkg
 * The Python package files:
     * curves-[version]-py3-none-any.whl
     * curves-[version].tar.gz
