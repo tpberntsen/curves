@@ -112,7 +112,49 @@ Start: 2020-02, End: 2020-03, Price: 16.2745
 See [Program.cs](https://github.com/cmdty/curves/tree/master/samples/csharp/Cmdty.Curves.Samples.Bootstrap/Program.cs) for examples of applying shaping using the bootstrapper, and alternative average weighting schemes, e.g. business day weighting.
 
 #### Spline
-To Do.
+The following C# code shows how to use the spline to derive a smooth daily curve
+from monthly and quarterly granularity input contract prices. Also demonstrated is
+the optional seasonal adjustment factor, in this case used to apply day-of-week
+seasonality.
+
+```c#
+var dayOfWeekAdjustment = new Dictionary<DayOfWeek, double>
+{
+    [DayOfWeek.Monday] = 0.95,
+    [DayOfWeek.Tuesday] = 0.99,
+    [DayOfWeek.Wednesday] = 1.05,
+    [DayOfWeek.Thursday] = 1.01,
+    [DayOfWeek.Friday] = 0.98,
+    [DayOfWeek.Saturday] = 0.92,
+    [DayOfWeek.Sunday] = 0.91
+};
+
+DoubleCurve<Day> curve = new MaxSmoothnessSplineCurveBuilder<Day>()
+    .AddContract(Month.CreateJuly(2019), 77.98)
+    .AddContract(Month.CreateAugust(2019), 76.01)
+    .AddContract(Month.CreateSeptember(2019), 78.74)
+    .AddContract(Quarter.CreateQuarter4(2019), 85.58)
+    .AddContract(Quarter.CreateQuarter1(2020), 87.01)
+    .WithMultiplySeasonalAdjustment(day => dayOfWeekAdjustment[day.DayOfWeek])
+    .BuildCurve();
+
+Console.WriteLine(curve.FormatData("F5"));
+```
+Which prints the following.
+```
+Count = 275
+2019-07-01  77.68539
+2019-07-02  80.83184
+2019-07-03  85.59869
+2019-07-04  82.21079
+....................
+2020-03-28  81.21869
+2020-03-29  80.30742
+2020-03-30  83.80771
+2020-03-31  87.30550
+```
+
+See [Program.cs](https://github.com/cmdty/curves/tree/master/samples/csharp/Cmdty.Curves.Samples.Spline/Program.cs) for an example of using the spline with alternative average weighting scheme, e.g. business day weighting.
 
 ### Using From Python
 This section gives same basic example of using the Python package.

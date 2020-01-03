@@ -34,27 +34,31 @@ namespace Cmdty.Curves.Samples.Spline
     {
         static void Main(string[] args)
         {
-            // All parameters added
-            var curve1 = new MaxSmoothnessSplineCurveBuilder<Day>()
+            // The following code shows how to use the spline to derive a smooth daily curve from
+            // monthly and quarterly granularity input contract prices. Also demonstrated is the
+            // optional seasonal adjustment factor, in this case used to apply day-of-week seasonality.
+
+            var dayOfWeekAdjustment = new Dictionary<DayOfWeek, double>
+            {
+                [DayOfWeek.Monday] = 0.95,
+                [DayOfWeek.Tuesday] = 0.99,
+                [DayOfWeek.Wednesday] = 1.05,
+                [DayOfWeek.Thursday] = 1.01,
+                [DayOfWeek.Friday] = 0.98,
+                [DayOfWeek.Saturday] = 0.92,
+                [DayOfWeek.Sunday] = 0.91
+            };
+            
+            DoubleCurve<Day> curve = new MaxSmoothnessSplineCurveBuilder<Day>()
                 .AddContract(Month.CreateJuly(2019), 77.98)
                 .AddContract(Month.CreateAugust(2019), 76.01)
                 .AddContract(Month.CreateSeptember(2019), 78.74)
                 .AddContract(Quarter.CreateQuarter4(2019), 85.58)
                 .AddContract(Quarter.CreateQuarter1(2020), 87.01)
-                .WithWeighting(year => 1)
-                .WithMultiplySeasonalAdjustment(year => year.Year % 2 == 0 ? 1.2 : 0.8)
+                .WithMultiplySeasonalAdjustment(day => dayOfWeekAdjustment[day.DayOfWeek])
                 .BuildCurve();
 
-            Console.WriteLine(curve1.FormatData("F5"));
-
-
-            // Just seasonal adjustment
-            var curve4 = new MaxSmoothnessSplineCurveBuilder<Day>()
-                .AddContract(new CalendarYear(2018), 78.95)
-                .AddContract(new CalendarYear(2019), 80.18)
-                .AddContract(new CalendarYear(2020), 81.25)
-                .WithMultiplySeasonalAdjustment(year => year.Year % 2 == 0 ? 1.2 : 0.8)
-                .BuildCurve();
+            Console.WriteLine(curve.FormatData("F5"));
 
             Console.WriteLine();
             Console.WriteLine();
@@ -81,7 +85,7 @@ namespace Cmdty.Curves.Samples.Spline
                 Contract<Month>.Create(Quarter.CreateQuarter4(2020), 74.92),
             };
 
-            var curveBusDayWeight = new MaxSmoothnessSplineCurveBuilder<Month>()
+            DoubleCurve<Month> curveBusDayWeight = new MaxSmoothnessSplineCurveBuilder<Month>()
                 .AddContracts(contracts)
                 .WithWeighting(busDayWeight)
                 .BuildCurve();
