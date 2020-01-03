@@ -20,7 +20,7 @@ This is a necessary to ensure that there are no arbitrage opportunities introduc
 ## Usage
 Two functions in the curves package are the core of the curve building calculations; bootstrap_contracts and max_smooth_interp.
 Some basic examples of both of these function are given below. Both of these methods make extensive use of pandas, with
-the pandas.Series used to represent forward curves, and pandas.Period for the delivery period of an input forward contract
+the pandas.Series type used to represent forward curves, and pandas.Period for the delivery period of an input forward contract
 or derived forward curve.
 
 For details of more advanced usage, view the docstrings for either of these functions and the Jupyter Notebook [curves_quick_start_tutorial](https://github.com/cmdty/curves/blob/master/samples/python/curves_quick_start_tutorial.ipynb).

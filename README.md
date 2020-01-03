@@ -9,9 +9,8 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
 
 ### Table of Contents
 * [Overview](#overview)
-* [Getting Started](#getting-started)
-    * [Installing](#installing)
-        * [Installing For Python on Linux](#installing-for-python-on-linux)
+* [Installing](#installing)
+    * [Installing For Python on Linux](#installing-for-python-on-linux)
     * [Using From C#](#using-from-c)
     * [Using From Python](#using-from-python)
 * [Technical Documentation](#technical-documentation)
@@ -41,9 +40,14 @@ granularity forward and futures prices.
 The resulting curves should be consistent with inputs, in that they average back to the input forward contract prices.
 This is a necessary to ensure that there are no arbitrage opportunities introduced between input contracts, and the derived forward curve.
 
-## Getting Started
+The core of the curves package essentially consists of two models; the bootstrapper and the spline.
 
-### Installing
+* The **bootstrapper** model takes a set of forward prices, for contracts with overlapping delivery/fixing periods, and returns a curve with overlapping periods removed, but with prices consistent with the original inputs. In addition the bootstrapper can be used to apply shaping to the forward prices by applying a predefined spread or ratios between two contract prices.
+* The **spline** model allows the creation of a smooth curve with higher granularity than the input contracts. This uses a maximum smoothness algorithm to interpolate input contracts with a fourth-order spline, whilst maintaining the average price constraints inherent in the input contract prices.
+
+See [Getting Started](#getting-started) below for more details on how to use these two model from both C# and Python.
+
+## Installing
 For use from C# install the NuGet package Cmdty.Curves.
 ```
 PM> Install-Package Cmdty.Curves -Version 0.1.0-beta1
@@ -62,9 +66,28 @@ Currently only a small amount of testing has been done for the Python package ru
 
 It was also found that the PyPI package pycparser had to be installed, in order for the pythonnet PyPI package to install correctly.
 
+## Getting Started
 
 ### Using From C#
-For examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
+#### Bootstrapper
+The C# code below gives an example of user the bootstrapper on overlapping Q1-20 and Jan-20 forward prices.
+```c#
+            // Bootstrapping 1 quarterly price and 1 monthly price into a monthly curve
+            (DoubleCurve<Month> pieceWiseCurve, IReadOnlyList<Contract<Month>> bootstrappedContracts) = new Bootstrapper<Month>()
+                                .AddContract(Month.CreateJanuary(2020), 19.05)
+                                .AddContract(Quarter.CreateQuarter1(2020), 17.22)
+                                .Bootstrap();
+
+            Console.WriteLine("Derived piecewise flat curve:");
+            Console.WriteLine(pieceWiseCurve.FormatData("F5"));
+
+            Console.WriteLine();
+
+            Console.WriteLine("Equivalent bootstrapped contracts:");
+            PrintBootstrapContracts(bootstrappedContracts);
+```
+
+For more sophisticated examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
 
 ### Using From Python
 A Python API has been created using [pythonnet](https://github.com/pythonnet/pythonnet). See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use this.
