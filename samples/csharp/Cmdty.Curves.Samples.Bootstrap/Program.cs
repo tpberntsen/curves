@@ -37,28 +37,30 @@ namespace Cmdty.Curves.Samples.Bootstrap
             //===============================================================================================
             // BASIC BOOTSTRAPPING CALCULATION
 
-            var jan20 = Month.CreateJanuary(2020);
-
             // Bootstrapping 1 quarterly price and 1 monthly price into a monthly curve
-            var (pieceWiseCurve, bootstrappedContracts) = new Bootstrapper<Month>()
-                                .AddContract(jan20, 19.05)
+            BootstrapResults<Month> bootstrapResults = new Bootstrapper<Month>()
+                                .AddContract(Month.CreateJanuary(2020), 19.05)
                                 .AddContract(Quarter.CreateQuarter1(2020), 17.22)
                                 .Bootstrap();
 
             Console.WriteLine("Derived piecewise flat curve:");
-            Console.WriteLine(pieceWiseCurve.FormatData("F5"));
+            Console.WriteLine(bootstrapResults.Curve.FormatData("F5"));
 
             Console.WriteLine();
 
             Console.WriteLine("Equivalent bootstrapped contracts:");
-            PrintBootstrapContracts(bootstrappedContracts);
+            foreach (Contract<Month> contract in bootstrapResults.BootstrappedContracts)
+            {
+                Console.WriteLine(contract);
+            }
 
             Console.WriteLine();
             Console.WriteLine();
-            
+
             //===============================================================================================
             // APPLYING SHAPING DURING BOOTSTRAPPING
 
+            var jan20 = Month.CreateJanuary(2020);
             var feb20 = Month.CreateFebruary(2020);
             var mar20 = Month.CreateMarch(2020);
 
@@ -160,12 +162,6 @@ namespace Cmdty.Curves.Samples.Bootstrap
             Console.ReadKey();
         }
 
-        private static void PrintBootstrapContracts(IReadOnlyList<Contract<Month>> bootstrappedContracts)
-        {
-            foreach (var contract in bootstrappedContracts)
-            {
-                Console.WriteLine(contract);
-            }
-        }
+   
     }
 }

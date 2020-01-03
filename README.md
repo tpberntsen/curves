@@ -5,14 +5,19 @@ Commodity Curves
 [![NuGet](https://img.shields.io/nuget/v/cmdty.curves.svg)](https://www.nuget.org/packages/Cmdty.Curves/)
 [![PyPI](https://img.shields.io/pypi/v/curves.svg)](https://pypi.org/project/curves/)
 
-Set of tools written in C# for constructing commodity forward/futures/swap curves with a fluent API. Python API also provided which integrates with the pandas library time series types.
+Set of tools written in C# for constructing commodity forward/futures/swap curves with a fluent API. Python API (created using [pythonnet](https://github.com/pythonnet/pythonnet)) also provided which integrates with the pandas library time series types.
 
 ### Table of Contents
 * [Overview](#overview)
 * [Installing](#installing)
     * [Installing For Python on Linux](#installing-for-python-on-linux)
+* [Getting Started](#getting-started)
     * [Using From C#](#using-from-c)
+        * [Bootstrapper](#bootstrapper)
+        * [Spline](#spline)
     * [Using From Python](#using-from-python)
+        * [Bootstrapper](#bootstrapper-1)
+        * [Spline](#spline-1)
 * [Technical Documentation](#technical-documentation)
 * [Building](#building)
     * [Build Prerequisites](#build-prerequisites)
@@ -69,27 +74,136 @@ It was also found that the PyPI package pycparser had to be installed, in order 
 ## Getting Started
 
 ### Using From C#
+This section gives some basic examples of using the C# API.
+For more sophisticated examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
+
 #### Bootstrapper
 The C# code below gives an example of user the bootstrapper on overlapping Q1-20 and Jan-20 forward prices.
 ```c#
-(DoubleCurve<Month> pieceWiseCurve, IReadOnlyList<Contract<Month>> bootstrappedContracts) = new Bootstrapper<Month>()
+BootstrapResults<Month> bootstrapResults = new Bootstrapper<Month>()
                     .AddContract(Month.CreateJanuary(2020), 19.05)
                     .AddContract(Quarter.CreateQuarter1(2020), 17.22)
                     .Bootstrap();
 
 Console.WriteLine("Derived piecewise flat curve:");
-Console.WriteLine(pieceWiseCurve.FormatData("F5"));
+Console.WriteLine(bootstrapResults.Curve.FormatData("F5"));
 
 Console.WriteLine();
 
 Console.WriteLine("Equivalent bootstrapped contracts:");
-PrintBootstrapContracts(bootstrappedContracts);
+foreach (Contract<Month> contract in bootstrapResults.BootstrappedContracts)
+{
+    Console.WriteLine(contract);
+}
+```
+This results in the following to be printed to the console.
+```
+Derived piecewise flat curve:
+Count = 3
+2020-01  19.05000
+2020-02  16.27450
+2020-03  16.27450
+
+Equivalent bootstrapped contracts:
+Start: 2020-01, End: 2020-01, Price: 19.05
+Start: 2020-02, End: 2020-03, Price: 16.2745
 ```
 
-For more sophisticated examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
+See [Program.cs](https://github.com/cmdty/curves/tree/master/samples/csharp/Cmdty.Curves.Samples.Bootstrap/Program.cs) for examples of applying shaping using the bootstrapper, and alternative average weighting schemes, e.g. business day weighting.
+
+#### Spline
+To Do.
 
 ### Using From Python
-A Python API has been created using [pythonnet](https://github.com/pythonnet/pythonnet). See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for an introduction on how to use this.
+This section gives same basic example of using the Python package.
+See the Jupyter Notebook [curves_quick_start_tutorial](samples/python/curves_quick_start_tutorial.ipynb) for a more thorough introduction.
+
+#### Bootstrapper
+Below is a basic example showing prices for January and Q1 delivery period periods being bootstrapped into consistent January, February and March forward prices.
+``` python
+from curves import bootstrap_contracts
+from datetime import date
+
+q1_price = 19.05
+contracts = [
+    (date(2019, 1, 1), 18.95), # Jan-19
+    (date(2019, 1, 1), date(2019, 3, 1), 19.05) # Q1-19
+]
+piecewise_curve, bootstrapped_contracts = bootstrap_contracts(contracts, freq='M')
+print(piecewise_curve)
+print()
+for bc in bootstrapped_contracts:
+    print("{0}, {1}, {2:.3f}".format(repr(bc.start), repr(bc.end), bc.price))
+```
+
+The above code prints to the following:
+```
+2019-01    18.950000
+2019-02    19.102542
+2019-03    19.102542
+Freq: M, dtype: float64
+
+Period('2019-01', 'M'), Period('2019-01', 'M'), 18.950
+Period('2019-02', 'M'), Period('2019-03', 'M'), 19.103
+```
+#### Spline
+The example below creates a daily granularity curve, from input contracts of various granularities. As would usually be the case in a practical scenario, 
+the bootstrap_contracts method is first used to remove the overlaps from the contracts. The example below also shows how the input contracts can have gaps 
+between them, which the spline will interpolate over, filling in the gaps in the final smooth curve. It also demonstrates the different ways of representing 
+the contract delivery period in the contract tuples and use of the helper module contract_period.
+```python
+from curves import max_smooth_interp
+from curves import contract_period as cp
+
+contracts = [
+    (date(2019, 5, 31), 34.875), 
+    (date(2019, 6, 1), date(2019, 6, 2), 32.87),
+    ((date(2019, 6, 3), date(2019, 6, 9)), 32.14),
+    (pd.Period(year=2019, month=6, freq='M'), 31.08),
+    (cp.month(2019, 7), 29.95),
+    (cp.q_3(2019), 30.18),
+    (cp.q_4(2019), 37.64),
+    (cp.winter(2019), 38.05),
+    (cp.summer(2020), 32.39),
+    (cp.winter(2020), 37.84),
+    (cp.gas_year(2020), 35.12)
+]
+
+pc_for_spline, bc_for_spline = bootstrap_contracts(contracts, freq='D')
+smooth_curve = max_smooth_interp(bc_for_spline, freq='D')
+
+print(smooth_curve)
+```
+
+Results in the following being printed:
+```
+2019-05-31    34.875000
+2019-06-01    33.404383
+2019-06-02    32.335617
+2019-06-03    31.800171
+2019-06-04    31.676636
+2019-06-05    31.804146
+2019-06-06    32.057113
+2019-06-07    32.337666
+2019-06-08    32.575648
+2019-06-09    32.728620
+2019-06-10    32.781858
+2019-06-11    32.745075
+                ...    
+2021-09-19    26.727181
+2021-09-20    26.652039
+2021-09-21    26.576895
+2021-09-22    26.501749
+2021-09-23    26.426602
+2021-09-24    26.351454
+2021-09-25    26.276305
+2021-09-26    26.201156
+2021-09-27    26.126006
+2021-09-28    26.050856
+2021-09-29    25.975706
+2021-09-30    25.900556
+Freq: D, Length: 854, dtype: float64
+```
 
 ## Technical Documentation
 The PDF file [max_smoothness_spline.pdf](docs/max_smoothness/max_smoothness_spline.pdf) contains details of the mathematics behind the maximum smoothness algorithm.
