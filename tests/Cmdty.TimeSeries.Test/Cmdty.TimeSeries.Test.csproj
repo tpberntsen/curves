@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Cmdty.TimePeriodValueTypes" Version="1.0.0-alpha1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
     <PackageReference Include="NUnit" Version="3.11.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
@@ -21,12 +22,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Cmdty.TimePeriodValueTypes\Cmdty.TimePeriodValueTypes.csproj" />
     <ProjectReference Include="..\..\src\Cmdty.TimeSeries\Cmdty.TimeSeries.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Remove="coverage.cobertura.xml"/>
+    <None Remove="coverage.cobertura.xml" />
   </ItemGroup>
 
 </Project>

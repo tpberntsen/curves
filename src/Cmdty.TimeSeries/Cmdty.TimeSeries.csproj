@@ -18,7 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Cmdty.TimePeriodValueTypes\Cmdty.TimePeriodValueTypes.csproj" />
+    <PackageReference Include="Cmdty.TimePeriodValueTypes" Version="1.0.0-alpha1" />
   </ItemGroup>
 
 </Project>
