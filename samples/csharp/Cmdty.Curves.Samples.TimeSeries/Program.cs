@@ -34,7 +34,7 @@ namespace Cmdty.Curves.Samples.TimeSeries
 {
     class Program
     {
-        static void Main(string[] args) // TODO figure out how to use System.CommandLine in this context, or use alternative command line parser
+        static void Main(string[] args)
         {
             if (args.Length == 0)
             {
