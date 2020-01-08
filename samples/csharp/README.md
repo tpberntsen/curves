@@ -20,4 +20,4 @@ The interactive Markdown files need to be setup and run locally using the steps 
 ```
 
 This Markdown file should now be automatically opened in a browser. From this newly opened page, use the following links to view and run the interactive docs.
-* [Time Period Value Types](TimePeriodValueTypes.md).
+* [Time Series](TimeSeries.md).
