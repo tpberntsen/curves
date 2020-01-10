@@ -55,7 +55,7 @@ See [Getting Started](#getting-started) below for more details on how to use the
 ## Installing
 For use from C# install the NuGet package Cmdty.Curves.
 ```
-PM> Install-Package Cmdty.Curves -Version 0.1.0-beta2
+PM> Install-Package Cmdty.Curves
 ```
 
 For use from Python install the curves package from PyPI.
