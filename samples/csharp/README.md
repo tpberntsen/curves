@@ -5,14 +5,9 @@ a tool which allows C# code to be run in a browser using Markdown files.
 
 The interactive Markdown files need to be setup and run locally using the steps in the sections below.
 
-#### Setup
-
-* Follow the setup requirements of Try .NET found in the [Setup section of project GitHub page](https://github.com/dotnet/try#setup).
-* Clone the [cmdty/curves](https://github.com/cmdty/curves) repository to your local machine.
-
-
 #### Running
 
+* Clone the [cmdty/curves](https://github.com/cmdty/curves) repository to your local machine.
 * Open a CLI locally and set the current directory to curves/samples/csharp/ within the cloned repository.
 * In the CLI run the following command:
 ```
