@@ -22,13 +22,14 @@ steps:
       projectKey: 'curves'
       projectName: 'curves'
 
-  - script: dotnet tool install -g dotnet-try
-    displayName: 'Install dotnet-try'
-
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '3.6'
     displayName: "Use Python 3.6"
+
+  - task: NuGetToolInstaller@1
+    inputs:
+      versionSpec: '5.1.0'
 
   - script: |
         pip install virtualenv
