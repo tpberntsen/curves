@@ -259,10 +259,6 @@ The following are required on the host machine in order for the build to run.
     * virtualenv.
     * setuptools.
     * wheel.
-* The [Try .NET](https://dotnet.microsoft.com/platform/try-dotnet) global tool. This can be installed by running the following command.
-```
-> dotnet tool install -g dotnet-try
-```
 
 #### Running the Build
 The build is started by running the PowerShell script build.ps1 from a PowerShell console, ISE, or the Visual Studio Package Manager Console.
@@ -279,18 +275,19 @@ The following results of the build will be saved into the artifacts directory (w
     * curves-[version].tar.gz
 
 ### Building from Linux and macOS
-Running the full build on non-Windows plaforms is still work in progress- the aim to to make it completely plaform agnostic. However, at the moment only the C# parts of the build are functioning cross-plaform. Using the .NET Core SDK the C# code can be built and unit tested by running the following commands in the clone repo.
-```
-> dotnet build
-> dotnet test
-```
+Running the full build on non-Windows plaforms is still work in progress- the aim to to make it completely plaform agnostic. However, at the moment only the C# parts of the build are functioning cross-plaform.
 
-The Cake build can be invoked using the bootstrapper Bash script build.sh. This requires the .NET SDK and mono to be installed. After first granting it execute permissions as below, the "Pack-NuGet" target results in the building and unit testing of the C#, before the creation of the Cmdty.Curves NuGet package.
+The Cake build can be invoked using the bootstrapper Bash script build.sh. After first granting it execute permissions as below, the "Pack-NuGet" target results in the building and unit testing of the C#, before the creation of the Cmdty.Curves NuGet package.
 ```
 > chmod +x build.sh
 > ./build.sh --target=Pack-NuGet.
 ```
 
+Alternatively, if [PowerShell Core](https://github.com/PowerShell/PowerShell) is installed,
+the build can be run with the following command:
+```
+> pwsh ./build.ps1
+```
 
 ## License
 
