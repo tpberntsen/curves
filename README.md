@@ -76,7 +76,8 @@ It was also found that the PyPI package pycparser had to be installed, in order 
 ### Using From C#
 This section gives some basic examples of using the C# API.
 For more sophisticated examples of usage see [samples/csharp/](https://github.com/cmdty/curves/tree/master/samples/csharp).
-
+The C# API makes extensive use of the [Time Period Value Types](https://github.com/cmdty/time-period-value-types) library for 
+representing delivery periods as time periods.
 #### Bootstrapper
 The C# code below gives an example of user the bootstrapper on overlapping Q1-20 and Jan-20 forward prices.
 ```c#
