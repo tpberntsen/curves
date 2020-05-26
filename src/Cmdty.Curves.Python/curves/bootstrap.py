@@ -24,10 +24,14 @@
 import clr
 from System import Func, Double, DayOfWeek
 from pathlib import Path
+
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
-from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IBootstrapperAddOptionalParameters, IBetween, Shaping, IIs, IAnd
-from typing import NamedTuple, Union, List
-from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, net_time_period_to_pandas_period, deconstruct_contract
+from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IBootstrapperAddOptionalParameters, \
+    IBetween, Shaping, IIs, IAnd
+from typing import NamedTuple, Union, List, Optional, Callable, Tuple, Iterable
+from datetime import date, datetime
+from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, \
+    net_time_period_to_pandas_period, deconstruct_contract
 import pandas as pd
 
 
@@ -41,8 +45,26 @@ class BootstrapResults(NamedTuple):
     piecewise_curve: pd.Series
     bootstrapped_contracts: List[Contract]
 
+# TODO look into nesting of typing types
+ContractType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple[pd.Period, float],
+                              Tuple[date, date, float], Tuple[datetime, datetime, float], Tuple[
+                                  pd.Period, pd.Period, float],
+                              Tuple[Tuple[date, date], float], Tuple[Tuple[datetime, datetime], float],
+                              Tuple[Tuple[pd.Period, pd.Period], float]]]
 
-def bootstrap_contracts(contracts, freq, average_weight=None, shaping_ratios=None, shaping_spreads=None, allow_redundancy=False) -> BootstrapResults:
+
+ShapingTypes = Iterable[
+    Union[Tuple[pd.Period, pd.Period, float], Tuple[date, date, float], Tuple[datetime, datetime, float],
+          Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[date, date], float], Tuple[
+              Tuple[datetime, datetime], float]]]
+
+
+def bootstrap_contracts(contracts: ContractType,
+                        freq: str,
+                        average_weight: Optional[Callable[[pd.Period], float]] = None,
+                        shaping_ratios: Optional[ShapingTypes] = None,
+                        shaping_spreads: Optional[ShapingTypes] = None,
+                        allow_redundancy: Optional[bool] = False) -> BootstrapResults:
     """
     Bootstraps a collection of commodity forward/swap/futures prices by removing the overlapping periods and optionally applies shaping.
 
@@ -108,10 +130,12 @@ def bootstrap_contracts(contracts, freq, average_weight=None, shaping_ratios=Non
             price (float): Forward price of commodity delivered over periods specified by start and end.
     """
     if freq not in FREQ_TO_PERIOD_TYPE:
-        raise ValueError("freq parameter value of '{}' not supported. The allowable values can be found in the keys of the dict curves.FREQ_TO_PERIOD_TYPE.".format(freq))
+        raise ValueError(
+            "freq parameter value of '{}' not supported. The allowable values can be found in the keys of the dict curves.FREQ_TO_PERIOD_TYPE.".format(
+                freq))
 
     time_period_type = FREQ_TO_PERIOD_TYPE[freq]
-    
+
     bootstrapper = IBootstrapperAddOptionalParameters[time_period_type](Bootstrapper[time_period_type]())
 
     for contract in contracts:
@@ -119,33 +143,38 @@ def bootstrap_contracts(contracts, freq, average_weight=None, shaping_ratios=Non
         (start, end) = contract_period(period, freq, time_period_type)
         BootstrapperExtensions.AddContract[time_period_type](bootstrapper, start, end, price)
 
-    if allow_redundancy == True:
+    if allow_redundancy:
         bootstrapper.AllowRedundancy()
 
     if shaping_ratios is not None:
         for (num, denom, ratio) in shaping_ratios:
             (num_start, num_end) = contract_period(num, freq, time_period_type)
             (denom_start, denom_end) = contract_period(denom, freq, time_period_type)
-            shaping_ratio = IIs[time_period_type](IAnd[time_period_type](IBetween[time_period_type](Shaping[time_period_type].Ratio).Between(num_start, num_end)).And(denom_start, denom_end)).Is(ratio)
+            shaping_ratio = IIs[time_period_type](IAnd[time_period_type](
+                IBetween[time_period_type](Shaping[time_period_type].Ratio).Between(num_start, num_end)).And(
+                denom_start, denom_end)).Is(ratio)
             bootstrapper.AddShaping(shaping_ratio)
 
     if shaping_spreads is not None:
         for (period1, period2, spread) in shaping_spreads:
             (period1_start, period1_end) = contract_period(period1, freq, time_period_type)
             (period2_start, period2_end) = contract_period(period2, freq, time_period_type)
-            shaping_spread = IIs[time_period_type](IAnd[time_period_type](IBetween[time_period_type](Shaping[time_period_type].Spread).Between(period1_start, period1_end)).And(period2_start, period2_end)).Is(spread)
+            shaping_spread = IIs[time_period_type](IAnd[time_period_type](
+                IBetween[time_period_type](Shaping[time_period_type].Spread).Between(period1_start, period1_end)).And(
+                period2_start, period2_end)).Is(spread)
             bootstrapper.AddShaping(shaping_spread)
 
     if average_weight is not None:
-        tranformed_average_weight = transform_time_func(freq, average_weight)
-        bootstrapper.WithAverageWeighting(Func[time_period_type, Double](tranformed_average_weight))
+        transformed_average_weight = transform_time_func(freq, average_weight)
+        bootstrapper.WithAverageWeighting(Func[time_period_type, Double](transformed_average_weight))
 
     dotnet_bootstrap_results = bootstrapper.Bootstrap()
-    
+
     piecewise_curve = net_time_series_to_pandas_series(dotnet_bootstrap_results.Curve, freq)
 
     bootstrapped_contracts = []
     for contract in dotnet_bootstrap_results.BootstrappedContracts:
-        bootstrapped_contracts.append(Contract(net_time_period_to_pandas_period(contract.Start, freq), net_time_period_to_pandas_period(contract.End, freq), contract.Price))
+        bootstrapped_contracts.append(Contract(net_time_period_to_pandas_period(contract.Start, freq),
+                                               net_time_period_to_pandas_period(contract.End, freq), contract.Price))
 
     return BootstrapResults(piecewise_curve, bootstrapped_contracts)

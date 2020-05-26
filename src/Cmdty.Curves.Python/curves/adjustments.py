@@ -24,13 +24,14 @@
 """ Provides functions to use as the mult_season_adjust and add_season_adjust parameters to curve construction
 functions. """
 
-from typing import Callable
+from typing import Callable, Optional
 import pandas as pd
 
 
 # TODO include one-off dates for holidays
-def dayofweek(default, monday=None, tuesday=None, wednesday=None, thursday=None, friday=None, saturday=None, sunday=None) \
-        -> Callable[[pd.Period], float]:
+def dayofweek(default: float, monday: Optional[float] = None, tuesday: Optional[float] = None,
+              wednesday: Optional[float] = None, thursday: Optional[float] = None, friday: Optional[float] = None,
+              saturday: Optional[float] = None, sunday: Optional[float] = None) -> Callable[[pd.Period], float]:
     """
     Creates a function which returns a float based on the day of week of it's parameter. 
 
@@ -49,7 +50,7 @@ def dayofweek(default, monday=None, tuesday=None, wednesday=None, thursday=None,
             that the returned function will return depends on the dayofweek attribute of the parameter. If any of the
             parameters monday/tuesday/wednesday etc have been provided, then the value of the parameter which 
             matches the Period day of week will be returned. Otherwise the value provided as the default
-            paramter will be returned.
+            parameter will be returned.
     """
     adjust_dict = {}
 
@@ -61,10 +62,10 @@ def dayofweek(default, monday=None, tuesday=None, wednesday=None, thursday=None,
     _populate_dict(adjust_dict, saturday, 5)
     _populate_dict(adjust_dict, sunday, 6)
 
-    def dayofweekadjust(period):
+    def day_of_week_adjust(period):
         return adjust_dict.get(period.dayofweek, default)
 
-    return dayofweekadjust
+    return day_of_week_adjust
 
 
 def _populate_dict(dict_to_populate, arg, dict_index) -> None:
