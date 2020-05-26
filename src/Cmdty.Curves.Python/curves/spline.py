@@ -24,7 +24,7 @@
 import clr
 import pandas as pd
 from datetime import datetime
-from typing import Optional, Callable
+from typing import Optional, Callable, Union
 from System import Func, Double
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, \
     net_time_series_to_pandas_series, contract_period, deconstruct_contract, ContractsType
@@ -33,7 +33,7 @@ clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCurveBuilderExtensions, ISplineAddOptionalParameters
 
 
-def max_smooth_interp(contracts: ContractsType,
+def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
                       freq: str,
                       mult_season_adjust: Optional[Callable[[pd.Period], float]] = None,
                       add_season_adjust: Optional[Callable[[pd.Period], float]] = None,
@@ -51,7 +51,8 @@ def max_smooth_interp(contracts: ContractsType,
     this function.
 
     Args:
-        contracts (iterable): iterable of tuples, with each tuple describing a forward delivery period and price in one
+        contracts (pd.Series or iterable): The input contracts to be interpolated.
+            If iterable of tuples, with each tuple describing a forward delivery period and price in one
             of the following forms:
                 ([period], [price]) 
                 ([period start], [period end], [price])
@@ -101,32 +102,38 @@ def max_smooth_interp(contracts: ContractsType,
     """
     
     if freq not in FREQ_TO_PERIOD_TYPE:
-        raise ValueError("freq parameter value of '{}' not supported. The allowable values can be found in the keys of the dict curves.FREQ_TO_PERIOD_TYPE.".format(freq))
+        raise ValueError("freq parameter value of '{}' not supported. The allowable values can be found in the keys "
+                         "of the dict curves.FREQ_TO_PERIOD_TYPE.".format(freq))
 
     time_period_type = FREQ_TO_PERIOD_TYPE[freq]
 
     spline_builder = ISplineAddOptionalParameters[time_period_type](MaxSmoothnessSplineCurveBuilder[time_period_type]())
 
-    for contract in contracts:
-        (period, price) = deconstruct_contract(contract)
-        (start, end) = contract_period(period, freq, time_period_type)
-        MaxSmoothnessSplineCurveBuilderExtensions.AddContract[time_period_type](spline_builder, start, end, price)
+    if isinstance(contracts, pd.Series):
+        for period, price in contracts.items():
+            (start, end) = contract_period(period, freq, time_period_type)
+            MaxSmoothnessSplineCurveBuilderExtensions.AddContract[time_period_type](spline_builder, start, end, price)
+    else:
+        for contract in contracts:
+            (period, price) = deconstruct_contract(contract)
+            (start, end) = contract_period(period, freq, time_period_type)
+            MaxSmoothnessSplineCurveBuilderExtensions.AddContract[time_period_type](spline_builder, start, end, price)
 
     if mult_season_adjust is not None:
         transformed_mult_season_adjust = transform_time_func(freq, mult_season_adjust)
         spline_builder.WithMultiplySeasonalAdjustment(Func[time_period_type, Double](transformed_mult_season_adjust))
 
     if add_season_adjust is not None:
-        tranformed_add_season_adjust = transform_time_func(freq, add_season_adjust)
-        spline_builder.WithAdditiveSeasonalAdjustment(Func[time_period_type, Double](tranformed_add_season_adjust))
+        transformed_add_season_adjust = transform_time_func(freq, add_season_adjust)
+        spline_builder.WithAdditiveSeasonalAdjustment(Func[time_period_type, Double](transformed_add_season_adjust))
     
     if average_weight is not None:
-        tranformed_average_weight = transform_time_func(freq, average_weight)
-        spline_builder.WithWeighting(Func[time_period_type, Double](tranformed_average_weight))
+        transformed_average_weight = transform_time_func(freq, average_weight)
+        spline_builder.WithWeighting(Func[time_period_type, Double](transformed_average_weight))
 
     if time_func is not None:
-        tranformed_time_func = transform_two_period_func(freq, time_func)
-        spline_builder.WithTimeFunc(Func[time_period_type, time_period_type, Double](tranformed_time_func))
+        transformed_time_func = transform_two_period_func(freq, time_func)
+        spline_builder.WithTimeFunc(Func[time_period_type, time_period_type, Double](transformed_time_func))
 
     if front_1st_deriv is not None:
         spline_builder.WithFrontFirstDerivative(front_1st_deriv)

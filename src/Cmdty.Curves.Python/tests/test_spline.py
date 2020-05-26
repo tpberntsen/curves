@@ -29,54 +29,71 @@ from curves._common import deconstruct_contract
 from curves.contract_period import quarter, winter, summer, gas_year
 from tests._test_common import weighted_average_slice_curve
 
+
 class TestSpline(unittest.TestCase):
-    
-    contracts = [
-            (date(2019, 1, 1), 32.7), # date
-            ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
-            ((date(2019, 1, 3), date(2019, 1, 7)), 29.3),
-            ((date(2019, 1, 8), date(2019, 1, 31)), 24.66),
-            (quarter(year=2019, quarter_num=2), 18.3),
-            (quarter(year=2019, quarter_num=3), 17.1),
-            (winter(2019), 22.4),
-            (summer(2020), 19.9),
-            (gas_year(2020), 20.01)
-        ]
-       
+    contracts_list = [
+        (date(2019, 1, 1), 32.7),  # date
+        ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
+        ((date(2019, 1, 3), date(2019, 1, 7)), 29.3),
+        ((date(2019, 1, 8), date(2019, 1, 31)), 24.66),
+        (quarter(year=2019, quarter_num=2), 18.3),
+        (quarter(year=2019, quarter_num=3), 17.1),
+        (winter(2019), 22.4),
+        (summer(2020), 19.9),
+        (gas_year(2020), 20.01)
+    ]
+
+    contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
+                                 index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
+
     test_case_data = [
-                        {
-                            "freq" : 'D',
-                            "contracts" : contracts,
-                            "mult_season_adjust" : lambda x: 1.0,
-                            "add_season_adjust" : lambda x: 0.1,
-                            "time_func" : lambda period1, period2: (period2 - period1).delta.days,
-                            "average_weight" : lambda x: 0.1,
-                            "front_1st_deriv" : 0.0,
-                            "back_1st_deriv" : 0.0,
-                        }, 
-                        {
-                            "freq" : 'D',
-                            "contracts" : contracts,
-                        },
-                        {
-                            "freq" : "30min",
-                            "contracts" : [
-                                                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=30), 56.84),
-                                                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
-                                                (datetime(2019, 6, 7, hour=18, minute=30), datetime(2019, 6, 7, hour=23, minute=30), 60.11),
-                                           ],
-                        },
-                        {
-                            "freq" : "15min",
-                            "contracts" : [
-                                                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=45), 56.84),
-                                                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
-                                                (datetime(2019, 6, 7, hour=18, minute=15), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
-                                           ],
-                        }
-                         # TODO add more test cases
-                    ]
-            
+        {
+            "freq": 'D',
+            "contracts": contracts_list,
+            "mult_season_adjust": lambda x: 1.0,
+            "add_season_adjust": lambda x: 0.1,
+            "time_func": lambda period1, period2: (period2 - period1).delta.days,
+            "average_weight": lambda x: 0.1,
+            "front_1st_deriv": 0.0,
+            "back_1st_deriv": 0.0,
+        },
+        {
+            "freq": 'D',
+            "contracts": contracts_series,
+            "mult_season_adjust": lambda x: 1.0,
+            "add_season_adjust": lambda x: 0.1,
+            "time_func": lambda period1, period2: (period2 - period1).delta.days,
+            "average_weight": lambda x: 0.1,
+            "front_1st_deriv": 0.0,
+            "back_1st_deriv": 0.0,
+        },
+        {
+            "freq": 'D',
+            "contracts": contracts_list,
+        },
+        {
+            "freq": 'D',
+            "contracts": contracts_series,
+        },
+        {
+            "freq": "30min",
+            "contracts": [
+                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=30), 56.84),
+                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
+                (datetime(2019, 6, 7, hour=18, minute=30), datetime(2019, 6, 7, hour=23, minute=30), 60.11),
+            ],
+        },
+        {
+            "freq": "15min",
+            "contracts": [
+                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=45), 56.84),
+                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
+                (datetime(2019, 6, 7, hour=18, minute=15), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
+            ],
+        }
+        # TODO add more test cases
+    ]
+
     # TODO use better seasonal adjustments
 
     # TODO properly parameterise these tests
@@ -84,16 +101,24 @@ class TestSpline(unittest.TestCase):
         for test_data in self.test_case_data:
             interp_curve = max_smooth_interp(**test_data)
             average_weight = test_data['average_weight'] if 'average_weight' in test_data else lambda x: 1.0
-            for contract in test_data['contracts']:
-                (period, contract_price) = deconstruct_contract(contract)
-                curve_average_price = weighted_average_slice_curve(interp_curve, test_data['freq'], period, average_weight)
-                self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-10)
+            test_contracts = test_data['contracts']
+            if isinstance(test_contracts, pd.Series):
+                for period, contract_price in test_contracts.items():
+                    curve_average_price = weighted_average_slice_curve(interp_curve, test_data['freq'], period,
+                                                                       average_weight)
+                    self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-10)
+            else:
+                for contract in test_contracts:
+                    (period, contract_price) = deconstruct_contract(contract)
+                    curve_average_price = weighted_average_slice_curve(interp_curve, test_data['freq'], period,
+                                                                       average_weight)
+                    self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-10)
 
     daily_contracts = [
-                        (pd.Period('2019-5-14', freq='D'), 15.2),
-                        ((pd.Period('2019-5-15', freq='D'), pd.Period('2019-5-16', freq='d')), 14.05),
-                        ((pd.Period('2019-5-17', freq='D'), pd.Period('2019-5-18', freq='d')), 13.18),
-                        ]
+        (pd.Period('2019-5-14', freq='D'), 15.2),
+        ((pd.Period('2019-5-15', freq='D'), pd.Period('2019-5-16', freq='d')), 14.05),
+        ((pd.Period('2019-5-17', freq='D'), pd.Period('2019-5-18', freq='d')), 13.18),
+    ]
 
     def test_max_smooth_interp_mult_season_adjust_called_as_expected(self):
 
@@ -110,7 +135,6 @@ class TestSpline(unittest.TestCase):
 
         self.assertListEqual(expected_arg_values, adjust_arg_values)
 
-
     def test_max_smooth_interp_add_season_adjust_called_as_expected(self):
 
         adjust_arg_values = []
@@ -125,7 +149,6 @@ class TestSpline(unittest.TestCase):
         expected_arg_values = [expected_first_arg + i for i in range(0, 5)] * 2
 
         self.assertListEqual(expected_arg_values, adjust_arg_values)
-
 
     def test_max_smooth_interp_average_weight_called_as_expected(self):
 
