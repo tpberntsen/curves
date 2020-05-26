@@ -21,10 +21,16 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
-""" Provides functions to use as the mult_season_adjust and add_season_adjust parameters to curve construction functions."""
+""" Provides functions to use as the mult_season_adjust and add_season_adjust parameters to curve construction
+functions. """
+
+from typing import Callable
+import pandas as pd
+
 
 # TODO include one-off dates for holidays
-def dayofweek(default, monday=None, tuesday=None, wednesday=None, thursday=None, friday=None, saturday=None, sunday=None):
+def dayofweek(default, monday=None, tuesday=None, wednesday=None, thursday=None, friday=None, saturday=None, sunday=None) \
+        -> Callable[[pd.Period], float]:
     """
     Creates a function which returns a float based on the day of week of it's parameter. 
 
@@ -61,7 +67,7 @@ def dayofweek(default, monday=None, tuesday=None, wednesday=None, thursday=None,
     return dayofweekadjust
 
 
-def _populate_dict(dict_to_populate, arg, dict_index):
+def _populate_dict(dict_to_populate, arg, dict_index) -> None:
     if arg is not None:
         dict_to_populate[dict_index] = arg
 

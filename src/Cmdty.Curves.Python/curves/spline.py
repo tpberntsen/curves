@@ -33,7 +33,7 @@ from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCur
 
 def max_smooth_interp(contracts, freq, mult_season_adjust=None, 
                        add_season_adjust=None, average_weight=None, time_func=None, 
-                       front_1st_deriv=None, back_1st_deriv=None):
+                       front_1st_deriv=None, back_1st_deriv=None) -> pd.Series:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using maximum smoothness algorithm.
 

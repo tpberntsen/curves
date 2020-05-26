@@ -26,13 +26,23 @@ from System import Func, Double, DayOfWeek
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IBootstrapperAddOptionalParameters, IBetween, Shaping, IIs, IAnd
-from collections import namedtuple
+from typing import NamedTuple, Union, List
 from curves._common import FREQ_TO_PERIOD_TYPE, tranform_time_func, net_time_series_to_pandas_series, contract_period, net_time_period_to_pandas_period, deconstruct_contract
+import pandas as pd
 
-Contract = namedtuple('Contract', 'start, end, price')
-BootstrapResults = namedtuple('BootstrapResults', 'piecewise_curve, bootstrapped_contracts')
 
-def bootstrap_contracts(contracts, freq, average_weight=None, shaping_ratios=None, shaping_spreads=None, allow_redundancy=False):
+class Contract(NamedTuple):
+    start: pd.Period
+    end: pd.Period
+    price: float
+
+
+class BootstrapResults(NamedTuple):
+    piecewise_curve: pd.Series
+    bootstrapped_contracts: List[Contract]
+
+
+def bootstrap_contracts(contracts, freq, average_weight=None, shaping_ratios=None, shaping_spreads=None, allow_redundancy=False) -> BootstrapResults:
     """
     Bootstraps a collection of commodity forward/swap/futures prices by removing the overlapping periods and optionally applies shaping.
 
