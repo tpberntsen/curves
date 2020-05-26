@@ -31,7 +31,7 @@ from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IB
 from typing import NamedTuple, Union, List, Optional, Callable, Tuple, Iterable
 from datetime import date, datetime
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, \
-    net_time_period_to_pandas_period, deconstruct_contract
+    net_time_period_to_pandas_period, deconstruct_contract, ContractsType
 import pandas as pd
 
 
@@ -45,21 +45,15 @@ class BootstrapResults(NamedTuple):
     piecewise_curve: pd.Series
     bootstrapped_contracts: List[Contract]
 
+
 # TODO look into nesting of typing types
-ContractType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple[pd.Period, float],
-                              Tuple[date, date, float], Tuple[datetime, datetime, float], Tuple[
-                                  pd.Period, pd.Period, float],
-                              Tuple[Tuple[date, date], float], Tuple[Tuple[datetime, datetime], float],
-                              Tuple[Tuple[pd.Period, pd.Period], float]]]
-
-
 ShapingTypes = Iterable[
     Union[Tuple[pd.Period, pd.Period, float], Tuple[date, date, float], Tuple[datetime, datetime, float],
           Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[date, date], float], Tuple[
               Tuple[datetime, datetime], float]]]
 
 
-def bootstrap_contracts(contracts: ContractType,
+def bootstrap_contracts(contracts: ContractsType,
                         freq: str,
                         average_weight: Optional[Callable[[pd.Period], float]] = None,
                         shaping_ratios: Optional[ShapingTypes] = None,

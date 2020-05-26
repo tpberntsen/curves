@@ -26,21 +26,22 @@ from datetime import date
 import pandas as pd
 from typing import Tuple
 
-def month(year, month) -> pd.Period:
+
+def month(year: int, month_num: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing a specific month.
 
     Args:
         year (int): Year of the month period being created.
-        month (int): Month of year (from 1 to 12) of month period being created.
+        month_num (int): Month of year (from 1 to 12) of month period being created.
 
     Returns:
         pandas.Period: Period with freqstr 'M' representing calendar month as specified by the month and year parameters.
     """
-    return pd.Period(year=year, month=month, freq='M')
+    return pd.Period(year=year, month=month_num, freq='M')
 
 
-def jan(year) -> pd.Period:
+def jan(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of January for a specific calendar year.
 
@@ -53,7 +54,7 @@ def jan(year) -> pd.Period:
     return pd.Period(year=year, month=1, freq='M')
 
 
-def feb(year) -> pd.Period:
+def feb(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of February for a specific calendar year.
 
@@ -66,7 +67,7 @@ def feb(year) -> pd.Period:
     return pd.Period(year=year, month=2, freq='M')
 
 
-def mar(year) -> pd.Period:
+def mar(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of March for a specific calendar year.
 
@@ -79,7 +80,7 @@ def mar(year) -> pd.Period:
     return pd.Period(year=year, month=3, freq='M')
 
 
-def apr(year) -> pd.Period:
+def apr(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of April for a specific calendar year.
 
@@ -92,7 +93,7 @@ def apr(year) -> pd.Period:
     return pd.Period(year=year, month=4, freq='M')
 
 
-def may(year) -> pd.Period:
+def may(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of May for a specific calendar year.
 
@@ -105,7 +106,7 @@ def may(year) -> pd.Period:
     return pd.Period(year=year, month=5, freq='M')
 
 
-def jun(year) -> pd.Period:
+def jun(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of June for a specific calendar year.
 
@@ -118,7 +119,7 @@ def jun(year) -> pd.Period:
     return pd.Period(year=year, month=6, freq='M')
 
 
-def jul(year) -> pd.Period:
+def jul(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of July for a specific calendar year.
 
@@ -131,7 +132,7 @@ def jul(year) -> pd.Period:
     return pd.Period(year=year, month=7, freq='M')
 
 
-def aug(year) -> pd.Period:
+def aug(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of August for a specific calendar year.
 
@@ -144,7 +145,7 @@ def aug(year) -> pd.Period:
     return pd.Period(year=year, month=8, freq='M')
 
 
-def sep(year) -> pd.Period:
+def sep(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of September for a specific calendar year.
 
@@ -157,7 +158,7 @@ def sep(year) -> pd.Period:
     return pd.Period(year=year, month=9, freq='M')
 
 
-def oct(year) -> pd.Period:
+def oct(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of October for a specific calendar year.
 
@@ -170,7 +171,7 @@ def oct(year) -> pd.Period:
     return pd.Period(year=year, month=10, freq='M')
 
 
-def nov(year) -> pd.Period:
+def nov(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of November for a specific calendar year.
 
@@ -183,7 +184,7 @@ def nov(year) -> pd.Period:
     return pd.Period(year=year, month=11, freq='M')
 
 
-def dec(year) -> pd.Period:
+def dec(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the month of December for a specific calendar year.
 
@@ -196,21 +197,21 @@ def dec(year) -> pd.Period:
     return pd.Period(year=year, month=12, freq='M')
 
 
-def quarter(year, quarter) -> pd.Period:
+def quarter(year: int, quarter_num: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing a specific quarter of a calendar year.
 
     Args:
         year (int): Year of the quarter period being created.
-        quarter (int): Quarter of year (from 1 to 4) of quarter period being created.
+        quarter_num (int): Quarter of year (from 1 to 4) of quarter period being created.
 
     Returns:
         pandas.Period: Period with freqstr 'Q' representing calendar quarter as specified by the month and quarter parameters.
     """
-    return pd.Period(year=year, quarter=quarter, freq='Q')
+    return pd.Period(year=year, quarter=quarter_num, freq='Q')
 
 
-def q_1(year) -> pd.Period:
+def q_1(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the first quarter of a specific calendar year.
 
@@ -223,7 +224,7 @@ def q_1(year) -> pd.Period:
     return pd.Period(year=year, quarter=1, freq='Q')
 
 
-def q_2(year) -> pd.Period:
+def q_2(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the second quarter of a specific calendar year.
 
@@ -236,7 +237,7 @@ def q_2(year) -> pd.Period:
     return pd.Period(year=year, quarter=2, freq='Q')
 
 
-def q_3(year) -> pd.Period:
+def q_3(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the third quarter of a specific calendar year.
 
@@ -249,7 +250,7 @@ def q_3(year) -> pd.Period:
     return pd.Period(year=year, quarter=3, freq='Q')
 
 
-def q_4(year) -> pd.Period:
+def q_4(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the fourth quarter of a specific calendar year.
 
@@ -262,7 +263,7 @@ def q_4(year) -> pd.Period:
     return pd.Period(year=year, quarter=4, freq='Q')
 
 
-def summer(year) -> pd.Period:
+def summer(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the energy forward definition of summer (2nd and 3rd quarter) of a specific year.
 
@@ -275,7 +276,7 @@ def summer(year) -> pd.Period:
     return pd.Period(year=year, quarter=2, freq='2Q')
 
 
-def winter(year) -> pd.Period:
+def winter(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing the energy forward definition of winter (4th and proceeding 1st quarter) of a specific year.
 
@@ -289,7 +290,7 @@ def winter(year) -> pd.Period:
     return pd.Period(year=year, quarter=4, freq='2Q')
 
 
-def cal_year(year) -> pd.Period:
+def cal_year(year: int) -> pd.Period:
     """
     Creates an instance of pandas.Period representing a specific calendar year.
 
@@ -302,7 +303,7 @@ def cal_year(year) -> pd.Period:
     return pd.Period(year=year, freq='A')
 
 
-def gas_year(year) -> Tuple[date, date]:
+def gas_year(year: int) -> Tuple[date, date]:
     """
     Creates an tuple representing an energy forward definition of a gas year, that being the year starting on the 1st of October.
 

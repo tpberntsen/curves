@@ -36,8 +36,8 @@ class TestSpline(unittest.TestCase):
             ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
             ((date(2019, 1, 3), date(2019, 1, 7)), 29.3),
             ((date(2019, 1, 8), date(2019, 1, 31)), 24.66),
-            (quarter(year=2019, quarter=2), 18.3),
-            (quarter(year=2019, quarter=3), 17.1),
+            (quarter(year=2019, quarter_num=2), 18.3),
+            (quarter(year=2019, quarter_num=3), 17.1),
             (winter(2019), 22.4),
             (summer(2020), 19.9),
             (gas_year(2020), 20.01)

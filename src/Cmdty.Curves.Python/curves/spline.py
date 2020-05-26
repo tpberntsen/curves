@@ -24,16 +24,23 @@
 import clr
 import pandas as pd
 from datetime import datetime
+from typing import Optional, Callable
 from System import Func, Double
-from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, net_time_series_to_pandas_series, contract_period, deconstruct_contract
+from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, \
+    net_time_series_to_pandas_series, contract_period, deconstruct_contract, ContractsType
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCurveBuilderExtensions, ISplineAddOptionalParameters
 
 
-def max_smooth_interp(contracts, freq, mult_season_adjust=None, 
-                       add_season_adjust=None, average_weight=None, time_func=None, 
-                       front_1st_deriv=None, back_1st_deriv=None) -> pd.Series:
+def max_smooth_interp(contracts: ContractsType,
+                      freq: str,
+                      mult_season_adjust: Optional[Callable[[pd.Period], float]] = None,
+                      add_season_adjust: Optional[Callable[[pd.Period], float]] = None,
+                      average_weight: Optional[Callable[[pd.Period], float]] = None,
+                      time_func: Optional[Callable[[pd.Period, pd.Period], float]] = None,
+                      front_1st_deriv: Optional[float] = None,
+                      back_1st_deriv: Optional[float] = None) -> pd.Series:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using maximum smoothness algorithm.
 
@@ -68,7 +75,7 @@ def max_smooth_interp(contracts, freq, mult_season_adjust=None,
             evaluated for each index period, added to it to derive each price in the resulting curve.
         average_weight (callable, optional): Mapping from pandas.Period type to float which describes the weighting
             that each forward period contributes to a price for delivery which spans multiple periods. The
-            pandas.Period parameter will have freq equal to the freq parameter. An example of such weighting is
+            pandas. Period parameter will have freq equal to the freq parameter. An example of such weighting is
             a monthly curve (freq='M') of a commodity which delivers on every calendar day. In this example average_weight would be
             a callable which returns the number of calendar days in the month, e.g.:
                 lambda p: p.asfreq('D', 'e').day

@@ -25,7 +25,8 @@ import clr
 from System import DateTime
 import pandas as pd
 import re
-from datetime import datetime
+from datetime import datetime, date
+from typing import Union, Tuple, Iterable
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.TimePeriodValueTypes")))
 from Cmdty.TimePeriodValueTypes import QuarterHour, HalfHour, Hour, Day, Month, Quarter, TimePeriodFactory
@@ -143,3 +144,10 @@ def from_datetime_like(datetime_like, time_period_type):
 
     date_time = DateTime(datetime_like.year, datetime_like.month, datetime_like.day, *time_args)
     return TimePeriodFactory.FromDateTime[time_period_type](date_time)
+
+
+ContractsType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple[pd.Period, float],
+                               Tuple[date, date, float], Tuple[datetime, datetime, float], Tuple[
+                                  pd.Period, pd.Period, float],
+                               Tuple[Tuple[date, date], float], Tuple[Tuple[datetime, datetime], float],
+                               Tuple[Tuple[pd.Period, pd.Period], float]]]

@@ -23,10 +23,11 @@
 
 """ Provides functions to use as the average_weight parameter to curve construction functions."""
 import pandas as pd
-from typing import Callable
+from datetime import date, datetime
+from typing import Callable, Union, Iterable
 
 
-def num_business_days(holidays) -> Callable[[pd.Period], float]:
+def num_business_days(holidays: Iterable[Union[date, datetime, pd.Timestamp, pd.Period]]) -> Callable[[pd.Period], float]:
     """
     Creates a function which returns the number of business days in a pandas.Period, typically for use as the average_weight parameter for other functions.
 
@@ -60,7 +61,7 @@ def num_weekdays() -> Callable[[pd.Period], float]:
 
 # TODO return zero for non-existent period, and 2 times for duplicated periods
 # TODO example in docstring
-def num_periods(freq, tz=None) -> Callable[[pd.Period], float]:
+def num_periods(freq: str, tz: str = None) -> Callable[[pd.Period], float]:
     """
     Creates a function which returns the number of occurances of pandas.Period of a specific freq in an instance of another pandas.Period.
 
