@@ -48,7 +48,8 @@ The keys represent the pandas Offset Alias which describe the granularity, and w
 The values are the associated .NET time period types used in behind-the-scenes calculations.
 """
 
-def tranform_time_func(freq, py_time_func):
+
+def transform_time_func(freq, py_time_func):
 
     def wrapper_time_func(net_time_period):
         pandas_period = net_time_period_to_pandas_period(net_time_period, freq)
@@ -57,7 +58,7 @@ def tranform_time_func(freq, py_time_func):
     return wrapper_time_func
 
 
-def tranform_two_period_func(freq, py_two_period_func):
+def transform_two_period_func(freq, py_two_period_func):
 
     def wrapper_time_func(net_time_period1, net_time_period2):
         pandas_period1 = net_time_period_to_pandas_period(net_time_period1, freq)

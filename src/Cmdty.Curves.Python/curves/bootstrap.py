@@ -27,7 +27,7 @@ from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IBootstrapperAddOptionalParameters, IBetween, Shaping, IIs, IAnd
 from typing import NamedTuple, Union, List
-from curves._common import FREQ_TO_PERIOD_TYPE, tranform_time_func, net_time_series_to_pandas_series, contract_period, net_time_period_to_pandas_period, deconstruct_contract
+from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, net_time_period_to_pandas_period, deconstruct_contract
 import pandas as pd
 
 
@@ -137,7 +137,7 @@ def bootstrap_contracts(contracts, freq, average_weight=None, shaping_ratios=Non
             bootstrapper.AddShaping(shaping_spread)
 
     if average_weight is not None:
-        tranformed_average_weight = tranform_time_func(freq, average_weight)
+        tranformed_average_weight = transform_time_func(freq, average_weight)
         bootstrapper.WithAverageWeighting(Func[time_period_type, Double](tranformed_average_weight))
 
     dotnet_bootstrap_results = bootstrapper.Bootstrap()

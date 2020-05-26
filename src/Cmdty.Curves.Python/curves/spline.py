@@ -25,7 +25,7 @@ import clr
 import pandas as pd
 from datetime import datetime
 from System import Func, Double
-from curves._common import FREQ_TO_PERIOD_TYPE, tranform_time_func, tranform_two_period_func, net_time_series_to_pandas_series, contract_period, deconstruct_contract
+from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, net_time_series_to_pandas_series, contract_period, deconstruct_contract
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCurveBuilderExtensions, ISplineAddOptionalParameters
@@ -106,19 +106,19 @@ def max_smooth_interp(contracts, freq, mult_season_adjust=None,
         MaxSmoothnessSplineCurveBuilderExtensions.AddContract[time_period_type](spline_builder, start, end, price)
 
     if mult_season_adjust is not None:
-        transformed_mult_season_adjust = tranform_time_func(freq, mult_season_adjust)
+        transformed_mult_season_adjust = transform_time_func(freq, mult_season_adjust)
         spline_builder.WithMultiplySeasonalAdjustment(Func[time_period_type, Double](transformed_mult_season_adjust))
 
     if add_season_adjust is not None:
-        tranformed_add_season_adjust = tranform_time_func(freq, add_season_adjust)
+        tranformed_add_season_adjust = transform_time_func(freq, add_season_adjust)
         spline_builder.WithAdditiveSeasonalAdjustment(Func[time_period_type, Double](tranformed_add_season_adjust))
     
     if average_weight is not None:
-        tranformed_average_weight = tranform_time_func(freq, average_weight)
+        tranformed_average_weight = transform_time_func(freq, average_weight)
         spline_builder.WithWeighting(Func[time_period_type, Double](tranformed_average_weight))
 
     if time_func is not None:
-        tranformed_time_func = tranform_two_period_func(freq, time_func)
+        tranformed_time_func = transform_two_period_func(freq, time_func)
         spline_builder.WithTimeFunc(Func[time_period_type, time_period_type, Double](tranformed_time_func))
 
     if front_1st_deriv is not None:
