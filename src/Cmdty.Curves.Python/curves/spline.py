@@ -23,7 +23,6 @@
 
 import clr
 import pandas as pd
-from datetime import datetime
 from typing import Optional, Callable, Union
 from System import Func, Double
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, \
