@@ -23,6 +23,7 @@
 
 import pandas as pd
 
+
 def _num_calendar_days(period):
 
     if period.freqstr == 'D':

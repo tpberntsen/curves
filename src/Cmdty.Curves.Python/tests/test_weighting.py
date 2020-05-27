@@ -26,6 +26,7 @@ import pandas as pd
 from curves import weighting
 from datetime import date
 
+
 class TestWeighting(unittest.TestCase):
 
     def test_num_business_days(self):
@@ -74,4 +75,3 @@ class TestWeighting(unittest.TestCase):
         day = pd.Period('2019-10-27 00:00', freq='D')
         num_half_hours = half_hours_count(day)
         self.assertEqual(50, num_half_hours)
-

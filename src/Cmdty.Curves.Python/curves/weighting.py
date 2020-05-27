@@ -63,7 +63,7 @@ def num_weekdays() -> Callable[[pd.Period], float]:
 # TODO example in docstring
 def num_periods(freq: str, tz: str = None) -> Callable[[pd.Period], float]:
     """
-    Creates a function which returns the number of occurances of pandas.Period of a specific freq in an instance of another pandas.Period.
+    Creates a function which returns the number of occurrences of pandas.Period of a specific freq in an instance of another pandas.Period.
 
     Args:
         freq (str): Pandas offset alias string for the Period being counted.

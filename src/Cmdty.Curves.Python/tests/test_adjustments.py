@@ -25,34 +25,33 @@ import unittest
 from curves import adjustments
 import pandas as pd
 
+
 class TestAdjustments(unittest.TestCase):
 
     def test_dayofweek_values_specified(self):
-
-        dayofweek_adjust = adjustments.dayofweek(0.5, monday=3.4, tuesday=1.2, wednesday=1.1, 
+        dayofweek_adjust = adjustments.dayofweek(0.5, monday=3.4, tuesday=1.2, wednesday=1.1,
                                                  thursday=0.9, friday=0.7, saturday=0.2, sunday=0.1)
 
-        self.assertEqual(3.4, dayofweek_adjust(pd.Period('2019-05-13', freq='D'))) # monday
-        self.assertEqual(1.2, dayofweek_adjust(pd.Period('2019-05-14', freq='D'))) # tuesday
-        self.assertEqual(1.1, dayofweek_adjust(pd.Period('2019-05-15', freq='D'))) # wednesday
-        self.assertEqual(0.9, dayofweek_adjust(pd.Period('2019-05-16', freq='D'))) # thursday
-        self.assertEqual(0.7, dayofweek_adjust(pd.Period('2019-05-17', freq='D'))) # friday
-        self.assertEqual(0.2, dayofweek_adjust(pd.Period('2019-05-18', freq='D'))) # saturday
-        self.assertEqual(0.1, dayofweek_adjust(pd.Period('2019-05-19', freq='D'))) # sunday
+        self.assertEqual(3.4, dayofweek_adjust(pd.Period('2019-05-13', freq='D')))  # monday
+        self.assertEqual(1.2, dayofweek_adjust(pd.Period('2019-05-14', freq='D')))  # tuesday
+        self.assertEqual(1.1, dayofweek_adjust(pd.Period('2019-05-15', freq='D')))  # wednesday
+        self.assertEqual(0.9, dayofweek_adjust(pd.Period('2019-05-16', freq='D')))  # thursday
+        self.assertEqual(0.7, dayofweek_adjust(pd.Period('2019-05-17', freq='D')))  # friday
+        self.assertEqual(0.2, dayofweek_adjust(pd.Period('2019-05-18', freq='D')))  # saturday
+        self.assertEqual(0.1, dayofweek_adjust(pd.Period('2019-05-19', freq='D')))  # sunday
 
     def test_dayofweek_value_not_specified_default_returned(self):
-
         default_value = 0.5
 
         dayofweek_adjust = adjustments.dayofweek(default_value)
 
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-13', freq='D'))) # monday
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-14', freq='D'))) # tuesday
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-15', freq='D'))) # wednesday
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-16', freq='D'))) # thursday
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-17', freq='D'))) # friday
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-18', freq='D'))) # saturday
-        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-19', freq='D'))) # sunday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-13', freq='D')))  # monday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-14', freq='D')))  # tuesday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-15', freq='D')))  # wednesday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-16', freq='D')))  # thursday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-17', freq='D')))  # friday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-18', freq='D')))  # saturday
+        self.assertEqual(default_value, dayofweek_adjust(pd.Period('2019-05-19', freq='D')))  # sunday
 
 
 if __name__ == '__main__':

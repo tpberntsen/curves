@@ -71,4 +71,3 @@ def dayofweek(default: float, monday: Optional[float] = None, tuesday: Optional[
 def _populate_dict(dict_to_populate, arg, dict_index) -> None:
     if arg is not None:
         dict_to_populate[dict_index] = arg
-
