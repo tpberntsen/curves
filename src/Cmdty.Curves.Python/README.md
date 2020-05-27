@@ -123,3 +123,26 @@ The above code prints to the following:
 Freq: D, Length: 854, dtype: float64
 ```
 
+### Curve Granularity
+The granularity of the derived curves is controlled by the string passed in as the freq parameter. For returned values 
+which are of type pandas.Series, this parameter is used when constructing these objects, with more details on the these 
+frequency strings found in the pandas documentation 
+[here](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects).
+The package level dict variable FREQ_TO_PERIOD_TYPE contains a mapping between freq parameter values and the underlying 
+managed types from the [.NET Time Period Library](https://github.com/cmdty/time-period-value-types) used to represent 
+the resulting curve index type, and hence granularity. As such, the keys of 
+FREQ_TO_PERIOD_TYPE can be used to determine the set of admissible values for the freq parameter.
+
+```python
+from curves import FREQ_TO_PERIOD_TYPE
+FREQ_TO_PERIOD_TYPE
+```
+Displays the following:
+```
+{'15min': Cmdty.TimePeriodValueTypes.QuarterHour,
+ '30min': Cmdty.TimePeriodValueTypes.HalfHour,
+ 'H': Cmdty.TimePeriodValueTypes.Hour,
+ 'D': Cmdty.TimePeriodValueTypes.Day,
+ 'M': Cmdty.TimePeriodValueTypes.Month,
+ 'Q': Cmdty.TimePeriodValueTypes.Quarter}
+```
