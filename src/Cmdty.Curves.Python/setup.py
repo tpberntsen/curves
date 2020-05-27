@@ -58,7 +58,7 @@ setuptools.setup(
     ],
     install_requires=[
         'pythonnet>=2.4.0',
-        'pandas>=0.24.2'
+        'pandas>=1.0.3'
         ],
     package_data={'curves' : [
                         'lib/*.dll',
