@@ -46,7 +46,6 @@ class BootstrapResults(NamedTuple):
     bootstrapped_contracts: List[Contract]
 
 
-# TODO look into nesting of typing types
 ShapingTypes = Iterable[
     Union[Tuple[pd.Period, pd.Period, float], Tuple[date, date, float], Tuple[datetime, datetime, float],
           Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[date, date], float], Tuple[
