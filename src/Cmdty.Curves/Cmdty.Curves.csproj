@@ -13,7 +13,6 @@
     <LangVersion>latest</LangVersion>
     <Description>Tools for building commodity forward, swaps, and futures curves.</Description>
     <PackageTags>commodities;trading;curves;oil;gas;power;quantitative;finance</PackageTags>
-    <TargetsForTfmSpecificBuildOutput>$(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -33,7 +32,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Cmdty.TimePeriodValueTypes" Version="1.0.0-alpha1" />
+    <PackageReference Include="Cmdty.TimeSeries" Version="1.0.0-alpha1" />
     <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
     <PackageReference Include="MathNet.Numerics.Signed" Version="4.8.1">
       <NoWarn>NU1605</NoWarn>
@@ -48,14 +47,5 @@
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Cmdty.TimeSeries\Cmdty.TimeSeries.csproj" PrivateAssets="all" />
-  </ItemGroup>
-
-  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
-    <ItemGroup>
-      <BuildOutputInPackage Include="@(ReferenceCopyLocalPaths-&gt;WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
-    </ItemGroup>
-  </Target>
 
 </Project>
