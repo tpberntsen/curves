@@ -64,7 +64,7 @@ For use from Python install the curves package from PyPI.
 ```
 ### Installing For Python on Linux
 Currently only a small amount of testing has been done for the Python package running on Linux (Ubuntu 18.04 LTS running in Windows 10 WSL) via the Mono runtime, using Python version 3.6.8. The following Linux dependencies have to be installed, as listed on [the pythonnet wiki](https://github.com/pythonnet/pythonnet/wiki/Troubleshooting-on-Windows,-Linux,-and-OSX):
-* Mono-develop or Mono-complete. Curves was successfully run after installing version 5.20.1.34 of Mono-complete. Note that pythonnet does not work with Mono version 6.x. See [this page](https://www.mono-project.com/docs/getting-started/install/linux/#accessing-older-releases) for instructions on installing older versions of Mono on Linux.
+* Mono-develop or Mono-complete.
 * clang.
 * libglib2.0-dev.
 * python-dev. Specifically the package python3.6-dev was installed.
