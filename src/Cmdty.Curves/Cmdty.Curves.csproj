@@ -32,7 +32,7 @@
   </Target>
 
   <ItemGroup>
-    <PackageReference Include="Cmdty.TimeSeries" Version="1.0.0-alpha1" />
+    <PackageReference Include="Cmdty.TimeSeries" Version="1.0.0-alpha2" />
     <PackageReference Include="JetBrains.Annotations" Version="2019.1.1" />
     <PackageReference Include="MathNet.Numerics.Signed" Version="4.8.1">
       <NoWarn>NU1605</NoWarn>
