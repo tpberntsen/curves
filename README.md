@@ -18,6 +18,7 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
     * [Using From Python](#using-from-python)
         * [Bootstrapper](#bootstrapper-1)
         * [Spline](#spline-1)
+        * [Python Version Compatibility](#python-version-compatibility)
 * [Technical Documentation](#technical-documentation)
 * [Building](#building)
     * [Build Prerequisites](#build-prerequisites)
@@ -245,6 +246,14 @@ Results in the following being printed:
 2021-09-30    25.900556
 Freq: D, Length: 854, dtype: float64
 ```
+
+### Python Version Compatibility
+The curves package is compatible with the Python interpreter up to **version 3.9**.
+
+Limitations on the Python version which the curves package can be used
+are largely driven by the [pythonnet](https://github.com/pythonnet/pythonnet) package dependency. The latest version of curves (1.0.3) depends on
+pythonnet version 2.5.2, which itself works with Python up to version 3.9.
+Hence this is also the maximum version with which curves works.
 
 ## Technical Documentation
 The PDF file [max_smoothness_spline.pdf](docs/max_smoothness/max_smoothness_spline.pdf) contains details of the mathematics behind the maximum smoothness algorithm.
