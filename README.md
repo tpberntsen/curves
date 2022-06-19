@@ -25,6 +25,7 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
     * [Running the Build](#running-the-build)
     * [Build Artifacts](#build-artifacts)
     * [Building from Linux and macOS](#building-from-linux-and-macos)
+* [Why the Strange Tech Stack?](#why-the-strange-tech-stack)
 * [License](#license)
 
 ## Overview
@@ -298,6 +299,26 @@ the build can be run with the following command:
 ```
 > pwsh ./build.ps1
 ```
+
+## Why the Strange Tech Stack?
+Users of the Python API might be perplexed as to the technology used: Python calling into .NET, which itself calls into native code for the Intel MKL numerical routines.
+This is certainly not a common structure, especially for a package focussed on complex numerical calculations.
+
+The Cmdty project started off as a .NET only project, written in C#, due to the author being mainly
+a C# guy during the day-job. The Python wrapper was added later as it became apparent that there was a demand to
+use the models from Python. Since then it now seems that there are many more users of the Python API than
+the C# NuGet package, resulting in significant time being spent on the Python API, and documentation.
+
+If the project was started again from scratch, it would have been written entirely in Python. However, due to time constraints, and not wanting to have the maintenance headache of 
+having two independent implementations side-by-side there is no plan to work on this. That said,
+if others want to have a go at a pure Python implementation it would be very much welcomed and I would
+happily help out.
+
+A Python-only implementation would solve the following problems:
+* Limitations to the Python version, as described [above](#python-version-compatibility).
+* Currently only certain curve granularities (Pandas period frequencies) are supported, as described at the bottom of the [PyPI package README](https://pypi.org/project/curves/).
+* Reduce the size of the package.
+* Makes it easy to use the PyPI package on non-Windows platforms. Use on Linux is possible, but requires that the Mono runtime be installed.
 
 ## License
 
