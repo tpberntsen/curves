@@ -249,11 +249,13 @@ Freq: D, Length: 854, dtype: float64
 ```
 
 ### Python Version Compatibility
-The curves package is compatible with the Python interpreter up to **version 3.9**.
+The curves package is compatible with the Python interpreter up to **version 3.8** and some patch versions of Python 3.9. The release notes for curves 
+version 1.0.3 incorrectly state that it is compatible with Python 3.9. See [Issue 18](https://github.com/cmdty/curves/issues/18) for an examples of 
+where there is compatibility with some patch versions of 3.9.
 
 Limitations on the Python version which the curves package can be used
 are largely driven by the [pythonnet](https://github.com/pythonnet/pythonnet) package dependency. The latest version of curves (1.0.3) depends on
-pythonnet version 2.5.2, which itself works with Python up to version 3.9.
+pythonnet version 2.5.2, which itself works with Python up to version 3.8.
 Hence this is also the maximum version with which curves works.
 
 ## Technical Documentation
