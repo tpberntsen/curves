@@ -26,7 +26,7 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
     * [Build Artifacts](#build-artifacts)
     * [Building from Linux and macOS](#building-from-linux-and-macos)
 * [Why the Strange Tech Stack?](#why-the-strange-tech-stack)
-* [Debugging C# Code From a Jupyter Notebook](#debugging-C#-code-from-a-jupyter-notebook)
+* [Debugging C# Code From a Jupyter Notebook](#debugging-c-code-from-a-jupyter-notebook)
     * [Debugging a Released PyPI Package](#debugging-a-released-pypi-package)
     * [Debugging Code With Custom Modifications](#debugging-code-with-custom-modifications)
 * [License](#license)
