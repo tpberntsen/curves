@@ -26,6 +26,9 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
     * [Build Artifacts](#build-artifacts)
     * [Building from Linux and macOS](#building-from-linux-and-macos)
 * [Why the Strange Tech Stack?](#why-the-strange-tech-stack)
+* [Debugging C# Code From a Jupyter Notebook](#debugging-C#-code-from-a-jupyter-notebook)
+    * [Debugging a Released PyPI Package](#debugging-a-released-pypi-package)
+    * [Debugging Code With Custom Modifications](#debugging-code-with-custom-modifications)
 * [License](#license)
 
 ## Overview
@@ -302,6 +305,7 @@ the build can be run with the following command:
 > pwsh ./build.ps1
 ```
 
+
 ## Why the Strange Tech Stack?
 Users of the Python API might be perplexed as to the technology used: Python calling into .NET, which itself calls into native code for the Intel MKL numerical routines.
 This is certainly not a common structure, especially for a package focussed on complex numerical calculations.
@@ -322,6 +326,49 @@ A Python-only implementation would solve the following problems:
 * Reduce the size of the package.
 * Makes it easy to use the PyPI package on non-Windows platforms. Use on Linux is possible, but requires that the Mono runtime be installed.
 
+## Debugging C# Code From a Jupyter Notebook
+This section contains the procedure to follow in order to debug the calculations in the C# 
+code, as invoked from Python running in a Jupyter notebook. The following steps are a prerequisite
+to the procedures described below.
+* Install the following software for building the C#:
+    * Visual Studio 2022.
+    * The .NET Core SDK version, as described in the section [Build Prerequisites](#build-prerequisites).
+* Clone the curves repo onto your machine.
+
+The below descriptions have been used from a Windows desktop. As Visual Studio is available for
+Apple computers a similar procedure might work with Apple hardware, but has never been tested.
+
+
+### Debugging a Released PyPI Package
+This section describes how to debug the execution of the curves package installed from PyPI.
+* Do a git checkout to the git tag associated with the version of the curves package you are 
+running in Jupyter. The git tags for each release are found on GitHub [here](https://github.com/cmdty/curves/tags).
+* In the cloned repo open Cmdty.Curves.sln in Visual Studio and build in Debug configuration.
+* Set breakpoints in the C# code. The most useful places for breakpoints are at the start of
+the core calculations:
+    * For the spline, the Build method of the class MaxSmoothnessSplineCurveBuilder, as found in [MaxSmoothnessSplineCurveBuilder.cs](./src/Cmdty.Curves/MaxSmoothness/MaxSmoothnessSplineCurveBuilder.cs).
+    * For the bootstrapper, the Calculate method of the class Bootstrapper, as found in [Bootstrapper](./src/Cmdty.Curves/Bootstrap/Bootstrapper.cs).
+* It is likely that there are many running processes for the python.exe interpretter. It is
+necessary to identify the PID (Process ID) of the exact python.exe process which is being used
+by Jupyter. One way to do this uses [Sysinternals Process Explorer](https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer):
+    * Launch Process Explorer and ensure PID is one of the displayed columns.
+    * Order the displayed processes by process name and locate the section which contains the
+    python.exe processes.
+    * Run the Jupyter notebook and observe the specific python.exe process for which the CPU usage 
+    increases, taking a note of the PID. In the image below the PID is found to be 33568.
+    ![Identifying PID](./assets/debug_identify_python_process.png)
+* In the Visual Studio menu bar select Debug > Attach to Process. In the resulting dialogue box
+search the processes using the noted PID. Select this process and press the Attach button.
+* Execute the Jupyter notebook. The C# code should break at the placed breakpoints.
+
+### Debugging Code With Custom Modifications
+This section describes the more advanced scenario of running and debugging Cmdty.Curves
+code which has been modified, and so is different to that used to created released PyPI packages.
+The process of debugging the C# code with custom modifications is identical to that described
+above, except that a [pip local project install](https://pip.pypa.io/en/stable/topics/local-project-installs/) is required. This should be done in the Anaconda Prompt using the
+path of the directory src\Cmdty.Curves.Python\ within the cloned curves repo as the path in
+the pip install command.
+
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
