@@ -272,7 +272,7 @@ physical nomination, and contracts at the very front of the curve will be in hig
 daily granularity, for example half-hourly in UK power markets.
 
 ### Building Curves of Daily or Lower Granularity
-This case is simple to handle. If for example building a daily, or monthly power forward curve,
+This case is simple to handle. If for example building a daily power forward curve,
 the weighting function provided to the bootstrapper or spline needs to take into account
 different volume of power delivered in each day due to the clock change. Ignoring the discount 
 factor in the weighting for simplicity, take as an example the weighting function used for a 
@@ -289,7 +289,7 @@ As such, the correct way to handle clock changes is to tranform all contract del
 to their UTC time equivalents before feeding into the Cmdty.Curves algorithms. UTC time is
 continuous and so does not have the complication of clock changes. The resulting
 curve produced would also be represented in UTC time, so the caller might want to transform
-this back to local time using time zone aware types for the index of the collections holding
+this back to local time, using time zone aware types for the index of the collections holding
 the derived high-granularity curve.
 
 
