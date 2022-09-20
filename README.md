@@ -19,6 +19,9 @@ Set of tools written in C# for constructing commodity forward/futures/swap curve
         * [Bootstrapper](#bootstrapper-1)
         * [Spline](#spline-1)
         * [Python Version Compatibility](#python-version-compatibility)
+    * [Handling Clock Changes](#handling-clock-changes)
+        * [Building Curves of Daily or Lower Granularity](#building-curves-of-daily-or-lower-granularity)
+        * [Building Curves of Higher Than Daily Granularity](#building-curves-of-higher-than-daily-granularity)
 * [Technical Documentation](#technical-documentation)
 * [Building](#building)
     * [Build Prerequisites](#build-prerequisites)
@@ -260,6 +263,35 @@ Limitations on the Python version which the curves package can be used
 are largely driven by the [pythonnet](https://github.com/pythonnet/pythonnet) package dependency. The latest version of curves (1.0.3) depends on
 pythonnet version 2.5.2, which itself works with Python up to version 3.8.
 Hence this is also the maximum version with which curves works.
+
+## Handling Clock Changes
+Clock changes cause complications in two scenarios when building curves. Both of these are most relevant
+when building power (electricity) forward curves where the additional (or lost time) caused
+by a clock change results in more (or less) of the commodity being delivered. In such markets
+physical nomination, and contracts at the very front of the curve will be in higher than
+daily granularity, for example half-hourly in UK power markets.
+
+### Building Curves of Daily or Lower Granularity
+This case is simple to handle. If for example building a daily, or monthly power forward curve,
+the weighting function provided to the bootstrapper or spline needs to take into account
+different volume of power delivered in each day due to the clock change. Ignoring the discount 
+factor in the weighting for simplicity, take as an example the weighting function used for a 
+baseload daily power curve. This would evaluate to:
+* 24.0 for days when there is no clock change, hence 24 hours in the day.
+* 25.0 for days when clocks move back an hour, hence there is an extra hour in the day.
+* 23.0 for dailys when clocks move forward and hour, hence there is an hour missing.
+
+### Building Curves of Higher Than Daily Granularity
+An example of this would be building a half-hourly power forward curve. Unfortunately,
+at present the Cmdty.Curves library does not support the use of time zone aware types to 
+represent the contract delivery periods. This would be the ideal way to handle the problem.
+As such, the correct way to handle clock changes is to tranform all contract delivery periods
+to their UTC time equivalents before feeding into the Cmdty.Curves algorithms. UTC time is
+continuous and so does not have the complication of clock changes. The resulting
+curve produced would also be represented in UTC time, so the caller might want to transform
+this back to local time using time zone aware types for the index of the collections holding
+the derived high-granularity curve.
+
 
 ## Technical Documentation
 The PDF file [max_smoothness_spline.pdf](docs/max_smoothness/max_smoothness_spline.pdf) contains details of the mathematics behind the maximum smoothness algorithm.
