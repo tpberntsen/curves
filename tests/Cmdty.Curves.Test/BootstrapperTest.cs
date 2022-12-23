@@ -555,10 +555,23 @@ namespace Cmdty.Curves.Test
             }
 
             foreach(Contract<Day> contract in bootstrappedContracts)
-            {
                 Assert.AreEqual(flatPrice, contract.Price, Tolerance);
-            }
+        }
 
+        [Test]
+        public void Bootstrap_GapsInInputContracts_PiecewiseFlatCurveIsZeroInGaps()
+        {
+            var (piecewiseFlatCurve, _) = new Bootstrapper<Month>()
+                .AddContract(Month.CreateJanuary(2019), Month.CreateMarch(2019), 13.55)
+                .AddContract(Month.CreateJanuary(2019), 12.1)
+                .AddContract(Month.CreateFebruary(2019), 14.72)
+                 //Gap from Apr-19 to Sep-19
+                 .AddContract(Month.CreateOctober(2019), Month.CreateDecember(2019), 15.07)
+                 .AddContract(Month.CreateOctober(2019), 48.88)
+                .Bootstrap();
+
+            foreach (Month month in Month.CreateApril(2019).EnumerateTo(Month.CreateSeptember(2019)))
+                Assert.AreEqual(0.0, piecewiseFlatCurve[month]);
         }
 
         // TODO add some tests on the target bootstrapped curve

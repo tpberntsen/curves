@@ -295,7 +295,7 @@ namespace Cmdty.Curves
                             do
                             {
                                 curvePeriods.Add(outputPeriod);
-                                curvePrices.Add(price);
+                                curvePrices.Add(0.0);
                                 i++;
                                 outputPeriod = outputPeriod.Next();
                             } while (IsGapInContractsAndShapings(contracts, shapings, outputPeriod));
