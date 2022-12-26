@@ -255,13 +255,11 @@ Freq: D, Length: 854, dtype: float64
 ```
 
 ### Python Version Compatibility
-The curves package is compatible with the Python interpreter up to **version 3.8** and some patch versions of Python 3.9. The release notes for curves 
-version 1.0.3 incorrectly state that it is compatible with Python 3.9. See [Issue 18](https://github.com/cmdty/curves/issues/18) for an examples of 
-where there is compatibility with some patch versions of 3.9.
+The curves package should be compatible with the Python interpreter up to **version 3.11**.
 
 Limitations on the Python version which the curves package can be used
-are largely driven by the [pythonnet](https://github.com/pythonnet/pythonnet) package dependency. The latest version of curves (1.0.3) depends on
-pythonnet version 2.5.2, which itself works with Python up to version 3.8.
+are largely driven by the [pythonnet](https://github.com/pythonnet/pythonnet) package dependency. The latest version of curves (1.2.0) depends on
+pythonnet version 3.0.1, which itself works with Python up to version 3.11.
 Hence this is also the maximum version with which curves works.
 
 ## Handling Clock Changes
@@ -302,7 +300,7 @@ This section describes how to run a scripted build on a cloned repo. Visual Stud
 #### Build Prerequisites
 The following are required on the host machine in order for the build to run.
 * The .NET Core SDK. Check the [global.json file](global.json) for the version necessary, taking into account [the matching rules used](https://docs.microsoft.com/en-us/dotnet/core/tools/global-json#matching-rules).
-* The Python interpretter, accessible by being in a file location in the PATH environment variable. Version 3.6 is used, although other 3.x versions might work.
+* The Python interpretter, accessible by being in a file location in the PATH environment variable. Version 3.7 is used, although other 3.x versions might work.
 * The following Python packages installed:
     * virtualenv.
     * setuptools.
@@ -320,7 +318,6 @@ The following results of the build will be saved into the artifacts directory (w
 * The NuGet package: Cmdty.Curves.[version].nupkg
 * The Python package files:
     * curves-[version]-py3-none-any.whl
-    * curves-[version].tar.gz
 
 ### Building from Linux and macOS
 Running the full build on non-Windows plaforms is still work in progress- the aim to to make it completely plaform agnostic. However, at the moment only the C# parts of the build are functioning cross-plaform.
