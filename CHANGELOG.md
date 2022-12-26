@@ -14,3 +14,6 @@ Update .NET Cmdty.TimeSeries reference to avoid clash with cmdty-storage package
 	* Change from least-squares solution to find a solution that is closest to a target curve, rather than zero. 
 	Each point on the target curve is derived as the price of the smallest contract that each period is within.
 	* Zero price is used as piecewise flat price for curve points in gaps. This fixes a bug, where the last price not in a gap is filled in.
+
+### 1.2.0
+* Update pythonnet dependency from 2.5.1 to 3.0.1 to allow compatibility with Python up to version 3.11.
