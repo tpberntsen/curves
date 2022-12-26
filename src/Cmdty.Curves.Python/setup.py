@@ -48,7 +48,7 @@ setuptools.setup(
         'Programming Language :: C#',
         'Intended Audience :: Developers',
         'Intended Audience :: Financial and Insurance Industry',
-        'Programming Language :: Python :: 3', # TODO specific Python versions?
+        'Programming Language :: Python :: 3 :: 3.7 :: 3.8 :: 3.9 :: 3.10 :: 3.11',
         'License :: OSI Approved :: MIT License',
         'Operating System :: Microsoft :: Windows',
         'Topic :: Office/Business :: Financial',
@@ -60,6 +60,7 @@ setuptools.setup(
         'pythonnet==3.0.1',
         'pandas>=1.0.3'
         ],
+    python_requires='>=3.7, <3.12',
     package_data={'curves' : [
                         'lib/*.dll',
                         'lib/*.pdb'
