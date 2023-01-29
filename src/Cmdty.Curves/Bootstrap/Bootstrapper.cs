@@ -234,7 +234,6 @@ namespace Cmdty.Curves
                     targetVector[i] = targetBootstrappedCurve[minTimePeriod.Offset(i)];
             }
 
-            Vector<double> targetVectorMinusLeastSquares = targetVector - leastSquaresSolution;
             Vector<double>[] nullspaceBasis = svd.VT.EnumerateRows(svd.Rank, svd.VT.RowCount - svd.Rank).ToArray();
 
             Vector<double> adjustedSolution;
@@ -243,7 +242,7 @@ namespace Cmdty.Curves
             else
             {
                 Matrix<double> nullspaceBaseMatrix = Matrix<double>.Build.DenseOfColumnVectors(nullspaceBasis);
-                Vector<double> nullspaceBasisWeights = nullspaceBaseMatrix.TransposeThisAndMultiply(targetVectorMinusLeastSquares);
+                Vector<double> nullspaceBasisWeights = nullspaceBaseMatrix.TransposeThisAndMultiply(targetVector);
                 Vector<double> solutionAdjustment = nullspaceBaseMatrix.Multiply(nullspaceBasisWeights);
                 adjustedSolution = leastSquaresSolution + solutionAdjustment;
             }
