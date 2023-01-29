@@ -1,0 +1,172 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage[round]{natbib}
+\usepackage{url}
+\usepackage{hyperref}
+
+\title{Bootstrapping of Commodity Forward Prices}
+\author{Jake C. Fowler}
+\date{January 2023}
+
+\begin{document}
+\newcommand{\+}[1]{\ensuremath{\mathbf{#1}}}
+
+\maketitle
+
+\section{Introduction}
+This document presents an algorithm for the boostrapping commodity forwards, futures and swap 
+contracts. 
+
+
+It is applicable for linear commodity contracts contingent on either a continuous delivery
+of physical commodity, financial payoff based on the average of an index throughout the
+contract delivery period. 
+
+The rest of this document will refer to just forward prices and curves, even though the same 
+methodology can be applied to futures and swap instruments as well.
+
+Also the document refers to the \emph{delivery period} of the contracts, in place of 
+\emph{delivery or fixing period} where \emph{fixing period} is the set of time periods from 
+which the average price of an index is used to calculate the payoff of a swap contract.
+
+\section{No-Arbitrage Forward Price Condition}
+This section describes the no-arbitrage relationship between the set of prices of forward contracts
+for a consecutive delivery period and price of a single lower granularity contract which spans 
+the whole delivery period of these. It is this relationship which forms the basis of the boostrapping
+algorithm.
+
+Denote:
+\begin{itemize}
+    \item $F$ as a forward price of the \emph{big} contract.
+    The notation does not contain the concept of the
+    time when this is observed, but it can just be assumed that the current valuation 
+    date is earlier than $t_s$ the start of the delivery period.
+    \item $f_i$ as the forward price for the $i$th \emph{small} contract a higher granularity 
+    period than $F$ has, with $i=1\dots n$
+    \item $D_i$ as the discount factor from the settlement date of contract $f_i$ to the 
+    valuation date. We assume that the delivery period of $f_i$ is short enough for 
+    the whole contract to be settled on a single date.
+    \item $w_i$ is the weighting of the delivery period of contract $i$, relative to
+    the delivery period that forward price $F$ corresponds to.
+\end{itemize}
+
+To show the no-arbitrage relationship, construct a portfolio which is long one unit of the 
+\emph{big} contract and short $w_i$ units of each \emph{small} contract. This portfolio
+is essentially flat, does not require and upfront cash, and so should have zero PV. If
+the PV were positive then a long positive would present an arbitrage, as would a 
+negative PV presents an arbigrate from taking a short position in the portfolio.
+Expressing the PV as the discounted cash flow from take the portfolio to settlement:
+
+\begin{equation}
+    \sum_{i=1}^{n}(F-f_i) w_i D_i = 0
+\end{equation}
+
+Which can be rearranged to:
+
+\begin{equation}
+    F = \frac{\sum_{i=1}^{n}f_i w_i D_i}{\sum_{i=1}^{n}w_i D_i}
+\end{equation}
+
+This is the no-arbigrate relationship between the \emph{big} contract and it's associated
+\emph{small} contracts, and can be seen as a weighted average.
+
+\section{Bootstrapping Algorithm}
+
+\subsection{Linear System}
+
+
+Such cases are referred to in this rest of this paper as \emph{partially overlapping contracts}
+and an examples seen in real market data when a contract for a one week delivery partially
+overlaps with a month.
+
+
+\subsection{Introduction of Nullspace Component to Solution}
+The previous section has shown an example where the least squares solution does 
+not give one we desire, due to a deviation from the prices of the input contracts
+where partially overlapping contracts are present.
+To rectify this, we can note that in the problematic scenario, and in the typical
+case of running the bootstrapping algorithm, the rank of matrix $\+A$ will be
+less than it's number of columns $n$, the number of boostrapped prices. In such
+cases there will be infinite solutions, and a general form of these solutions found
+using the fact that any vector in the nullspace of $\+A$ can be added to any
+particular solution.
+
+\bigskip
+
+If the solution which is closest to $\+0$ is not the good, then we need to define
+a new vector $\+x^{target}$, the solution which should be closest to will be choosen.
+In the case of the problematic example where all input contracts have the same price,
+then $\+x^{target}$ with all elements equal to this price seems like the obvious choice.
+See the section below for a discussion on choosing $\+x^{target}$.
+
+\bigskip
+
+Defined $\+K$ as a matrix with columns containing the orthonormal basis of the nullspace
+of $\+A$, and error vector as $\+e = \+x^{target} - \+x$. We want to find a linear combination
+of the columns of $\+K$ which can be added to $\+x$ to move it closest to $\+x^{target}$.
+This corresponds to find the least-squares solution of $\+c$ to the following system:
+
+\begin{equation}
+    \+K\+c = \+e
+\end{equation}
+
+The least-squares solution can be found be solving the Normal Equations:
+
+\begin{equation}
+    \+K^T \+K \+c = \+K^T \+e
+\end{equation}
+
+As $\+K$ is orthonormal $\+K^T \+K = \+I$, hence $\+c$ is calculated as:
+
+\begin{equation}
+    \+c = \+K^T \+e
+\end{equation}
+
+
+\subsection{Choosing The Target Vector}
+In the case where all input forward prices are the same, choosing $\+x^{target}$ is
+easy, but what about the more realistic case when all prices are different? This is
+somewhat arbitrary, but intuition says that each element of $\+x^{target}$ should be
+a function of the prices of all input contracts which span the delivery period 
+each element of $\+x^{target}$ represents the bootstrapped price of. Some experimentation
+has shown that taking the price of contract with minimum length of delivery period yields
+good results. In the case where there is more than one contract has the same minimum length,
+which in practice would be unusual, then the price of the contract which is delivers earliest 
+should be used.
+
+
+\section{Future Work}
+More research into choice of the target vector can be done, including an analysis of both
+the intuitive and mathematical reasoning behind the logic for calculating $\+x^{target}$ 
+presented in this paper, as well as alternative strategies. The results of varying  
+$\+x^{target}$ should be analysed with real market data to assess usage in practice.
+
+\bigskip
+
+The whole approach to bootstrapping in this paper should also be compared to algorithms
+which perform both boostrapping and interpolation, such as \cite{Benth}. In the case of
+partially overalapping contracts, the inclusion of the nullspace component and target
+vector presented in this paper is used to impose a shape on the resulting boostrapped
+prices, but one could argue that using a spline is more suitable due to the smooth 
+structure of a spline giving a more desirable shape. A piecewise flat curve could
+then be averaged back from the result of the spline, and the use of a bootstapper
+to create the input to another spline algorithm is no longer needed. Two downside of
+using a combined bootstrapping and interpolation algorithm can be seen. The first
+is that introduces additional complication in the case where only a piecewise flat
+curve is required from the bootstrapping. The second is that a higher order polynomial
+is required to ensure that the number of of unknowns (polynomial coefficients) is at
+least as large as the number of constraints in the linear system solved in the spline
+calculation. This is because the number of piecewise polynomials being solved for can 
+vary when the input contracts are allowed to overlap. The higher the order of the
+piecewise polynomials, the more tendency it has to oscillate.
+The author has observed undesirable oscillations when using a 4th order polynomial,
+as used in \cite{Benth}, when interpolating natural gas and power forward curves. 
+In practice it is unlikely that a polynomial should change it's
+slope more than once when interpolating commodity forward curve data.
+
+
+
+\bibliographystyle{plainnat}
+\bibliography{bootstrapping_commodity_forwards}
+
+\end{document}
