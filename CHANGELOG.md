@@ -1,5 +1,5 @@
 
-## Python PIP Package Releases
+## Python PyPI Package Releases
 ### 1.0.1
 * Update pythonnet dependency from 2.4.0 to 2.5.1 (allows use of Python 3.8).
 
@@ -22,3 +22,6 @@ Update .NET Cmdty.TimeSeries reference to avoid clash with cmdty-storage package
 * .NET binaries included in Python package target .NET Standard, not .NET Framework, hence compatible with
 more .NET types.
 * For non-Windows OS default to trying .NET (Core), rather than Mono as default runtime.
+
+### 1.4.0 (not yet released)
+* Include target_curve parameter to bootstrap_contracts function.

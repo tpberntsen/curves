@@ -27,6 +27,7 @@ from curves.contract_period import month, quarter, winter, summer, gas_year
 from curves import bootstrap_contracts, weighting
 from curves._common import deconstruct_contract
 import pandas as pd
+import numpy as np
 from tests._test_common import weighted_average_slice_curve
 import clr
 from System import ArgumentException
@@ -91,7 +92,11 @@ class TestBootstrap(unittest.TestCase):
             (quarter(2019, 1), 12.85)
         ]
 
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='M')
+        monthly_index = pd.period_range(start='2019-01-01', periods=3, freq='M')
+        target_curve = pd.Series(data=[52.3, 0.88, 1.87], index=monthly_index)
+
+        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='M',
+                                                                      target_curve=target_curve)
 
         for input_contract in input_contracts:
             (period, contract_price) = deconstruct_contract(input_contract)

@@ -31,7 +31,7 @@ from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IB
 from typing import NamedTuple, Union, List, Optional, Callable, Tuple, Iterable
 from datetime import date, datetime
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, \
-    net_time_period_to_pandas_period, deconstruct_contract, ContractsType
+    net_time_period_to_pandas_period, deconstruct_contract, ContractsType, series_to_double_time_series
 import pandas as pd
 
 
@@ -57,7 +57,8 @@ def bootstrap_contracts(contracts: ContractsType,
                         average_weight: Optional[Callable[[pd.Period], float]] = None,
                         shaping_ratios: Optional[ShapingTypes] = None,
                         shaping_spreads: Optional[ShapingTypes] = None,
-                        allow_redundancy: Optional[bool] = False) -> BootstrapResults:
+                        allow_redundancy: Optional[bool] = False,
+                        target_curve: pd.Series = None) -> BootstrapResults:
     """
     Bootstraps a collection of commodity forward/swap/futures prices by removing the overlapping periods and optionally applies shaping.
 
@@ -112,6 +113,10 @@ def bootstrap_contracts(contracts: ContractsType,
         allow_redundancy (bool, optional): Flag indicating whether the input contracts are allowed to have redundancy
             without an exception being thrown. An example of redundancy is contracts including prices for
             quarter and also all three constituent months of the same quarter. Defaults to False.
+        target_curve (pd.Series, optional): curve for which the  piecewise_curve is calculated to be closest to, in
+            terms of Euclidian distance. If omitted, defaults to a curve where the price of each point is the price of
+            the shortest input contract which overlaps the point delivery period. Corresponds to x^{target} in the
+            following doc: https://github.com/cmdty/curves/blob/master/docs/bootstrap/bootstrapping_commodity_forwards.pdf
 
     Returns:
         (pandas.Series, list of tuple): named tuple with the following elements:
@@ -160,6 +165,10 @@ def bootstrap_contracts(contracts: ContractsType,
     if average_weight is not None:
         transformed_average_weight = transform_time_func(freq, average_weight)
         bootstrapper.WithAverageWeighting(Func[time_period_type, Double](transformed_average_weight))
+
+    if target_curve is not None:
+        net_target_curve = series_to_double_time_series(target_curve, time_period_type)
+        bootstrapper.WithTargetBootstrappedCurve(net_target_curve)
 
     dotnet_bootstrap_results = bootstrapper.Bootstrap()
 

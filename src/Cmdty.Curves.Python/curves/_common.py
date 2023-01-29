@@ -23,6 +23,7 @@
 
 import clr
 from System import DateTime
+import System as dotnet
 import pandas as pd
 import re
 from datetime import datetime, date
@@ -30,6 +31,9 @@ from typing import Union, Tuple, Iterable
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.TimePeriodValueTypes")))
 from Cmdty.TimePeriodValueTypes import QuarterHour, HalfHour, Hour, Day, Month, Quarter, TimePeriodFactory
+
+clr.AddReference(str(Path('curves/lib/Cmdty.TimeSeries')))
+import Cmdty.TimeSeries as ts
 
 
 FREQ_TO_PERIOD_TYPE = {
@@ -144,6 +148,17 @@ def from_datetime_like(datetime_like, time_period_type):
 
     date_time = DateTime(datetime_like.year, datetime_like.month, datetime_like.day, *time_args)
     return TimePeriodFactory.FromDateTime[time_period_type](date_time)
+
+
+def series_to_double_time_series(series, time_period_type):
+    """Converts an instance of pandas Series to a Cmdty.TimeSeries.TimeSeries type with Double data type."""
+    series_len = len(series)
+    net_indices = dotnet.Array.CreateInstance(time_period_type, series_len)
+    net_values = dotnet.Array.CreateInstance(dotnet.Double, series_len)
+    for i in range(series_len):
+        net_indices[i] = from_datetime_like(series.index[i], time_period_type)
+        net_values[i] = series.values[i]
+    return ts.DoubleTimeSeries[time_period_type](net_indices, net_values)
 
 
 ContractsType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple[pd.Period, float],
