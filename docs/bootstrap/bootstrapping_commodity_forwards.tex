@@ -31,6 +31,31 @@ Also the document refers to the \emph{delivery period} of the contracts, in plac
 \emph{delivery or fixing period} where \emph{fixing period} is the set of time periods from 
 which the average price of an index is used to calculate the payoff of a swap contract.
 
+\subsection{Bootstrapping Definition and Uses}
+The process of bootstrapping is to take a set of prices of forward and derive a piecewise 
+flat forward curve consistent with these prices. In the typical case, the delivery periods 
+of the input forward contracts will be overlapping, so boostrapping can been seen as an
+algorithm for producing a set of forward prices for contiguous delivery periods. 
+In this wasy, bootstrapping should in the most general case be seen as an interpolation method.
+
+% TODO comment that bootstrapped prices can't generally be realised
+
+\bigskip
+
+One example of the use of a bootstrapped curve is for it to be loaded into an ETRM
+(Energy Trading Risk Management) system for the valuation of a portfolio of vanilla
+trades. The bootstrapping creates an unambiguous price for each delivery period in the
+lowest granularity which a commodity trades, which has practical benefits over just
+using the raw forward prices of traded contracts.
+
+A piecewise flat bootstrapped curve can also be used for the conservative valuation
+of a physical asset with embedded optionality.
+
+% TODO note that not lower bound because not realisable
+
+Finally bootstrapping can be used to derive the inputs to an interpolation method which
+is then used to calculate a smoothed higher granularity forward curve.
+
 \section{No-Arbitrage Forward Price Condition}
 This section describes the no-arbitrage relationship between the set of prices of forward contracts
 for a consecutive delivery period and price of a single lower granularity contract which spans 
