@@ -102,9 +102,53 @@ This is the no-arbigrate relationship between the \emph{big} contract and it's a
 \subsection{Linear System}
 
 
+
+\subsection{The Problem of Partially Overlapping Contracts}
+
+The bootstrapping algorithm presented in the previous section has some cases, 
+where it does not perform well. Take an example of two input contracts, the
+first with delivery covering the first three periods: $t_1$, $t_2$, $t_3$. The second
+contract has delivery covering two periods: $t_3$, $t_4$. If the prices of these
+two contracts is both 10.0, then the vector of bootstrapped price is calculated
+as $\begin{bmatrix}8.0 & 8.0 & 14.0 & 6.0\end{bmatrix}^T$. Intuitively this 
+result comes as a surprise, one would expect that the bootstrapped price of
+all four periods will equal 10.0, the price of both input contracts.
+
+It can easily be verified that these prices average back to the input contracts
+over just the delivery periods of each input forward. The next check
+that these results are not erroneous is to calculate the euclidean length of
+the boostrapped price vector and compare it to the length of the intuitively 
+expeted flat price vector of 4 10's. The actual bootstrapped vector is of length 360.0, 
+which is indeed lower than the length of flat price vector of 400.0 Where matrix
+$\+A$ is underdetermined, and hence has infinite solutions, we know that the 
+bootstrapper will return the single solution with the smallest length. Although
+the above check does not confirm that there has not been a mistake (i.e. a smaller
+solution vector exists), it does bring into question whether the criteria of 
+returning the price vector of lowest length is indeed desirable.
+
+
+
+The weighting matrix
+is as follows:
+
+
+
+
+The above example is contrived and simplified for ease of explaination.
+Cases seen with real market data being bootstrapped with a similar structure, where
+two forward contract one another, but neither is completely overlapped by the other.
+In such cases the input forward prices are not all equal, so the identification
+of the boostrapper results being problem is not the same as the above.
+example. The problem seen with real market data is that sections of the bootstrapped
+curve vary wildly from the input prices.
+
 Such cases are referred to in this rest of this paper as \emph{partially overlapping contracts}
 and an examples seen in real market data when a contract for a one week delivery partially
 overlaps with a month.
+
+As such, \emph{partially overlapping contracts} should not merely be 
+thought of as edge cases, and the bootstrapping algorithm needs to be made robust to
+such cases.
 
 
 \subsection{Introduction of Nullspace Component to Solution}
