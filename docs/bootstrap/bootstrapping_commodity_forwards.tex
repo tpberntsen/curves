@@ -6,7 +6,7 @@
 
 \title{Bootstrapping of Commodity Forward Prices}
 \author{Jake C. Fowler}
-\date{January 2023}
+\date{February 2023}
 
 \begin{document}
 \newcommand{\+}[1]{\ensuremath{\mathbf{#1}}}
@@ -127,12 +127,43 @@ solution vector exists), it does bring into question whether the criteria of
 returning the price vector of lowest length is indeed desirable.
 
 
+The weighting matrix is as follows:
 
-The weighting matrix
-is as follows:
+\begin{equation}
+    \+A = \begin{bmatrix}
+        \frac{1}{3} & \frac{1}{3} & \frac{1}{3} & 0 \\
+        0 & 0 & 0.5 & 0.5
+    \end{bmatrix}
+\end{equation}
 
+With pseudo-inverse:
 
+\begin{equation}
+    \+A^+ = \begin{bmatrix}
+        1.2 & -0.4 \\
+        1.2 & -0.4 \\
+        0.6 & 0.8 \\
+        -0.6 & 1.2 \\
+    \end{bmatrix}
+\end{equation}
 
+To verify that the problem seen above will also be the case with an arbitrary forward
+price of the input contracts equal to $c$, we can calculate the derived bootstrapped 
+prices algebraically:
+
+\begin{equation}
+    \+x = \+A^+ \+b = \begin{bmatrix}
+            0.8c \\
+            0.8c \\
+            1.4c \\
+            0.6c \\
+        \end{bmatrix}
+\end{equation}
+
+This confirms that whatever the prices of the two input forward contracts, the bootstrapped
+contracts will not be constant and equal to the input contract price.
+
+\bigskip
 
 The above example is contrived and simplified for ease of explaination.
 Cases seen with real market data being bootstrapped with a similar structure, where
@@ -224,6 +255,9 @@ Substituting for $\+x$ and $\+c$:
 \end{equation}
 
 % TODO: check \+K \+K^T is projection into nullspace, and comment on any meaning
+
+\subsection{Example of Using Nullspace Component}
+
 
 \subsection{Choosing The Target Vector}
 In the case where all input forward prices are the same, choosing $\+x^{target}$ is
