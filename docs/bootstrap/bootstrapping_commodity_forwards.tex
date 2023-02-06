@@ -303,6 +303,35 @@ slope more than once when interpolating commodity forward curve data.
 % TODO mathematical interpretation of partially overlapping contracts and
 % projection into nullspace of the target vector
 
+\bigskip
+
+The handling of shaping constraints which are collinear with the forward price constraints
+(and prior shaping constraints) in an efficient manner is an area which requires more work. 
+For example if the forward
+prices for Q1-23, Jan-23, and Feb-23 are all present, then the shaping ratio or spread
+from Q1-2023 to Mar-23 is redundant because the 3 prices already specify the Mar-23 
+forward price. Mathematically, the addition of the shaping constraint row to matrix
+$\+A$ will not change the rank of $\+A$. In such situations the shaping row will
+never be required and ideally the bootstrapping algorithm should detect this and 
+not append the shaping constraint row to $\+A$. The calculation could involve fully 
+recalculating the rank of $\+A$ after each constraint row has been appended, or whether
+each new row is a linear combination of existing rows, but this could be expensive.
+There should be a more efficient algorithm which for each new row makes use of the 
+calculations used to check previous rows. Some research into rank-revealing QR
+factorisations might yield an approach.
+
+Similarly, checking whether forward price constraints are collinear with other
+forward price constraints could be desired, although the case for discarding
+redundant forward price constraints is less clear cut than it is for shaping 
+constraints.
+The algorithm caller would have to be aware of the dependency of the results on
+the order in which the forward prices and shaping factors are fed in. To make 
+the results deterministic, an ordering first step would be required.
+
+Such handling of constraint collinearity would be required for a truly formulaic
+bootstrapping algorithm.
+
+
 \bibliographystyle{plainnat}
 \bibliography{bootstrapping_commodity_forwards}
 
