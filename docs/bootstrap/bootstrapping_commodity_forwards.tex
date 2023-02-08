@@ -102,6 +102,27 @@ This is the no-arbigrate relationship between the \emph{big} contract and it's a
 \subsection{Linear System}
 
 
+It is important to note for later discussion in this paper that the above solution will be 
+\emph{least squares} in two different senses. Firstly, should matrix $\+A$ have rank less
+than $m$, as would be the case where there is some redundancy in the input contracts,
+$\hat{\+b}$ will not necessarily be equal to the vector of input contracts $\+b$. It
+will however but the vector in the column space of $\+A$ which has the lowest sum of 
+element-wise squared difference to $\+b$.
+
+Secondly, should matrix $\+A$ have rank less
+than it's number of columns, as well typically be the case in practice, the linear 
+system $\+A\+x = \+b$ will have infinite solutions, and $\hat{\+x}$ will be chosen
+as the smallest solution, i.e. the one with the lowest some of squared elements.
+At first it seems that this second \emph{least squares} property is a desirable one,
+given we are looking for a piecewise flat output curve. Think of the case of bootstrapping
+a single contract to the forward prices of the periods within it's delivery period. A
+vector with the same price for all sub-periods as the single input contract price will 
+be also equal to the vector of prices with lowest sum of squared elements. The section 
+below however shows that the least squares solution is not necessarily a 
+good one for the bootstrapping problem, and introduces an adjustment which improves
+the results.
+
+% TODO write above in terms of euclidean distance.
 
 \subsection{The Problem of Partially Overlapping Contracts}
 
@@ -257,6 +278,7 @@ Substituting for $\+x$ and $\+c$:
 % TODO: check \+K \+K^T is projection into nullspace, and comment on any meaning
 
 \subsection{Example of Using Nullspace Component}
+This section present 
 
 
 \subsection{Choosing The Target Vector}
