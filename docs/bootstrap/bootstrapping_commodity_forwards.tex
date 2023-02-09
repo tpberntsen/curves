@@ -278,8 +278,86 @@ Substituting for $\+x$ and $\+c$:
 % TODO: check \+K \+K^T is projection into nullspace, and comment on any meaning
 
 \subsection{Example of Using Nullspace Component}
-This section present 
+This section use the input data as TODO, but includes the nullspace component presented
+in equation xyz as an example and how this solves the problematic case. As before
+before input contracts have price $c$, and we will set the target vector as follows:
 
+\begin{equation}
+    \+x^{target} = \begin{bmatrix}
+        c \\
+        c \\
+        c \\
+        c \\
+    \end{bmatrix}
+\end{equation}
+
+And the nullspace projection matrix (to do check it is this) is:
+
+\begin{equation}
+    \+K \+K^T = \begin{bmatrix}
+        0.6 & -0.4 & -0.2 & 0.2  \\
+        -0.4 & 0.6 & -0.2 & 0.2 \\
+        -0.2 & -0.2 & 0.4 & -0.4 \\
+        0.2 & 0.2 & -0.4 & 0.4
+    \end{bmatrix}
+\end{equation}
+
+Substitution this into equation xyz:
+
+\begin{eqnarray}
+    \nonumber
+    \+x^* = \+A^+ \+b + \+K \+K^T \+x^{target} \\
+    \nonumber
+    = \begin{bmatrix}
+        0.8c \\
+        0.8c \\
+        1.4c \\
+        0.6c \\
+    \end{bmatrix} +
+    \begin{bmatrix}
+        0.6 & -0.4 & -0.2 & 0.2  \\
+        -0.4 & 0.6 & -0.2 & 0.2 \\
+        -0.2 & -0.2 & 0.4 & -0.4 \\
+        0.2 & 0.2 & -0.4 & 0.4
+    \end{bmatrix}
+    \begin{bmatrix}
+        c \\
+        c \\
+        c \\
+        c \\
+    \end{bmatrix} \\
+    \nonumber
+    = \begin{bmatrix}
+        0.8c \\
+        0.8c \\
+        1.4c \\
+        0.6c \\
+    \end{bmatrix} +
+    \begin{bmatrix}
+        0.2c \\
+        0.2c \\
+        -0.4c \\
+        0.4c \\
+    \end{bmatrix} \\
+    = \begin{bmatrix}
+        c \\
+        c \\
+        c \\
+        c \\
+    \end{bmatrix}
+\end{eqnarray}
+
+We can see from this example that including the nullspace term has the desired effect
+of resulting in the bootstrapped prices to equal the input forward prices. The above
+example is of course contrived and does not look like a real use of bootstrapping.
+However, experiments have been conducted on more realistic inputs to the boostrapper,
+which have shown that in the case of partially overlapping contracts the inclusion of
+the nullspace term has improved the results by moving the calculated bootstrapped prices 
+closer to the input forward prices. In these cases, without the nullspace term included
+the bootstrapped prices deviated wildly from the input contract prices in a way which was
+clearly not a good interpolation.
+
+% TODO include more realistic example in appendix
 
 \subsection{Choosing The Target Vector}
 In the case where all input forward prices are the same, choosing $\+x^{target}$ is
