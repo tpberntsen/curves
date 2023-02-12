@@ -115,8 +115,20 @@ This is the no-arbigrate relationship between the \emph{big} contract and it's a
 
 \section{Bootstrapping Algorithm}
 
-\subsection{Linear System}
+\subsection{Shaping The Forward Curve}
 
+The application of shaping to a forward curve is typically done with power and gas prices
+where there is strong seasonality, the forward prices are at a too low granularity to
+show this seasonality, and a spline algorithm cannot be trusted to give the correct shape.
+
+In this paper the application of shaping is done in two different ways: with spreads 
+and ratios. In both cases the application of shaping can be expressed as a linear
+equations and appended to the same linear system which describes the forward price
+constraints. In this way the solution to the linear system can jointly boostrap the
+forward prices and apply shaping.
+
+
+\subsection{Linear System}
 
 It is important to note for later discussion in this paper that the above solution will be 
 \emph{least squares} in two different senses. Firstly, should matrix $\+A$ have rank less
@@ -139,6 +151,8 @@ good one for the bootstrapping problem, and introduces an adjustment which impro
 the results.
 
 % TODO write above in terms of euclidean distance.
+
+
 
 \subsection{The Problem of Partially Overlapping Contracts}
 
