@@ -130,6 +130,27 @@ forward prices and apply shaping.
 
 \subsection{Linear System}
 
+The above forward price and shaping constraints can be written in matrix form as:
+
+\begin{equation}
+    \+A\+x = \+b
+\end{equation}
+
+Here element $i$ of vector $\+x$ equals $f_i$, and the joint bootstrapping and shaping
+problem involves solving for $\+x$. However, it is unlikely that the above system can
+be solved to a unique solution as matrix $\+A$ will not necessarily be square. As
+such, the vector of bootstrapped prices $\hat{\+x}$ is found as the least squares
+solution:
+
+\begin{equation}
+    \hat{\+x} = \+A^+\+b
+\end{equation}
+
+Where matrix $\+A^+$ is the pseudoinverse (otherwise knowne as the Moore-Penrose inverse)
+of $\+A$.
+
+\bigskip
+
 It is important to note for later discussion in this paper that the above solution will be 
 \emph{least squares} in two different senses. Firstly, should matrix $\+A$ have rank less
 than $m$, as would be the case where there is some redundancy in the input contracts,
