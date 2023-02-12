@@ -4,7 +4,7 @@
 \usepackage{url}
 \usepackage{hyperref}
 
-\title{Bootstrapping of Commodity Forward Prices}
+\title{Bootstrapping and Shaping of Commodity Forward, Swap and Futures Prices}
 \author{Jake C. Fowler}
 \date{February 2023}
 
@@ -14,6 +14,22 @@
 \maketitle
 
 THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
+
+
+\begin{abstract}
+    This paper presents an algorithm for bootstrapping and shaping of the linear commodity
+    instruments: forwards, swaps and futures. First the joint bootstrapping and shaping
+    problem is formulated as a system of linear equations. This system is not guaranteed to have
+    a unique solution, so a pseudoinverse is used to find
+    find the least squares solution. Next a case where this solution does not give
+    the desired results is presented. A modification of the original algorithm is
+    described which adds a vector from the nullspace of the linear system matrix to
+    the least squares solution. This nullspace vector is chosen to minimise the 
+    Euclidean distance to a target vector which is itself derived from market prices.
+    Finally there is a discussion on future research into how this algorithm can be 
+    improved.
+\end{abstract}
+
 
 \section{Introduction}
 This document presents an algorithm for the boostrapping commodity forwards, futures and swap 
@@ -372,6 +388,7 @@ should be used.
 
 
 \section{Future Work}
+\subsection{Choice of Target Vector}
 More research into choice of the target vector can be done, including an analysis of both
 the intuitive and mathematical reasoning behind the logic for calculating $\+x^{target}$ 
 presented in this paper, as well as alternative strategies. The results of varying  
@@ -379,6 +396,7 @@ $\+x^{target}$ should be analysed with real market data to assess usage in pract
 
 \bigskip
 
+\subsection{Combined Spline Interpolation and Bootstrapping}
 The whole approach to bootstrapping in this paper should also be compared to algorithms
 which perform both boostrapping and interpolation, such as \cite{Benth}. In the case of
 partially overalapping contracts, the inclusion of the nullspace component and target
@@ -405,6 +423,7 @@ slope more than once when interpolating commodity forward curve data.
 
 \bigskip
 
+\subsection{Efficient Handling of Collinear Rows}
 The handling of shaping constraints which are collinear with the forward price constraints
 (and prior shaping constraints) in an efficient manner is an area which requires more work. 
 For example if the forward
