@@ -328,6 +328,16 @@ Substituting for $\+x$ and $\+c$:
 
 % TODO: check \+K \+K^T is projection into nullspace, and comment on any meaning
 
+From a practical implementation perspective it is worth noting that the nullspace
+basis can be found from the SVD (Singular Value Decomposition) of $\+A$ 
+\footnotemark. Performing an
+SVD on $\+A$ as an intermediate step to calculating $\+A^+$, which represents a
+convenience for the implementation.
+
+\footnotetext{For the SVD $\+A = \+U \+\Sigma \+V^T$, the nullspace of $\+A$ can
+be found from the columns of $\+V$ corresponding to the column (or row) indices 
+of the zero singular values along the diagonal of $\+\Sigma$.}
+
 \subsection{Example of Using Nullspace Component}
 This section use the input data as TODO, but includes the nullspace component presented
 in equation xyz as an example and how this solves the problematic case. As before
