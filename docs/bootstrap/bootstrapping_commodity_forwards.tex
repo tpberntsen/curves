@@ -31,32 +31,27 @@ THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
 \end{abstract}
 
 
-\section{Introduction}
-This document presents an algorithm for the boostrapping commodity forwards, futures and swap 
-contracts. 
-
-
-It is applicable for linear commodity contracts contingent on either a continuous delivery
+\section{Introduction and Terminology}
+This document presents an algorithm for the boostrapping and shaping of commodity forwards, futures and swap 
+contracts. It is applicable for linear commodity contracts contingent on either a continuous delivery
 of physical commodity, financial payoff based on the average of an index throughout the
-contract delivery period. 
-
-The rest of this document will refer to just forward prices and curves, even though the same 
-methodology can be applied to futures and swap instruments as well.
-
-Also the document refers to the \emph{delivery period} of the contracts, in place of 
+contract delivery period. The rest of this document will refer to just \emph{forward} prices and curves, even though the same 
+methodology can be applied to futures and swap instruments as well. Also the document refers 
+to the \emph{delivery period} of the contracts, in place of 
 \emph{delivery or fixing period} where \emph{fixing period} is the set of time periods from 
 which the average price of an index is used to calculate the payoff of a swap contract.
 
-\subsection{Bootstrapping Definition and Uses}
-The process of bootstrapping is to take a set of prices of forward and derive a piecewise 
+\section{Bootstrapping Definition}
+The process of bootstrapping is to transform a set of forward prices into a piecewise 
 flat forward curve consistent with these prices. In the typical case, the delivery periods 
 of the input forward contracts will be overlapping, so boostrapping can been seen as an
-algorithm for producing a set of forward prices for contiguous delivery periods. 
+algorithm for producing a set of forward prices for contiguous delivery periods, consistent
+with the input forward prices.
 In this wasy, bootstrapping should in the most general case be seen as an interpolation method.
 
 % TODO comment that bootstrapped prices can't generally be realised
 
-\bigskip
+\section{Uses For Bootstrapping}
 
 One example of the use of a bootstrapped curve is for it to be loaded into an ETRM
 (Energy Trading Risk Management) system for the valuation of a portfolio of vanilla
@@ -71,6 +66,8 @@ of a physical asset with embedded optionality.
 
 Finally bootstrapping can be used to derive the inputs to an interpolation method which
 is then used to calculate a smoothed higher granularity forward curve.
+
+% TODO more details on the input to interpolation
 
 \section{No-Arbitrage Forward Price Condition}
 This section describes the no-arbitrage relationship between the set of prices of forward contracts
