@@ -61,10 +61,29 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     first_period = standardised_contracts[0][0]
     last_period = standardised_contracts[-1][1]
     result_curve_index = pd.period_range(start=first_period, end=last_period)
-
-    matrix_size = len(result_curve_index) * 2 + 2
+    num_result_curve_points = len(result_curve_index)
+    # Construct linear system and solve
+    matrix_size = num_result_curve_points * 2 + 2
     constraint_matrix = np.array((matrix_size, matrix_size))
     constraint_vector = np.array((matrix_size, 1))
-    
-    return TensionSplineResults(None, None)
 
+    # TODO populate constraints
+    solution = np.zeros(matrix_size) # TODO set this to the actual solution
+
+    # Read results off solution
+    result_curve_prices = np.zeros(num_result_curve_points)
+    result_idx = 0
+    for i in range(0, num_contracts):
+        z = solution[i * 2]
+        y = solution[i * 2 + 1]
+        
+
+    result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
+    return TensionSplineResults(result_curve, None)
+
+
+def _default_time_func(period1, period2):
+    time_stamp1 = period1.start_time
+    time_stamp2 = period2.start_time
+    time_delta = time_stamp2 - time_stamp1
+    return time_delta.total_seconds() / 60.0 / 60.0 / 24.0 / 365.0  # Convert to years with ACT/365
