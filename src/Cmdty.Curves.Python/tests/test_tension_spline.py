@@ -21,22 +21,23 @@
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
 
+import unittest
 import pandas as pd
-import numpy as np
-import typing as tp
-from curves._common import ContractsType
+from curves import tension_spline
 
 
-class TensionSplineResults(tp.NamedTuple):
-    forward_curve: pd.Series
-    spline_parameters: tp.Dict
+class TestTensionSpline(unittest.TestCase):
 
+    def test_inputs_constant_outputs_constant(self):
+        # Arrange
+        flat_price = 25.65
+        num_contracts = 3
+        monthly_index = pd.period_range(start='2023-03-01', periods=num_contracts, freq='M')
+        monthly_curve = pd.Series(data=[flat_price]*num_contracts, index=monthly_index)
 
-def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
-                    freq: str,
-                    tension: float,
-                    mult_season_adjust: tp.Optional[tp.Callable[[pd.Period], float]] = None,
-                    add_season_adjust: tp.Optional[tp.Callable[[pd.Period], float]] = None,
-                    average_weight: tp.Optional[tp.Callable[[pd.Period], float]] = None) -> TensionSplineResults:
-    return TensionSplineResults(None, None)
+        # Act
+        daily_curve, _ = tension_spline(monthly_curve, freq='D')
 
+        # Assert
+        expect_daily_curve = monthly_curve.resample('D').fillna('pad')
+        self.assertEqual(daily_curve, expect_daily_curve)
