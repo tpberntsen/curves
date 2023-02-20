@@ -60,8 +60,11 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
     if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
-        # TODO check no overlaps
         # TODO handle gaps
+        for i in range(1, num_contracts):
+            if standardised_contracts[i-1][1] >= standardised_contracts[i][0]:
+                raise ValueError('contracts should not have delivery periods which overlap. Elements '
+                                 '{} and {} have overlaps.'.format(i-1, i))
         spline_boundaries = [contract[0] for contract in standardised_contracts]
     else:
         if len(spline_boundaries) != num_contracts:
@@ -72,7 +75,9 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                              ' However, it equals {}.'.format(standardised_contracts[0][0], spline_boundaries[0]))
         for i in range(1, num_contracts):
             if spline_boundaries[i] <= spline_boundaries[i-1]:
-                raise ValueError('')
+                raise ValueError('spline_boundaries should be in ascending order. Elements {} and'
+                                 '{} have values {} and {}, hence are not in order.'
+                                 .format(i-1, i, spline_boundaries[i-1], spline_boundaries[i]))
 
     first_period = standardised_contracts[0][0]
     last_period = standardised_contracts[-1][1]
