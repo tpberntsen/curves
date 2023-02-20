@@ -33,11 +33,13 @@ class TensionSplineResults(tp.NamedTuple):
 
 
 def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
-                    freq: str,
-                    tension: float,
-                    mult_season_adjust: tp.Optional[tp.Callable[[pd.Period], float]] = None,
-                    add_season_adjust: tp.Optional[tp.Callable[[pd.Period], float]] = None,
-                    average_weight: tp.Optional[tp.Callable[[pd.Period], float]] = None) -> TensionSplineResults:
+            freq: str,
+            tension: float,
+            mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+            add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+            average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+            spline_boundaries = None) \
+        -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
         raise ValueError('contracts argument must have length at least 2. Length of contract used is {}.'
@@ -56,8 +58,22 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             contract_periods = pd.period_range(start_period, end_period)
             standardised_contracts.append((start_period, end_period, price))
 
-    standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort be start
-    # TODO check no overlaps
+    standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
+    if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
+        # TODO check no overlaps
+        # TODO handle gaps
+        spline_boundaries = [contract[0] for contract in standardised_contracts]
+    else:
+        if len(spline_boundaries) != num_contracts:
+            raise ValueError('len(spline_boundaries) should equal len(contracts). However, len(spline_boundaries) '
+                             'equals {} and len(contracts) equals {}.'.format(len(spline_boundaries), num_contracts))
+        if spline_boundaries[0] != standardised_contracts[0][0]:
+            raise ValueError('First element of spline_boundaries should equal {}, the start of the first contract.'
+                             ' However, it equals {}.'.format(standardised_contracts[0][0], spline_boundaries[0]))
+        for i in range(1, num_contracts):
+            if spline_boundaries[i] <= spline_boundaries[i-1]:
+                raise ValueError('')
+
     first_period = standardised_contracts[0][0]
     last_period = standardised_contracts[-1][1]
     result_curve_index = pd.period_range(start=first_period, end=last_period)
@@ -76,7 +92,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     for i in range(0, num_contracts):
         z = solution[i * 2]
         y = solution[i * 2 + 1]
-        
+
 
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
     return TensionSplineResults(result_curve, None)
