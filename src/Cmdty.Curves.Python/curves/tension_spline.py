@@ -32,12 +32,14 @@ class TensionSplineResults(tp.NamedTuple):
     spline_parameters: tp.Dict
 
 
+# TODO: ability to specify time zone
 def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             freq: str,
-            tension: float,
+            tension: float, # TODO: time varying tension. Research if this is possible.
+            discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
+            average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
             mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
             add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-            average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
             spline_boundaries = None) \
         -> TensionSplineResults:
     num_contracts = len(contracts)
@@ -88,13 +90,31 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     constraint_matrix = np.array((matrix_size, matrix_size))
     constraint_vector = np.array((matrix_size, 1))
 
+    # Calculate vectors of coefficients
+    # TODO: change these to numpy arrays?
+    discount_factors = [discount_factor(key) for key in result_curve_index]
+    if average_weight is None:
+        average_weights = [1.0] * num_result_curve_points
+    else:
+        average_weights = [average_weight(key) for key in result_curve_index]
+
+    if mult_season_adjust is None:
+        mult_season_adjusts = [1.0] * num_result_curve_points
+    else:
+        mult_season_adjusts = [mult_season_adjust(key) for key in result_curve_index]
+
+    if add_season_adjust is None:
+        add_season_adjusts = [0.0] * num_result_curve_points
+    else:
+        add_season_adjusts = [add_season_adjust(key) for key in result_curve_index]
+
     # TODO populate constraints
     solution = np.zeros(matrix_size) # TODO set this to the actual solution
 
     # Read results off solution
     result_curve_prices = np.zeros(num_result_curve_points)
     result_idx = 0
-    for i in range(0, num_contracts):
+    for i in range(0, spline_boundaries):
         z = solution[i * 2]
         y = solution[i * 2 + 1]
 
