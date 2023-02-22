@@ -61,6 +61,8 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             standardised_contracts.append((start_period, end_period, price))
 
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
+    first_period = standardised_contracts[0][0]
+    last_period = standardised_contracts[-1][1]
     if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
         # TODO handle gaps
         for i in range(1, num_contracts):
@@ -69,10 +71,11 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                  '{} and {} have overlaps.'.format(i-1, i))
         spline_boundaries = [contract[0] for contract in standardised_contracts]
     else:
+        # TODO allow len(spline_boundaries) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
         if len(spline_boundaries) != num_contracts:
             raise ValueError('len(spline_boundaries) should equal len(contracts). However, len(spline_boundaries) '
                              'equals {} and len(contracts) equals {}.'.format(len(spline_boundaries), num_contracts))
-        if spline_boundaries[0] != standardised_contracts[0][0]:
+        if spline_boundaries[0] != first_period:
             raise ValueError('First element of spline_boundaries should equal {}, the start of the first contract.'
                              ' However, it equals {}.'.format(standardised_contracts[0][0], spline_boundaries[0]))
         for i in range(1, num_contracts):
@@ -80,9 +83,11 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 raise ValueError('spline_boundaries should be in ascending order. Elements {} and'
                                  '{} have values {} and {}, hence are not in order.'
                                  .format(i-1, i, spline_boundaries[i-1], spline_boundaries[i]))
+            if spline_boundaries[i] > last_period:
+                raise ValueError('spline_boundaries should not contain items after the latest contract delivery period.'
+                     'Element {} contains {} which is after the latest delivery of {}.'
+                                 .format(i, spline_boundaries[i], last_period))
 
-    first_period = standardised_contracts[0][0]
-    last_period = standardised_contracts[-1][1]
     result_curve_index = pd.period_range(start=first_period, end=last_period)
     num_result_curve_points = len(result_curve_index)
     # Construct linear system and solve
@@ -112,12 +117,16 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     solution = np.zeros(matrix_size) # TODO set this to the actual solution
 
     # Read results off solution
+    tension_squared = tension * tension
     result_curve_prices = np.zeros(num_result_curve_points)
     result_idx = 0
-    for i in range(0, spline_boundaries):
+    for i, section_start in enumerate(spline_boundaries):
         z = solution[i * 2]
         y = solution[i * 2 + 1]
-
+        #section_end_period = spline_boundaries[i+1] if i <
+        while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
+            t = _default_time_func(first_period, result_curve_index[result_idx])
+            result_idx += 1
 
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
     return TensionSplineResults(result_curve, None)
