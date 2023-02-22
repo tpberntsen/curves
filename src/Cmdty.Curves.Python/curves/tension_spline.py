@@ -125,7 +125,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         y_start = solution[i * 2 + 1]
         z_end = solution[(i + 1) * 2]
         y_end = solution[(i + 1) * 2 + 1]
-        section_end = spline_boundaries[i+1] if i <= num_result_curve_points else last_period + 1
+        section_end = spline_boundaries[i+1] if i < len(spline_boundaries)-1 else last_period + 1
         h = _default_time_func(section_start, section_end)
         while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
             period = result_curve_index[result_idx]
