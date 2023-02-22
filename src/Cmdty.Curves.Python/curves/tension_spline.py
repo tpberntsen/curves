@@ -121,11 +121,23 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     result_curve_prices = np.zeros(num_result_curve_points)
     result_idx = 0
     for i, section_start in enumerate(spline_boundaries):
-        z = solution[i * 2]
-        y = solution[i * 2 + 1]
-        #section_end_period = spline_boundaries[i+1] if i <
+        z_start = solution[i * 2]
+        y_start = solution[i * 2 + 1]
+        z_end = solution[(i + 1) * 2]
+        y_end = solution[(i + 1) * 2 + 1]
+        section_end = spline_boundaries[i+1] if i <= num_result_curve_points else last_period + 1
+        h = _default_time_func(section_start, section_end)
         while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
-            t = _default_time_func(first_period, result_curve_index[result_idx])
+            period = result_curve_index[result_idx]
+            time_from_section_start = _default_time_func(section_start, period)
+            time_to_section_end = _default_time_func(period, section_end)
+            # TODO vectorise this
+            spline_val = (z_start * np.sinh(tension * time_to_section_end) +
+                z_end * np.sinh(tension * time_from_section_start))/(tension_squared * np.sinh(tension * h)) + \
+                ((y_start - z_start/tension_squared) * time_to_section_end +
+                 (y_end - z_end/tension_squared) * time_from_section_start)/h
+            result_curve_prices[result_idx] = (spline_val + add_season_adjusts[result_idx]) * \
+                                              mult_season_adjusts[result_idx]
             result_idx += 1
 
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
