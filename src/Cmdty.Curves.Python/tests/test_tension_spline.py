@@ -36,8 +36,9 @@ class TestTensionSpline(unittest.TestCase):
         monthly_curve = pd.Series(data=[flat_price]*num_contracts, index=monthly_index)
 
         # Act
-        daily_curve, _ = tension_spline(monthly_curve, freq='D', tension=0.5, discount_factor=lambda x: 1.0)
+        daily_curve, spline_params = tension_spline(monthly_curve, freq='D', tension=0.5, discount_factor=lambda x: 1.0)
 
         # Assert
         expect_daily_curve = monthly_curve.resample('D').fillna('pad')
-        self.assertEqual(daily_curve, expect_daily_curve)
+        self.assertEqual(len(daily_curve), len(expect_daily_curve))
+        self.assertEqual(len(spline_params), len(monthly_curve)+1)

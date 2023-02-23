@@ -27,9 +27,15 @@ import typing as tp
 from curves._common import ContractsType, _last_period, deconstruct_contract, contract_pandas_periods
 
 
+class SplineParameters(tp.NamedTuple):
+    period: tp.Union[pd.Period, pd.Timestamp]
+    z: float
+    y: float
+
+
 class TensionSplineResults(tp.NamedTuple):
     forward_curve: pd.Series
-    spline_parameters: tp.Dict
+    spline_parameters: tp.List[SplineParameters]
 
 
 # TODO: ability to specify time zone
@@ -113,19 +119,27 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     else:
         add_season_adjusts = [add_season_adjust(key) for key in result_curve_index]
 
+    #sinh_
+
     # TODO populate constraints
     solution = np.zeros(matrix_size) # TODO set this to the actual solution
 
     # Read results off solution
     tension_squared = tension * tension
     result_curve_prices = np.zeros(num_result_curve_points)
+    spline_parameters = []
     result_idx = 0
     for i, section_start in enumerate(spline_boundaries):
         z_start = solution[i * 2]
         y_start = solution[i * 2 + 1]
         z_end = solution[(i + 1) * 2]
         y_end = solution[(i + 1) * 2 + 1]
-        section_end = spline_boundaries[i+1] if i < len(spline_boundaries)-1 else last_period + 1
+        spline_parameters.append(SplineParameters(section_start, z_start, z_end))
+        if i == len(spline_boundaries) - 1:
+            section_end = last_period + 1
+            spline_parameters.append(SplineParameters(section_end, z_start, z_end))
+        else:
+            section_end = spline_boundaries[i+1]
         h = _default_time_func(section_start, section_end)
         while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
             period = result_curve_index[result_idx]
@@ -141,7 +155,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             result_idx += 1
 
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
-    return TensionSplineResults(result_curve, None)
+    return TensionSplineResults(result_curve, spline_parameters)
 
 
 def _default_time_func(period1, period2):
