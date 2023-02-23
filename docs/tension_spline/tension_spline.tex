@@ -41,11 +41,12 @@ case a boundary point will exit for the start of the gap.
 
 \bigskip
 
-\begin{equation}
+\begin{multline}
 p_i(t) = \big[ z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1})) \big] 
         / (\tau^2 \sinh(\tau h_i)) \\
-    + (y_{i-1} - z_{i-1}/\tau^2)(t_i - t)/h_i + (y_i - z_i/\tau^2)
-\end{equation}
+    + (y_{i-1} - z_{i-1}/\tau^2)(t_i - t)/h_i + 
+    (y_i - z_i/\tau^2)(t - t_{i-1})/h_i
+\end{multline}
 
 Where $h_i =  t_i - t_{i-1}$. 
 $z_i = p^{''}(t_i)$ and $y_i = p(t_i)$, i.e. the (as yet unknown) value of the function at
@@ -75,25 +76,6 @@ $S_{add}(t)$ an additive adjustment, and $S_{mult}(t)$ a multiplicative adjustme
 \subsubsection{Polynomial Boundary Point Constraints}
 As usual with splines, constraints are put in place that adjascent polynomials have equal value, first derivative, and second derivatives at the boundary points.
 These three constraints can be respectively expressed as:
-\begin{equation}
-    \label{eq:continuity_constraint}
-    a_i + b_i t + c_i t^2 + d_i t^3 + e_i t^4 - 
-    a_{i+1} - b_{i+1} t - c_{i+1} t^2 - d_{i+1} t^3 - e_{i+1} t^4 = 0
-\end{equation}
-
-\begin{equation}
-    \label{eq:1st_deriv_constraint}
-    b_i + 2 c_i t + 3 d_i t^2 + 4 e_i t^3 - 
-    b_{i+1} - 2 c_{i+1} t - 3 d_{i+1} t^2 - 4 e_{i+1} t^3 = 0
-\end{equation}
-
-\begin{equation}
-    \label{eq:2nd_deriv_constraint}
-    2 c_i + 6 d_i t + 12 e_i t^2 - 
-    2 c_{i+1} - 6 d_{i+1} t - 12 e_{i+1} t^2 = 0
-\end{equation}
-The above three equations should hold for the boundary points \\
-$t \in \{t_1, t_2, \hdots, t_{n-2}, t_{n-1}\}$.
 
 \subsubsection{Forward Price Constraint}
 The most important constraints is that the derived forward curve averages back to the 
@@ -103,18 +85,15 @@ Setting this equal to the average of the derived smooth curve:
 
 \begin{equation}
     \label{eq:traded_forward_calc}
-    F_i = \frac{\sum_{t \in T_i} (p(t) + S_{add}(t))S_{mult}(t)w(t)}
-    {\sum_{t \in T_i} w(t)}
+    F_i = \frac{\sum_{t \in T_i} (p(t) + S_{add}(t))S_{mult}(t)w(t)D(t)}
+    {\sum_{t \in T_i} w(t)D(t)}
 \end{equation}
 
-Where $w(t)$ is a weighting function and $T_i$ is the set of all delivery start times
+Where $D(t)$ is the discount factor from the settlement date of delivery period $t$.
+$w(t)$ is a weighting function and $T_i$ is the set of all delivery start times
 for the delivery periods at the granularity of the curve being built. The weighting function has two
 meanings from a busines perspective.
 \begin{itemize}
-    \item The discount factor, because the no-arbitrage price of a forward contract is equal 
-    to the discount factor weighted average of its components. However, in a low interest rate 
-    environment, the discount factor can be approximated as 1.0 for all maturities, in which case 
-    the discounting component can be ignored.
     \item The volume of commodity delivered in each period. For example, an off-peak power forward 
     contract in the UK delivers over 12 hours in on weekdays, and 24 hours on weekends, hence $w(t)$ 
     would equal double for $t$ representing weekends compared to $w(t)$ when $t$ represents a weekday delivery. 
@@ -129,27 +108,33 @@ Equation \ref{eq:traded_forward_calc} can be transformed into an equation linear
 in the polynomial representation of $p(t)$:
 
 \begin{equation}
-    \sum_{t \in T_i} (p_i(t) + S_{add}(t)) S_{mult}(t)w(t) = 
-    F_i \sum_{t \in T_i} w(t)
+    \sum_{t \in T_i} (p_i(t) + S_{add}(t)) S_{mult}(t)w(t)D(t) = 
+    F_i \sum_{t \in T_i} w(t) D(t)
 \end{equation}
-Rearranging:
-\begin{equation}
-    \sum_{t \in T_i} (a_i + b_i t + c_i t^2 + d_i t^3 + e_i t^4  + 
-    S_{add}(t)) S_{mult}(t)w(t) = F_i \sum_{t \in T_i} w(t)
-\end{equation}
-Rearranging again gives a form linear with respect to the unknown polynomial coefficients $a_i$, $b_i$, $c_i$ and $d_i$.
-\begin{eqnarray}
+
+Substituting in for $p_i(t)$:
+\begin{multline}
+    \sum_{t \in T_i} ( \big[ z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1})) \big] 
+    / (\tau^2 \sinh(\tau h_i)) \\
++ (y_{i-1} - z_{i-1}/\tau^2)(t_i - t)/h_i + 
+(y_i - z_i/\tau^2)(t - t_{i-1})/h_i + 
+    S_{add}(t)) S_{mult}(t)w(t)D(t) \\
+    = F_i \sum_{t \in T_i} w(t)D(t)
+\end{multline}
+
+Rearranging again gives a form linear with respect to the unknown polynomial coefficients
+$z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
+
+\begin{multline}
     \label{eq:price_constraint}
-    \nonumber
     a_i \sum_{t \in T_i} S_{mult}(t)w(t) +
     b_i \sum_{t \in T_i} S_{mult}(t)w(t) t +
     c_i \sum_{t \in T_i} S_{mult}(t)w(t) t^2 + \\
-    \nonumber
     d_i \sum_{t \in T_i} S_{mult}(t)w(t) t^3 +
     e_i \sum_{t \in T_i} S_{mult}(t)w(t) t^4 = \\ 
-    F_i \sum_{t \in T_i} w(t) - 
-    \sum_{t \in T_i} S_{add}(t)S_{mult}(t)w(t)
-\end{eqnarray}
+    F_i \sum_{t \in T_i} w(t) D(t) - 
+    \sum_{t \in T_i} S_{add}(t)S_{mult}(t)w(t)D(t)
+\end{multline}
 
 In the case where there are gaps between the input forward contract delivery periods,
 the forward price constraint is simply omitted.
