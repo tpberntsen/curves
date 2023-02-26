@@ -20,7 +20,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-
+from datetime import date
 import unittest
 import pandas as pd
 from curves import tension_spline
@@ -30,15 +30,19 @@ class TestTensionSpline(unittest.TestCase):
 
     def test_inputs_constant_outputs_constant(self):
         # Arrange
-        flat_price = 25.65
+        freq = 'H'
+        time_zone = 'Europe/London'
+        flat_price = 0.0
         num_contracts = 3
-        monthly_index = pd.period_range(start='2023-03-01', periods=num_contracts, freq='M')
-        monthly_curve = pd.Series(data=[flat_price]*num_contracts, index=monthly_index)
+        monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
+        monthly_curve = pd.Series(data=[flat_price] * num_contracts, index=monthly_index)
+        spline_boundaries = ['2023-04-01', date(2023, 5, 12), pd.Period(freq='D', year=2023, month=6, day=21)]
 
         # Act
-        daily_curve, spline_params = tension_spline(monthly_curve, freq='D', tension=0.5, discount_factor=lambda x: 1.0)
+        daily_curve, spline_params = tension_spline(monthly_curve, freq=freq, tension=0.5, time_zone=time_zone,
+                                                    discount_factor=lambda x: 1.0, spline_boundaries=spline_boundaries)
 
         # Assert
-        expect_daily_curve = monthly_curve.resample('D').fillna('pad')
+        expect_daily_curve = monthly_curve.resample(freq).fillna('pad').to_timestamp()
         self.assertEqual(len(daily_curve), len(expect_daily_curve))
-        self.assertEqual(len(spline_params), len(monthly_curve)+1)
+        self.assertEqual(len(spline_params), len(monthly_curve) + 1)

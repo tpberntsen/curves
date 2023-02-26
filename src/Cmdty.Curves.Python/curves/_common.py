@@ -103,7 +103,7 @@ def deconstruct_contract(contract):
         (period, price) = ((contract[0], contract[1]), contract[2])
     else:
         raise ValueError("contract tuple must have either 2 or 3 items")
-    return (period, price)
+    return period, price
 
 
 def contract_period(input_period, freq, time_period_type):
@@ -129,23 +129,19 @@ def _last_period(period, freq):
 
     if not freq[0].isdigit():
         return period.asfreq(freq, 'e')
-    
     m = re.match("(\d+)(\w+)", freq)
-    
     num = int(m.group(1))
     sub_freq = m.group(2)
-    
     return (period.asfreq(sub_freq, 'e') - num + 1).asfreq(freq)
 
 
 def from_datetime_like(datetime_like, time_period_type):
     """ Converts either a pandas Period, datetime or date to a .NET Time Period"""
 
-    if (hasattr(datetime_like, 'hour')):
+    if hasattr(datetime_like, 'hour'):
         time_args = (datetime_like.hour, datetime_like.minute, datetime_like.second)
     else:
         time_args = (0, 0, 0)
-
     date_time = DateTime(datetime_like.year, datetime_like.month, datetime_like.day, *time_args)
     return TimePeriodFactory.FromDateTime[time_period_type](date_time)
 

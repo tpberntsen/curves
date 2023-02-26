@@ -38,15 +38,15 @@ class TensionSplineResults(tp.NamedTuple):
     spline_parameters: tp.List[SplineParameters]
 
 
-# TODO: ability to specify time zone
 def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
-            freq: str,
-            tension: float, # TODO: time varying tension. Research if this is possible.
-            discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
-            average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-            mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-            add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-            spline_boundaries = None) \
+                   freq: str,
+                   tension: float,  # TODO: time varying tension. Research if this is possible.
+                   discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
+                   average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                   mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                   add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                   time_zone=None,  # TODO put type hint for str, pytz.timezone, dateutil.tz.tzfile or None
+                   spline_boundaries=None) \
         -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
@@ -56,14 +56,15 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     standardised_contracts = []  # Contract as tuples of (Period, Period, price)
     if isinstance(contracts, pd.Series):
         for period, price in contracts.items():
-            start_period = period.asfreq(freq, 's')
-            end_period = _last_period(period, freq)
+            start_period = _to_index_element(period.asfreq(freq, 's'), freq, time_zone)
+            end_period = _to_index_element(_last_period(period, freq), freq, time_zone)
             standardised_contracts.append((start_period, end_period, price))
     else:
         for contract in contracts:
             period, price = deconstruct_contract(contract)
             start_period, end_period = contract_pandas_periods(period, freq)
-            contract_periods = pd.period_range(start_period, end_period)
+            start_period = _to_index_element(start_period, freq, time_zone)
+            end_period = _to_index_element(end_period, freq, time_zone)
             standardised_contracts.append((start_period, end_period, price))
 
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
@@ -72,29 +73,33 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
         # TODO handle gaps
         for i in range(1, num_contracts):
-            if standardised_contracts[i-1][1] >= standardised_contracts[i][0]:
+            if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
                 raise ValueError('contracts should not have delivery periods which overlap. Elements '
-                                 '{} and {} have overlaps.'.format(i-1, i))
+                                 '{} and {} have overlaps.'.format(i - 1, i))
         spline_boundaries = [contract[0] for contract in standardised_contracts]
     else:
         # TODO allow len(spline_boundaries) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
         if len(spline_boundaries) != num_contracts:
             raise ValueError('len(spline_boundaries) should equal len(contracts). However, len(spline_boundaries) '
                              'equals {} and len(contracts) equals {}.'.format(len(spline_boundaries), num_contracts))
+        spline_boundaries = [_to_index_element(sb, freq, time_zone) for sb in spline_boundaries]
         if spline_boundaries[0] != first_period:
             raise ValueError('First element of spline_boundaries should equal {}, the start of the first contract.'
                              ' However, it equals {}.'.format(standardised_contracts[0][0], spline_boundaries[0]))
         for i in range(1, num_contracts):
-            if spline_boundaries[i] <= spline_boundaries[i-1]:
+            if spline_boundaries[i] <= spline_boundaries[i - 1]:
                 raise ValueError('spline_boundaries should be in ascending order. Elements {} and'
                                  '{} have values {} and {}, hence are not in order.'
-                                 .format(i-1, i, spline_boundaries[i-1], spline_boundaries[i]))
+                                 .format(i - 1, i, spline_boundaries[i - 1], spline_boundaries[i]))
             if spline_boundaries[i] > last_period:
                 raise ValueError('spline_boundaries should not contain items after the latest contract delivery period.'
-                     'Element {} contains {} which is after the latest delivery of {}.'
+                                 'Element {} contains {} which is after the latest delivery of {}.'
                                  .format(i, spline_boundaries[i], last_period))
-
-    result_curve_index = pd.period_range(start=first_period, end=last_period)
+    if time_zone is None:
+        result_curve_index = pd.period_range(start=first_period, end=last_period)
+    else:
+        result_curve_index = pd.date_range(start=first_period, end=last_period,
+                                           freq=freq, tz=time_zone)
     num_result_curve_points = len(result_curve_index)
     # Construct linear system and solve
     matrix_size = num_result_curve_points * 2 + 2
@@ -119,10 +124,9 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     else:
         add_season_adjusts = [add_season_adjust(key) for key in result_curve_index]
 
-    #sinh_
-
+    # sinh_
     # TODO populate constraints
-    solution = np.zeros(matrix_size) # TODO set this to the actual solution
+    solution = np.zeros(matrix_size)  # TODO set this to the actual solution
 
     # Read results off solution
     tension_squared = tension * tension
@@ -136,10 +140,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         y_end = solution[(i + 1) * 2 + 1]
         spline_parameters.append(SplineParameters(section_start, z_start, z_end))
         if i == len(spline_boundaries) - 1:
-            section_end = last_period + 1
+            section_end = last_period # TODO: do I need to add one to this?
             spline_parameters.append(SplineParameters(section_end, z_start, z_end))
         else:
-            section_end = spline_boundaries[i+1]
+            section_end = spline_boundaries[i + 1]
         h = _default_time_func(section_start, section_end)
         while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
             period = result_curve_index[result_idx]
@@ -147,9 +151,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             time_to_section_end = _default_time_func(period, section_end)
             # TODO vectorise this
             spline_val = (z_start * np.sinh(tension * time_to_section_end) +
-                z_end * np.sinh(tension * time_from_section_start))/(tension_squared * np.sinh(tension * h)) + \
-                ((y_start - z_start/tension_squared) * time_to_section_end +
-                 (y_end - z_end/tension_squared) * time_from_section_start)/h
+                          z_end * np.sinh(tension * time_from_section_start)) / (
+                                     tension_squared * np.sinh(tension * h)) + \
+                         ((y_start - z_start / tension_squared) * time_to_section_end +
+                          (y_end - z_end / tension_squared) * time_from_section_start) / h
             result_curve_prices[result_idx] = (spline_val + add_season_adjusts[result_idx]) * \
                                               mult_season_adjusts[result_idx]
             result_idx += 1
@@ -159,7 +164,17 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
 
 def _default_time_func(period1, period2):
-    time_stamp1 = period1.start_time
-    time_stamp2 = period2.start_time
+    time_stamp1 = period1.start_time if isinstance(period1, pd.Period) else period1
+    time_stamp2 = period2.start_time if isinstance(period2, pd.Period) else period2
     time_delta = time_stamp2 - time_stamp1
     return time_delta.total_seconds() / 60.0 / 60.0 / 24.0 / 365.0  # Convert to years with ACT/365
+
+
+def _to_index_element(period, freq, tz):
+    if tz is None:
+        return pd.Period(period, freq=freq)
+    else:
+        if isinstance(period, pd.Period):
+            return period.to_timestamp().tz_localize(tz)
+        else:
+            return pd.Timestamp(period, tz=tz)
