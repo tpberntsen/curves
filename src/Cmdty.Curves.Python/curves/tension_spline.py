@@ -124,12 +124,32 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     else:
         add_season_adjusts = [add_season_adjust(key) for key in result_curve_index]
 
-    # sinh_
+    # Precalculate sinh vectors
+    tension_squared = tension * tension
+    num_sections = len(spline_boundaries)
+    # TODO: research allocation-efficient numpy vectorisation
+    h_is = np.empty((num_sections,))
+    t_from_section_start = np.empty((num_result_curve_points,))
+    t_to_section_end = np.empty((num_result_curve_points,))
+
+    curve_point_idx = 0
+    for i, section_start in enumerate(spline_boundaries):
+        section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
+        h_is[i] = _default_time_func(section_start, section_end)
+        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_start:
+            period = result_curve_index[curve_point_idx]
+            t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
+            t_to_section_end[curve_point_idx] = _default_time_func(period, section_end)
+            curve_point_idx += 1
+
+    tau_sqrd_sinh = np.sinh(tension * h_is) * tension_squared
+    sinh_tau_t_from_start = np.sinh(t_from_section_start * tension)
+    sinh_tau_t_to_end = np.sinh(t_to_section_end * tension)
+
     # TODO populate constraints
     solution = np.zeros(matrix_size)  # TODO set this to the actual solution
 
     # Read results off solution
-    tension_squared = tension * tension
     result_curve_prices = np.zeros(num_result_curve_points)
     spline_parameters = []
     result_idx = 0
@@ -139,7 +159,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         z_end = solution[(i + 1) * 2]
         y_end = solution[(i + 1) * 2 + 1]
         spline_parameters.append(SplineParameters(section_start, z_start, z_end))
-        if i == len(spline_boundaries) - 1:
+        if i == num_sections - 1:
             section_end = last_period # TODO: do I need to add one to this?
             spline_parameters.append(SplineParameters(section_end, z_start, z_end))
         else:
