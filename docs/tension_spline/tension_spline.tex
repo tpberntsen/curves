@@ -85,8 +85,8 @@ Setting this equal to the average of the derived smooth curve:
 
 \begin{equation}
     \label{eq:traded_forward_calc}
-    F_i = \frac{\sum_{t \in T_i} (p(t) + S_{add}(t))S_{mult}(t)w(t)D(t)}
-    {\sum_{t \in T_i} w(t)D(t)}
+    F_j = \frac{\sum_{t \in T_j} (p(t) + S_{add}(t))S_{mult}(t)w(t)D(t)}
+    {\sum_{t \in T_j} w(t)D(t)}
 \end{equation}
 
 Where $D(t)$ is the discount factor from the settlement date of delivery period $t$.
@@ -107,41 +107,38 @@ meanings from a busines perspective.
 Equation \ref{eq:traded_forward_calc} can be transformed into an equation linear on the parameters of the piecewise polynomial by substituting
 in the polynomial representation of $p(t)$:
 
+% TODO find latex command for intersection and use below
 \begin{equation}
-    \sum_{t \in T_i} (p_{i(t)}(t) + S_{add}(t)) S_{mult}(t)w(t)D(t) = 
-    F_i \sum_{t \in T_i} w(t) D(t)
+    \sum_i \sum_{t \in T_j, t \in  [t_{i-1}, t_i) } p_i(t) S_{mult}(t)w(t)D(t) = 
+    F_j \sum_{t \in T_j} w(t) D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
 \end{equation}
 
-Where $i(t)$ equals the index $i$ for the minimum $t_i >= t$.
 
-Substituting in for $p_{i(t)}(t)$:
+
+Substituting in for $p_i(t)$:
 \begin{multline}
-    \sum_{t \in T_i} ( \big[ z_{i(t)-1} \sinh(\tau (t_{i(t)} - t)) + z_{i(t)} \sinh(\tau (t - t_{i(t)-1})) \big] 
-    / (\tau^2 \sinh(\tau h_{i(t)})) \\
-+ (y_{t_{i(t)}-1} - z_{i(t)-1}/\tau^2)(t_i - t)/h_i + 
+    \sum_i \sum_{t \in T_i, t \in  [t_{i-1}, t_i)} ( \big[ z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1})) \big] 
+    / (\tau^2 \sinh(\tau h_i)) \\
++ (y_{i-1} - z_{i-1}/\tau^2)(t_i - t)/h_i + 
 (y_i - z_i/\tau^2)(t - t_{i-1})/h_i + 
     S_{add}(t)) S_{mult}(t)w(t)D(t) \\
-    = F_i \sum_{t \in T_i} w(t)D(t)
+    = F_i \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
 \end{multline}
 
-Where $h_{i(t)} = t_{i(t)} - t_{i(t)-1}$.
 
 Rearranging again gives a form linear with respect to the unknown polynomial coefficients
 $z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
 
 \begin{multline}
-    \label{eq:price_constraint}
-    a_i \sum_{t \in T_i} S_{mult}(t)w(t) +
-    b_i \sum_{t \in T_i} S_{mult}(t)w(t) t +
-    c_i \sum_{t \in T_i} S_{mult}(t)w(t) t^2 + \\
-    d_i \sum_{t \in T_i} S_{mult}(t)w(t) t^3 +
-    e_i \sum_{t \in T_i} S_{mult}(t)w(t) t^4 = \\ 
-    F_i \sum_{t \in T_i} w(t) D(t) - 
-    \sum_{t \in T_i} S_{add}(t)S_{mult}(t)w(t)D(t)
+    \sum_i \biggl( z_i \sum_{t \in T_i, t \in  [t_{i-1}, t_i)} \sinh(\tau (t - t_{i-1}))
+    / (\tau^2 \sinh(\tau h_i)) - 1/\tau^2(t - t_{i-1})/h_i \\
+    + z_{i-1} \sum_{t \in T_i, t \in  [t_{i-1}, t_i)} \sinh(\tau (t_i - t))
+    / (\tau^2 \sinh(\tau h_i)) - 1/\tau^2(t_i - t)/h_i \\
+    + y_i \sum_{t \in T_i, t \in  [t_{i-1}, t_i)} (t - t_{i-1})/h_i \\
+    + y_{i-1} \sum_{t \in T_i, t \in  [t_{i-1}, t_i)} (t_i - t)/h_i \biggr) \\
+    = F_i \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
 \end{multline}
 
-In the case where there are gaps between the input forward contract delivery periods,
-the forward price constraint is simply omitted.
 
 \subsubsection{Matrix Form of Constraints}
 Equations \ref{eq:continuity_constraint}, \ref{eq:1st_deriv_constraint}, \ref{eq:2nd_deriv_constraint} and
