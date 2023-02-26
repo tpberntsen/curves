@@ -108,19 +108,23 @@ Equation \ref{eq:traded_forward_calc} can be transformed into an equation linear
 in the polynomial representation of $p(t)$:
 
 \begin{equation}
-    \sum_{t \in T_i} (p_i(t) + S_{add}(t)) S_{mult}(t)w(t)D(t) = 
+    \sum_{t \in T_i} (p_{i(t)}(t) + S_{add}(t)) S_{mult}(t)w(t)D(t) = 
     F_i \sum_{t \in T_i} w(t) D(t)
 \end{equation}
 
-Substituting in for $p_i(t)$:
+Where $i(t)$ equals the index $i$ for the minimum $t_i >= t$.
+
+Substituting in for $p_{i(t)}(t)$:
 \begin{multline}
-    \sum_{t \in T_i} ( \big[ z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1})) \big] 
-    / (\tau^2 \sinh(\tau h_i)) \\
-+ (y_{i-1} - z_{i-1}/\tau^2)(t_i - t)/h_i + 
+    \sum_{t \in T_i} ( \big[ z_{i(t)-1} \sinh(\tau (t_{i(t)} - t)) + z_{i(t)} \sinh(\tau (t - t_{i(t)-1})) \big] 
+    / (\tau^2 \sinh(\tau h_{i(t)})) \\
++ (y_{t_{i(t)}-1} - z_{i(t)-1}/\tau^2)(t_i - t)/h_i + 
 (y_i - z_i/\tau^2)(t - t_{i-1})/h_i + 
     S_{add}(t)) S_{mult}(t)w(t)D(t) \\
     = F_i \sum_{t \in T_i} w(t)D(t)
 \end{multline}
+
+Where $h_{i(t)} = t_{i(t)} - t_{i(t)-1}$.
 
 Rearranging again gives a form linear with respect to the unknown polynomial coefficients
 $z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
