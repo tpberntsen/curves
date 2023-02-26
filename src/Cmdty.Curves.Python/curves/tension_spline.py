@@ -104,26 +104,28 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     # Construct linear system and solve
     matrix_size = num_result_curve_points * 2 + 2
     constraint_matrix = np.array((matrix_size, matrix_size))
-    constraint_vector = np.array((matrix_size, 1))
 
     # Calculate vectors of coefficients
-    # TODO: change these to numpy arrays?
-    discount_factors = [discount_factor(key) for key in result_curve_index]
+    discount_factors = np.fromiter((discount_factor(key) for key in result_curve_index), dtype=np.float64,
+                                   count=num_result_curve_points)
     if average_weight is None:
-        average_weights = [1.0] * num_result_curve_points
+        average_weights = np.ones(num_result_curve_points)
     else:
-        average_weights = [average_weight(key) for key in result_curve_index]
-
+        average_weights = np.fromiter((average_weight(key) for key in result_curve_index), dtype=np.float64,
+                                      count=num_result_curve_points)
+    weights_times_discounts = discount_factors * average_weights
     if mult_season_adjust is None:
-        mult_season_adjusts = [1.0] * num_result_curve_points
+        mult_season_adjusts = np.ones(num_result_curve_points)
     else:
-        mult_season_adjusts = [mult_season_adjust(key) for key in result_curve_index]
+        mult_season_adjusts = np.fromiter((mult_season_adjust(key) for key in result_curve_index), dtype=np.float64,
+                                          count=num_result_curve_points)
 
     if add_season_adjust is None:
-        add_season_adjusts = [0.0] * num_result_curve_points
+        add_season_adjusts = np.zeros(num_result_curve_points)
     else:
-        add_season_adjusts = [add_season_adjust(key) for key in result_curve_index]
-
+        add_season_adjusts = np.fromiter((add_season_adjust(key) for key in result_curve_index), dtype=np.float64,
+                                         count=num_result_curve_points)
+    weights_x_discounts_x_mult_adjust = weights_times_discounts * mult_season_adjusts
     # Precalculate sinh vectors
     tension_squared = tension * tension
     num_sections = len(spline_boundaries)
@@ -146,6 +148,23 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     sinh_tau_t_from_start = np.sinh(t_from_section_start * tension)
     sinh_tau_t_to_end = np.sinh(t_to_section_end * tension)
 
+    constraint_vector = np.empty((matrix_size, 1))
+    contract_start_idx = 0
+    # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
+    for i, (start, end, price) in enumerate(standardised_contracts):
+        while result_curve_index[contract_start_idx] != start:
+            contract_start_idx += 1
+        # TODO: search end in more efficient way, i.e. binary search of remaining vector?
+        contract_end_idx = contract_start_idx
+        while result_curve_index[contract_end_idx] != end:
+            contract_end_idx += 1
+        contract_end_idx += 1
+        weights_times_discounts_slice = weights_times_discounts[contract_start_idx:contract_end_idx]
+        add_season_adjusts_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
+        weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
+        constraint_vector[i] = price * np.sum(weights_times_discounts_slice) + \
+                               np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
+
     # TODO populate constraints
     solution = np.zeros(matrix_size)  # TODO set this to the actual solution
 
@@ -160,7 +179,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         y_end = solution[(i + 1) * 2 + 1]
         spline_parameters.append(SplineParameters(section_start, z_start, z_end))
         if i == num_sections - 1:
-            section_end = last_period # TODO: do I need to add one to this?
+            section_end = last_period  # TODO: do I need to add one to this?
             spline_parameters.append(SplineParameters(section_end, z_start, z_end))
         else:
             section_end = spline_boundaries[i + 1]
@@ -172,7 +191,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             # TODO vectorise this
             spline_val = (z_start * np.sinh(tension * time_to_section_end) +
                           z_end * np.sinh(tension * time_from_section_start)) / (
-                                     tension_squared * np.sinh(tension * h)) + \
+                                 tension_squared * np.sinh(tension * h)) + \
                          ((y_start - z_start / tension_squared) * time_to_section_end +
                           (y_end - z_end / tension_squared) * time_from_section_start) / h
             result_curve_prices[result_idx] = (spline_val + add_season_adjusts[result_idx]) * \
