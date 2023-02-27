@@ -103,7 +103,6 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     num_result_curve_points = len(result_curve_index)
     # Construct linear system and solve
     matrix_size = num_result_curve_points * 2 + 2
-    constraint_matrix = np.array((matrix_size, matrix_size))
 
     # Calculate vectors of coefficients
     discount_factors = np.fromiter((discount_factor(key) for key in result_curve_index), dtype=np.float64,
@@ -163,9 +162,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 * weights_x_discounts_x_mult_adjust
     zi_minus1_coeffs = (sinh_tau_t_to_end / tau_sqrd_sinh_expanded - t_to_section_end / tau_sqrd_hi_expanded) \
                 * weights_x_discounts_x_mult_adjust
-    yi_coffs = (t_from_section_start / h_is_expanded) * weights_x_discounts_x_mult_adjust
+    yi_coeffs = (t_from_section_start / h_is_expanded) * weights_x_discounts_x_mult_adjust
     yi_minus1_coeffs = (t_to_section_end / h_is_expanded) * weights_x_discounts_x_mult_adjust
 
+    # Populate constraint vector
     constraint_vector = np.empty((matrix_size, 1))
     contract_start_idx = 0
     # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
@@ -183,7 +183,34 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         constraint_vector[i] = price * np.sum(weights_times_discounts_slice) + \
                                np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
 
-    # TODO populate constraints
+    # Populate constraint matrix
+    constraint_matrix = np.array((matrix_size, matrix_size)) # TODO: make this banded matrix
+    spline_boundary_idx = 0
+    contract_section_start_idx = 0
+    # This is made more complicated by flexibility of allowing contracts and spline sections to differ
+    for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
+        # Find first spline section
+        while spline_boundaries[spline_boundary_idx] > contract_start:
+            spline_boundary_idx += 1
+        # Loop through spline sections which overlap contract
+        while spline_boundary_idx < num_sections and spline_boundaries[spline_boundary_idx] > contract_end:
+            section_start = spline_boundaries[spline_boundary_idx]
+            section_end = spline_boundaries[spline_boundary_idx + 1] if spline_boundary_idx < num_sections - 1 else last_period
+            contract_section_start_period = contract_start if contract_start >= section_start else section_start
+            contract_section_end_period = contract_end if contract_end <= section_end else section_end
+            while result_curve_index[contract_section_start_idx] != contract_section_start_period:
+                contract_section_start_idx += 1
+            # TODO use quicker search than this linear scan
+            contract_section_end_idx = contract_section_start_idx
+            while result_curve_index[contract_section_end_idx] != contract_section_end_period:
+                contract_section_end_idx += 1
+            contract_section_end_idx += 1
+            constraint_matrix[contract_idx, contract_idx * 2] = np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, contract_idx * 2 + 1] = np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, (contract_idx + 1) * 2] = np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, (contract_idx + 1) * 2 + 1] = np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            spline_boundary_idx += 1
+
     solution = np.zeros(matrix_size)  # TODO set this to the actual solution
 
     # Read results off solution
