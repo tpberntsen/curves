@@ -133,6 +133,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     h_is = np.empty((num_sections,))
     t_from_section_start = np.empty((num_result_curve_points,))
     t_to_section_end = np.empty((num_result_curve_points,))
+    h_is_expanded = np.empty((num_result_curve_points,)) # Needed for vectorised calcs
 
     curve_point_idx = 0
     for i, section_start in enumerate(spline_boundaries):
@@ -142,11 +143,28 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             period = result_curve_index[curve_point_idx]
             t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
             t_to_section_end[curve_point_idx] = _default_time_func(period, section_end)
+            h_is_expanded[curve_point_idx] = h_is[i]
             curve_point_idx += 1
 
     tau_sqrd_sinh = np.sinh(tension * h_is) * tension_squared
+    tau_sqrd_sinh_expanded = np.empty((num_result_curve_points,))
+    for i, section_start in enumerate(spline_boundaries):
+        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_start:
+            tau_sqrd_sinh_expanded[curve_point_idx] = tau_sqrd_sinh[i]
+            curve_point_idx += 1
+
+    tau_sqrd_hi_expanded = tension_squared * h_is_expanded
     sinh_tau_t_from_start = np.sinh(t_from_section_start * tension)
     sinh_tau_t_to_end = np.sinh(t_to_section_end * tension)
+
+    # TODO: research allocation-efficient vectorisation with numpy. Probably just make operations in-place.
+    # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs to be zero vectors if tension is zero
+    zi_coeffs = (sinh_tau_t_from_start / tau_sqrd_sinh_expanded - t_from_section_start / tau_sqrd_hi_expanded) \
+                * weights_x_discounts_x_mult_adjust
+    zi_minus1_coeffs = (sinh_tau_t_to_end / tau_sqrd_sinh_expanded - t_to_section_end / tau_sqrd_hi_expanded) \
+                * weights_x_discounts_x_mult_adjust
+    yi_coffs = (t_from_section_start / h_is_expanded) * weights_x_discounts_x_mult_adjust
+    yi_minus1_coeffs = (t_to_section_end / h_is_expanded) * weights_x_discounts_x_mult_adjust
 
     constraint_vector = np.empty((matrix_size, 1))
     contract_start_idx = 0
