@@ -47,7 +47,7 @@ p_i(t) = \frac{z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1}))}{\t
 \end{multline}
 
 Where $h_i =  t_i - t_{i-1}$. 
-$z_i = p^{''}(t_i)$ and $y_i = p(t_i)$, i.e. the (as yet unknown) value of the function at
+$z_i = p^{\prime \prime}(t_i)$ and $y_i = p(t_i)$, i.e. the (as yet unknown) value of the function at
 the boundary points.
 
 The curve fitting algorithm essentially involves solving for the parameters
@@ -72,8 +72,65 @@ $S_{add}(t)$ an additive adjustment, and $S_{mult}(t)$ a multiplicative adjustme
 
 \subsection{Constraints}
 \subsubsection{Polynomial Boundary Point Constraints}
-As usual with splines, constraints are put in place that adjascent polynomials have equal value, first derivative, and second derivatives at the boundary points.
-These three constraints can be respectively expressed as:
+As usual with splines, constraints are put in place that adjascent polynomials 
+have equal value, first derivative, and second derivatives at the boundary points.
+
+\subsubsection{Polynomial Value Boundary Point Equality}
+To make $p(t)$ continuous we need to constrain $p_i(t_{i-1}) = p_{i-1}(t_{i-1})$. Evaluating both
+of these:
+
+\begin{eqnarray}
+    \nonumber
+    p_i(t_{i-1}) = \frac{z_{i-1} \sinh(\tau h_i) + z_i \sinh(0)}{\tau^2 \sinh(\tau h_i)}
+    + \frac{(y_{i-1} - z_{i-1}/\tau^2) h_i }{h_i} \\
+    \nonumber
+    = \frac{z_{i-1}}{\tau^2} + y_{i-1} - \frac{z_{i-1}}{\tau^2} \\
+    = y_{i-1}
+\end{eqnarray}
+
+\begin{eqnarray}
+    \nonumber
+    p_{i-1}(t_{i-1}) = \frac{z_{i-2} \sinh(0) + z_{i-1} \sinh(\tau h_{i-1})}{\tau^2 \sinh(\tau h_{i-1})}
+    + \frac{(y_{i-1} - z_{i-1}/\tau^2) h_{i-1}}{h_{i-1}} \\
+    \nonumber
+    = \frac{z_{i-1}}{\tau^2} + y_{i-1} - \frac{z_{i-1}}{\tau^2} \\
+    \nonumber
+    = y_{i-1}
+\end{eqnarray}
+
+Hence, by construction, $p(t)$ is always continuous with value $y_{i-1}$ at the boundary
+between $p_i$ and $p_{i - 1}$
+
+\subsubsection{Polynomial First Derivative Boundary Point Equality}
+This is to constrain $p^\prime_i(t_{i-1}) = p^\prime_{i-1}(t_{i-1})$. First finding the 
+expression for $p^\prime_i(t)$:
+
+\begin{multline}
+    p_i(t) = \frac{z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1}))}{\tau^2 \sinh(\tau h_i)}  \\
+        + \frac{(y_{i-1} - z_{i-1}/\tau^2)(t_i - t) + (y_i - z_i/\tau^2)(t - t_{i-1})}{h_i}
+\end{multline}
+
+\begin{multline}
+    p^\prime_i(t) = \frac{ z_{i-1} \cosh(\tau (t_i - t)) + z_i \cosh(\tau (t - t_{i-1}))}{\tau \sinh(\tau h_i)}  \\
+        + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau^2}{h_i}
+\end{multline}
+
+For clarity, rearranging this to highlight the linearity with respect to the parameters:
+
+\begin{multline}
+    p^\prime_i(t) = z_{i-1} \biggl( \frac{ \cosh(\tau (t_i - t))}{\tau \sinh(\tau h_i)} + \frac{1}{h_i \tau^2} \biggr)
+        + z_i \biggl( \frac{ \cosh(\tau (t - t_{i-1}))}{\tau \sinh(\tau h_i)} - \frac{1}{h_i \tau^2} \biggr) \\
+        + y_i \frac{1}{h_i} - y_{i - 1} \frac{1}{h_i}
+\end{multline}
+
+Evaluating this about the boundary points:
+
+
+
+\bigskip
+
+The above three equation should hold for the boundary points \\
+$t \in \{t_1, t_2, \hdots, t_{n-2}, t_{n-1}\}$.
 
 \subsubsection{Forward Price Constraint}
 The most important constraints is that the derived forward curve averages back to the 
@@ -133,9 +190,6 @@ $z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
     + y_{i-1} \sum_{t \in T_i \cap [t_{i-1}, t_i)} \frac{(t_i - t)}{h_i} S_{mult}(t)w(t)D(t) \biggr) \\
     = F_i \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
 \end{multline}
-
-
-\subsection{First Derivative Continuity Constraint}
 
 
 \subsubsection{Matrix Form of Constraints}
