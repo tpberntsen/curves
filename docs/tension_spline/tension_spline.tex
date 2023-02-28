@@ -42,8 +42,8 @@ case a boundary point will exit for the start of the gap.
 \bigskip
 
 \begin{multline}
-p_i(t) = \frac{z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1}))}{\tau^2 \sinh(\tau h_i)}  \\
-    + \frac{(y_{i-1} - z_{i-1}/\tau^2)(t_i - t) + (y_i - z_i/\tau^2)(t - t_{i-1})}{h_i}
+p_i(t) = \frac{z_{i-1} \sinh(\tau_i (t_i - t)) + z_i \sinh(\tau_i (t - t_{i-1}))}{\tau_i^2 \sinh(\tau h_i)}  \\
+    + \frac{(y_{i-1} - z_{i-1}/\tau_i^2)(t_i - t) + (y_i - z_i/\tau_i^2)(t - t_{i-1})}{h_i}
 \end{multline}
 
 Where $h_i =  t_i - t_{i-1}$. 
@@ -81,19 +81,19 @@ of these:
 
 \begin{eqnarray}
     \nonumber
-    p_i(t_{i-1}) = \frac{z_{i-1} \sinh(\tau h_i) + z_i \sinh(0)}{\tau^2 \sinh(\tau h_i)}
-    + \frac{(y_{i-1} - z_{i-1}/\tau^2) h_i }{h_i} \\
+    p_i(t_{i-1}) = \frac{z_{i-1} \sinh(\tau_i h_i) + z_i \sinh(0)}{\tau_i^2 \sinh(\tau_i h_i)}
+    + \frac{(y_{i-1} - z_{i-1}/\tau_i^2) h_i }{h_i} \\
     \nonumber
-    = \frac{z_{i-1}}{\tau^2} + y_{i-1} - \frac{z_{i-1}}{\tau^2} \\
+    = \frac{z_{i-1}}{\tau_i^2} + y_{i-1} - \frac{z_{i-1}}{\tau_i^2} \\
     = y_{i-1}
 \end{eqnarray}
 
 \begin{eqnarray}
     \nonumber
-    p_{i-1}(t_{i-1}) = \frac{z_{i-2} \sinh(0) + z_{i-1} \sinh(\tau h_{i-1})}{\tau^2 \sinh(\tau h_{i-1})}
-    + \frac{(y_{i-1} - z_{i-1}/\tau^2) h_{i-1}}{h_{i-1}} \\
+    p_{i-1}(t_{i-1}) = \frac{z_{i-2} \sinh(0) + z_{i-1} \sinh(\tau_{i-1} h_{i-1})}{\tau_{i-1}^2 \sinh(\tau_{i-1} h_{i-1})}
+    + \frac{(y_{i-1} - z_{i-1}/\tau_{i-1}^2) h_{i-1}}{h_{i-1}} \\
     \nonumber
-    = \frac{z_{i-1}}{\tau^2} + y_{i-1} - \frac{z_{i-1}}{\tau^2} \\
+    = \frac{z_{i-1}}{\tau_{i-1}^2} + y_{i-1} - \frac{z_{i-1}}{\tau_{i-1}^2} \\
     \nonumber
     = y_{i-1}
 \end{eqnarray}
@@ -106,24 +106,39 @@ This is to constrain $p^\prime_i(t_{i-1}) = p^\prime_{i-1}(t_{i-1})$. First find
 expression for $p^\prime_i(t)$:
 
 \begin{multline}
-    p_i(t) = \frac{z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1}))}{\tau^2 \sinh(\tau h_i)}  \\
-        + \frac{(y_{i-1} - z_{i-1}/\tau^2)(t_i - t) + (y_i - z_i/\tau^2)(t - t_{i-1})}{h_i}
+    p_i(t) = \frac{z_{i-1} \sinh(\tau_i (t_i - t)) + z_i \sinh(\tau_i (t - t_{i-1}))}{\tau_i^2 \sinh(\tau h_i)}  \\
+        + \frac{(y_{i-1} - z_{i-1}/\tau_i^2)(t_i - t) + (y_i - z_i/\tau_i^2)(t - t_{i-1})}{h_i}
 \end{multline}
 
 \begin{multline}
-    p^\prime_i(t) = \frac{ z_{i-1} \cosh(\tau (t_i - t)) + z_i \cosh(\tau (t - t_{i-1}))}{\tau \sinh(\tau h_i)}  \\
-        + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau^2}{h_i}
+    p^\prime_i(t) = \frac{ z_{i-1} \cosh(\tau_i (t_i - t)) + z_i \cosh(\tau_i (t - t_{i-1}))}{\tau_i \sinh(\tau_i h_i)}  \\
+        + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i}
 \end{multline}
 
 For clarity, rearranging this to highlight the linearity with respect to the parameters:
 
 \begin{multline}
-    p^\prime_i(t) = z_{i-1} \biggl( \frac{ \cosh(\tau (t_i - t))}{\tau \sinh(\tau h_i)} + \frac{1}{h_i \tau^2} \biggr)
-        + z_i \biggl( \frac{ \cosh(\tau (t - t_{i-1}))}{\tau \sinh(\tau h_i)} - \frac{1}{h_i \tau^2} \biggr) \\
+    p^\prime_i(t) = z_i \biggl( \frac{ \cosh(\tau_i (t - t_{i-1}))}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) 
+        + z_{i-1} \biggl( \frac{ \cosh(\tau_i (t_i - t))}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} \biggr)\\
         + y_i \frac{1}{h_i} - y_{i - 1} \frac{1}{h_i}
 \end{multline}
 
 Evaluating this about the boundary points:
+
+\begin{multline}
+    p^\prime_i(t_{i-1}) = z_i \biggl( \frac{1}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) 
+        + z_{i-1} \biggl( \frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} \biggr)\\
+        + y_i \frac{1}{h_i} - y_{i - 1} \frac{1}{h_i}
+\end{multline}
+
+\begin{multline}
+    p^\prime_{i-1}(t_{i-1}) = z_{i-1} \biggl( \frac{ \cosh(\tau_{i-1} h_{i-1})}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} - \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr) 
+        + z_{i-2} \biggl( \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr)\\
+        + y_{i-1} \frac{1}{h_{i-1}} - y_{i-2} \frac{1}{h_{i-1}}
+\end{multline}
+
+Setting these equal:
+
 
 
 
