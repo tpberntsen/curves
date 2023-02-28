@@ -186,8 +186,8 @@ in the polynomial representation of $p(t)$:
 
 Substituting in for $p_i(t)$:
 \begin{multline}
-    \sum_i \sum_{t \in T_i \cap  [t_{i-1}, t_i)} \biggl( \frac{z_{i-1} \sinh(\tau (t_i - t)) + z_i \sinh(\tau (t - t_{i-1}))}{\tau^2 \sinh(\tau h_i)}  \\
-    + \frac{(y_{i-1} - z_{i-1}/\tau^2)(t_i - t) + (y_i - z_i/\tau^2)(t - t_{i-1})}{h_i} + 
+    \sum_i \sum_{t \in T_i \cap  [t_{i-1}, t_i)} \biggl( \frac{z_{i-1} \sinh(\tau_i (t_i - t)) + z_i \sinh(\tau_i (t - t_{i-1}))}{\tau_i^2 \sinh(\tau_i h_i)}  \\
+    + \frac{(y_{i-1} - z_{i-1}/\tau_i^2)(t_i - t) + (y_i - z_i/\tau_i^2)(t - t_{i-1})}{h_i} + 
     S_{add}(t) \biggr) S_{mult}(t)w(t)D(t) \\
     = F_i \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
 \end{multline}
@@ -197,10 +197,10 @@ Rearranging again gives a form linear with respect to the unknown polynomial coe
 $z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
 
 \begin{multline}
-    \sum_i \biggl(  z_i \sum_{t \in T_i \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau (t - t_{i-1}))}{\tau^2 \sinh(\tau h_i)} 
-      - \frac{t - t_{i-1}}{\tau^2 h_i} \biggr) S_{mult}(t)w(t)D(t) \\
-    + z_{i-1} \sum_{t \in T_i \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau (t_i - t))}{\tau^2 \sinh(\tau h_i)} 
-     - \frac{t_i - t}{\tau^2 h_i} \biggr) S_{mult}(t)w(t)D(t) \\
+    \sum_i \biggl(  z_i \sum_{t \in T_i \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau_i (t - t_{i-1}))}{\tau_i^2 \sinh(\tau_i h_i)} 
+      - \frac{t - t_{i-1}}{\tau_i^2 h_i} \biggr) S_{mult}(t)w(t)D(t) \\
+    + z_{i-1} \sum_{t \in T_i \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau_i (t_i - t))}{\tau_i^2 \sinh(\tau_i h_i)} 
+     - \frac{t_i - t}{\tau_i^2 h_i} \biggr) S_{mult}(t)w(t)D(t) \\
     + y_i \sum_{t \in T_i \cap [t_{i-1}, t_i)} \frac{(t - t_{i-1})}{h_i} S_{mult}(t)w(t)D(t) \\
     + y_{i-1} \sum_{t \in T_i \cap [t_{i-1}, t_i)} \frac{(t_i - t)}{h_i} S_{mult}(t)w(t)D(t) \biggr) \\
     = F_i \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
