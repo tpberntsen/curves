@@ -37,9 +37,11 @@ class TestTensionSpline(unittest.TestCase):
         monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
         monthly_curve = pd.Series(data=[flat_price] * num_contracts, index=monthly_index)
         spline_boundaries = ['2023-04-01', date(2023, 5, 12), pd.Period(freq='D', year=2023, month=6, day=21)]
+        def tension(p):
+            return 0.5
 
         # Act
-        daily_curve, spline_params = tension_spline(monthly_curve, freq=freq, tension=0.5, time_zone=time_zone,
+        daily_curve, spline_params = tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
                                                     discount_factor=lambda x: 1.0, spline_boundaries=spline_boundaries)
 
         # Assert

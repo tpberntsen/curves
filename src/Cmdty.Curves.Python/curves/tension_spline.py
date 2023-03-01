@@ -40,14 +40,13 @@ class TensionSplineResults(tp.NamedTuple):
 
 def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                    freq: str,
-                   tension: float,  # TODO: time varying tension. Research if this is possible.
+                   tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
                    discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
                    average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                    mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                    add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-                   time_zone=None,  # TODO put type hint for str, pytz.timezone, dateutil.tz.tzfile or None
-                   spline_boundaries=None) \
-        -> TensionSplineResults:
+                   time_zone=tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]],
+                   spline_boundaries=None) -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
         raise ValueError('contracts argument must have length at least 2. Length of contract used is {}.'
@@ -55,7 +54,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     standardised_contracts = []  # Contract as tuples of (Period, Period, price)
     if isinstance(contracts, pd.Series):
-        for period, price in contracts.items():
+        for period, price in contracts.items(): # TODO check this works with Series of Timestamps
             start_period = _to_index_element(period.asfreq(freq, 's'), freq, time_zone)
             end_period = _to_index_element(_last_period(period, freq), freq, time_zone)
             standardised_contracts.append((start_period, end_period, price))
@@ -71,7 +70,6 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     first_period = standardised_contracts[0][0]
     last_period = standardised_contracts[-1][1]
     if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
-        # TODO handle gaps
         for i in range(1, num_contracts):
             if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
                 raise ValueError('contracts should not have delivery periods which overlap. Elements '
@@ -126,10 +124,17 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                          count=num_result_curve_points)
     weights_x_discounts_x_mult_adjust = weights_times_discounts * mult_season_adjusts
     # Precalculate sinh vectors
-    tension_squared = tension * tension
+    if isinstance(tension, float):
+        def get_tension(p) -> float:
+            return tension
+    else:
+        def get_tension(p) -> float:
+            return tension(p)
+
     num_sections = len(spline_boundaries)
-    # TODO: research allocation-efficient numpy vectorisation
     h_is = np.empty((num_sections,))
+    tension_by_section = np.empty((num_sections,))
+    tensions_expanded = np.empty((num_result_curve_points,))
     t_from_section_start = np.empty((num_result_curve_points,))
     t_to_section_end = np.empty((num_result_curve_points,))
     h_is_expanded = np.empty((num_result_curve_points,)) # Needed for vectorised calcs
@@ -138,26 +143,31 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     for i, section_start in enumerate(spline_boundaries):
         section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
+        tension_by_section[i] = get_tension(section_start)
         while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_start:
             period = result_curve_index[curve_point_idx]
             t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
             t_to_section_end[curve_point_idx] = _default_time_func(period, section_end)
             h_is_expanded[curve_point_idx] = h_is[i]
+            tensions_expanded[curve_point_idx] = tension_by_section[i]
             curve_point_idx += 1
 
-    tau_sqrd_sinh = np.sinh(tension * h_is) * tension_squared
+    tau_sqrd_sinh = np.sinh(tension_by_section * h_is) * tension_by_section * tension_by_section
     tau_sqrd_sinh_expanded = np.empty((num_result_curve_points,))
+    tau_sqrd_hi = tension_by_section * h_is
+
+    tau_sqrd_hi_expanded = np.empty((num_result_curve_points,))
     for i, section_start in enumerate(spline_boundaries):
         while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_start:
             tau_sqrd_sinh_expanded[curve_point_idx] = tau_sqrd_sinh[i]
+            tau_sqrd_hi_expanded[curve_point_idx] = tau_sqrd_hi[i]
             curve_point_idx += 1
 
-    tau_sqrd_hi_expanded = tension_squared * h_is_expanded
-    sinh_tau_t_from_start = np.sinh(t_from_section_start * tension)
-    sinh_tau_t_to_end = np.sinh(t_to_section_end * tension)
+    sinh_tau_t_from_start = np.sinh(t_from_section_start * tensions_expanded)
+    sinh_tau_t_to_end = np.sinh(t_to_section_end * tensions_expanded)
 
     # TODO: research allocation-efficient vectorisation with numpy. Probably just make operations in-place.
-    # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs to be zero vectors if tension is zero
+    # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs to be zero vectors if tension is zero?
     zi_coeffs = (sinh_tau_t_from_start / tau_sqrd_sinh_expanded - t_from_section_start / tau_sqrd_hi_expanded) \
                 * weights_x_discounts_x_mult_adjust
     zi_minus1_coeffs = (sinh_tau_t_to_end / tau_sqrd_sinh_expanded - t_to_section_end / tau_sqrd_hi_expanded) \
@@ -184,7 +194,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
 
     # Populate constraint matrix
-    constraint_matrix = np.array((matrix_size, matrix_size)) # TODO: make this banded matrix
+    constraint_matrix = np.array((matrix_size, matrix_size))  # TODO: make this banded matrix
     spline_boundary_idx = 0
     contract_section_start_idx = 0
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
@@ -229,14 +239,15 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         else:
             section_end = spline_boundaries[i + 1]
         h = _default_time_func(section_start, section_end)
+        tension_squared = tension_by_section[i]**2
         while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
             period = result_curve_index[result_idx]
             time_from_section_start = _default_time_func(section_start, period)
             time_to_section_end = _default_time_func(period, section_end)
             # TODO vectorise this
-            spline_val = (z_start * np.sinh(tension * time_to_section_end) +
-                          z_end * np.sinh(tension * time_from_section_start)) / (
-                                 tension_squared * np.sinh(tension * h)) + \
+            spline_val = (z_start * sinh_tau_t_to_end[result_idx] +
+                          z_end * sinh_tau_t_from_start[result_idx]) / (
+                                 tau_sqrd_sinh_expanded[result_idx]) + \
                          ((y_start - z_start / tension_squared) * time_to_section_end +
                           (y_end - z_end / tension_squared) * time_from_section_start) / h
             result_curve_prices[result_idx] = (spline_val + add_season_adjusts[result_idx]) * \
