@@ -3,6 +3,7 @@
 \usepackage[round]{natbib}
 \usepackage{url}
 \usepackage{hyperref}
+\setcounter{MaxMatrixCols}{20}
 
 \title{Tension Spline Algorithm for Building Forward Curves}
 \author{Jake C. Fowler}
@@ -148,7 +149,7 @@ Setting these equal:
         + y_{i-2} \frac{1}{h_{i-1}}
 \end{multline}
 
-
+This constraint should be held for $i = 2 \hdots n$.
 
 \bigskip
 
@@ -205,227 +206,78 @@ Rearranging again gives a form linear with respect to the unknown polynomial coe
 $z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
 
 \begin{multline}
-    \sum_i \biggl(  z_i \sum_{t \in T_i \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau_i (t - t_{i-1}))}{\tau_i^2 \sinh(\tau_i h_i)} 
+    \sum_i \biggl(  z_i \sum_{t \in T_j \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau_i (t - t_{i-1}))}{\tau_i^2 \sinh(\tau_i h_i)} 
       - \frac{t - t_{i-1}}{\tau_i^2 h_i} \biggr) S_{mult}(t)w(t)D(t) \\
-    + z_{i-1} \sum_{t \in T_i \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau_i (t_i - t))}{\tau_i^2 \sinh(\tau_i h_i)} 
+    + z_{i-1} \sum_{t \in T_j \cap [t_{i-1}, t_i)} \biggl( \frac{\sinh(\tau_i (t_i - t))}{\tau_i^2 \sinh(\tau_i h_i)} 
      - \frac{t_i - t}{\tau_i^2 h_i} \biggr) S_{mult}(t)w(t)D(t) \\
-    + y_i \sum_{t \in T_i \cap [t_{i-1}, t_i)} \frac{(t - t_{i-1})}{h_i} S_{mult}(t)w(t)D(t) \\
-    + y_{i-1} \sum_{t \in T_i \cap [t_{i-1}, t_i)} \frac{(t_i - t)}{h_i} S_{mult}(t)w(t)D(t) \biggr) \\
-    = F_i \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
+    + y_i \sum_{t \in T_j \cap [t_{i-1}, t_i)} \frac{(t - t_{i-1})}{h_i} S_{mult}(t)w(t)D(t) \\
+    + y_{i-1} \sum_{t \in T_j \cap [t_{i-1}, t_i)} \frac{(t_i - t)}{h_i} S_{mult}(t)w(t)D(t) \biggr) \\
+    = F_j \sum_{t \in T_i} w(t)D(t) - \sum_{t \in T_i} S_{add}(t) S_{mult}(t)w(t)D(t)
 \end{multline}
 
+This constraint should be held for $j=1 \hdots n$.
 
 \subsubsection{Matrix Form of Constraints}
-Equations \ref{eq:continuity_constraint}, \ref{eq:1st_deriv_constraint}, \ref{eq:2nd_deriv_constraint} and
- \ref{eq:price_constraint} can be expressed as the linear system $\+{Ax = b}$ where:
+%Equations \ref{eq:continuity_constraint}, \ref{eq:1st_deriv_constraint}, \ref{eq:2nd_deriv_constraint} and
+% \ref{eq:price_constraint} can be expressed as the linear system $\+{Ax = b}$ where:
+
+1st derivative constraint
+\begin{multline}
+    0 = z_i \biggl( \frac{1}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) \\
+        + z_{i-1} \biggl( \frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} 
+        - \frac{ \cosh(\tau_{i-1} h_{i-1})}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2}\biggr)\\
+        - z_{i-2} \biggl( \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr)\\
+        + y_i \frac{1}{h_i} - y_{i - 1} \bigl( \frac{1}{h_i} + \frac{1}{h_{i-1}} \bigr)
+        + y_{i-2} \frac{1}{h_{i-1}}
+\end{multline}
+
+This constraint should be held for $i = 2 \hdots n$.
+
+Start with forward price constraint as less lags (probably)
+
+\begin{equation}
+    \alpha^j_i = 
+\end{equation}
+
+Superscript is for contract, supersci
 
 \begin{equation*}
-    \+x = \begin{bmatrix}
-        \+x_1 \\
-        \+x_2 \\
+    \begin{bmatrix}
+        1 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \alpha^1_0 & \beta^1_0 & \gamma^1_0 & \delta^1_0 & \alpha^1_1 & \beta^1_1 & \hdots & 0 & 0 & \alpha^1_n & \beta^1_n & \gamma^1_n & \delta^1_n \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \alpha^2_0 & \beta^2_0 & \gamma^2_0 & \delta^2_0 & \alpha^2_1 & \beta^2_1 & \hdots & 0 & 0 & \alpha^2_n & \beta^2_n & \gamma^2_n & \delta^2_n \\        
+        \vdots & & & & & & \ddots & & & & & & \vdots \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \alpha^n_0 & \beta^n_0 & \gamma^n_0 & \delta^n_0 & \alpha^n_1 & \beta^n_1 & \hdots & 0 & 0 & \alpha^n_n & \beta^n_n & \gamma^n_n & \delta^n_n \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 1 & 0 
+    \end{bmatrix}
+    \begin{bmatrix}
+        z_0 \\
+        y_0 \\
+        z_1 \\
+        y_1 \\
         \vdots \\
-        \+x_{n-1} \\
-        \+x_n \\
-    \end{bmatrix}
-\end{equation*}
-
-\begin{equation*}
-    \+b = \begin{bmatrix}
-        \+b_1 \\
-        \+b_2 \\
+        z_{n-1} \\
+        y_{n-1} \\
+        z_n \\
+        y_n \\
+    \end{bmatrix} =
+    \begin{bmatrix}
+        0 \\
+        f_i \\
+        0 \\
+        0 \\
         \vdots \\
-        \+b_{n-1} \\
-        \+b_n \\
-    \end{bmatrix}
-\end{equation*}
-
-\begin{equation*}
-    \+A = \begin{bmatrix}
-        \+A_1 & \+0 & \hdots & \+0 & \+0 \\
-        \+0 & \+A_2 & \hdots & \+0 & \+0 \\
-        \vdots & & \ddots & & \vdots \\
-        \+0 & \+0 & & \+A_{n-1} & \+0 \\
-        \+0 & \+0 & \hdots & \+0 & \+A_n
-    \end{bmatrix}
-\end{equation*}
-
-And:
-\begin{equation*}
-    \+{x_i} = \begin{bmatrix}
-        a_i \\
-        b_i \\
-        c_i \\
-        d_i \\
-        e_i \\
-    \end{bmatrix}
-\end{equation*}
-
-\begin{equation*}
-    \+{b_i} = \begin{bmatrix}
         0 \\
         0 \\
         0 \\
-        F_i \sum_{t \in T_i} w(t) - 
-        \sum_{t \in T_i} S_{add}(t)S_{mult}(t)w(t)
+        0 \\
     \end{bmatrix}
 \end{equation*}
 
-\begin{equation*}
-    \+A_i = \begin{bmatrix}
-        1 & t_i & t_i^2 & t_i^3 & t_i^4 & -1 & -t_i & -t_i^2 & -t_i^3 & -t_i^4 \\
-        0 & 1 & 2 t_i & 3 t_i^2 & 4 t_i^3 & 0 & -1 & -2 t_i & -3 t_i^2 & -4 t_i^3 \\
-        0 & 0 & 2 & 6 t & 12 t^2 & 0 & 0 & -2 & -6 t & -12 t^2 \\
-        f_i^1 & f_i^2 & f_i^3 & f_i^4 & f_i^5 & 0 & 0 & 0 & 0 & 0
-    \end{bmatrix}
-\end{equation*}
-Where the components in the last row are defined as:
-
-\begin{eqnarray}
-    \nonumber
-    f_i^1 = \sum_{t \in T_i} S_{mult}(t)w(t) \\
-    \nonumber
-    f_i^2 = \sum_{t \in T_i} S_{mult}(t)w(t) t \\
-    \nonumber
-    f_i^3 = \sum_{t \in T_i} S_{mult}(t)w(t) t^2 \\
-    \nonumber
-    f_i^4 = \sum_{t \in T_i} S_{mult}(t)w(t) t^3 \\
-    \nonumber
-    f_i^5 = \sum_{t \in T_i} S_{mult}(t)w(t) t^4  
-\end{eqnarray}
-
-\subsection{Smoothness Criteria}
-% TODO references
-Maximum smoothness is obtained by by finding the spline 
-parameters which minimise the integral of the second derivative.
-\begin{eqnarray}
-    \label{eq:11}
-    \nonumber
-    min \int_{t_0}^{t_n}p''(t)^2 dt = \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p''_i(t)^2dt \\
-    \nonumber
-    =\sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i} (2 c_i + 6 d_i t + 12 e_i t^2)^2dt \\
-    \nonumber
-    =\sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i} (4 c_i^2 + 24 c_i d_i t + 48 c_i e_i t^2 +
-    36 d_i^2 t^2 + 144 d_i e_i t^3 + 144 e_i^2 t^4)dt \\
-    =\sum_{i=1}^{n} 4 c_i^2 \Delta_i^1 + 12 c_i d_i \Delta_i^2
-    + 16 c_i e_i \Delta_i^3 + 12 d_i^2 \Delta_i^3 + 36 d_i e_i \Delta_i^4 +
-    \frac{144}{5} e_i^2 \Delta_i^5
-\end{eqnarray}
-Where $\Delta_i^j$ is defined as the difference between $t^j$ at the polynomial boundary points, 
-i.e. $\Delta_i^j = t_i^j - t_{i-1}^j$.
-Recognising \ref{eq:11} as a quadratic form it can be reformulating in the following matrix form:
 
 
-\begin{equation}
-    \label{eq:12}
-    \sum_{i=1}^{n}\+{x_i^TH_ix_i}
-\end{equation}
-Where:
-
-\begin{equation*}
-    \+{H_i} = \begin{bmatrix}
-        0 & 0 & 0 & 0 & 0 \\
-        0 & 0 & 0 & 0 & 0 \\
-        0 & 0 & 4 \Delta_i^1 & 6 \Delta_i^2 & 8 \Delta_i^3 \\
-        0 & 0 & 6 \Delta_i^2 & 12 \Delta_i^3 & 18 \Delta_i^4 \\
-        0 & 0 & 8 \Delta_i^3 & 18 \Delta_i^4 & \frac{144}{5} \Delta_i^5
-    \end{bmatrix}
-\end{equation*}
-The objective function \ref{eq:12} can be arranged into a single matrix quadratic form without
-the summation as:
-
-\begin{equation}
-    \+{x^THx}
-\end{equation}
-Where:
-
-\begin{equation*}
-    \+x = \begin{bmatrix}
-        \+x_1 \\
-        \+x_2 \\
-        \vdots \\
-        \+x_{n-1} \\
-        \+x_n \\
-    \end{bmatrix}
-\end{equation*}
-
-\begin{equation*}
-    \+H = \begin{bmatrix}
-        \+H_1 & \+0 & \hdots & \+0 & \+0 \\
-        \+0 & \+H_2 & \hdots & \+0 & \+0 \\
-        \vdots & & \ddots & & \vdots \\
-        \+0 & \+0 & & \+H_{n-1} & \+0 \\
-        \+0 & \+0 & \hdots & \+0 & \+H_n
-    \end{bmatrix}
-\end{equation*}
-
-\subsection{Minimisation Problem}
-The sections above show that finding the maximum smoothness curve comes down to finding
-the polynomial coefficients, vector $\+x$, which minimises $\+{x^THx}$, subject to the linear constraints
-$\+{Ax=b}$. This problem is well suited to the method of 
-Lagrange multipliers for which we first define the vector $\+\lambda$.
-
-\begin{equation}
-    \+\lambda = \begin{bmatrix}
-        \lambda_1 \\
-        \lambda_2 \\
-        \vdots \\
-        \lambda_{4n-2} \\
-        \lambda_{4n-1} \\
-    \end{bmatrix}
-\end{equation}
-
-\newcommand{\Lagr}{\mathcal{L}}
-
-\begin{equation}
-    \Lagr(\+{x, \lambda}) = \+{x^THx + \lambda^T(Ax - b)}
-\end{equation}
-The minima $\displaystyle\min_{x, \lambda}\Lagr(\+{x, \lambda})$ is found as the solution
-where the partial derivatives of $\Lagr(\+{x, \lambda})$ with respect to $\+x$ and $\+\lambda$
-are zero.
-
-\begin{equation}
-    \frac{\Lagr(\+{x, \lambda})}{\partial{\+x}} = \+{2Hx + A^T\lambda} = 0
-\end{equation}
-
-\begin{equation}
-    \frac{\Lagr(\+{x, \lambda})}{\partial{\+\lambda}} = \+{Ax - b} = 0
-\end{equation}
-These can be arranged into a single linear system:
-
-\begin{equation}
-    \begin{bmatrix}
-        \+{2H} & \+{A^T} \\
-        \+{A} & \+{0}
-    \end{bmatrix}
-    \begin{bmatrix}
-        \+{x_{min}} \\
-        \+{\lambda_{min}}
-    \end{bmatrix} = 
-    \begin{bmatrix}
-        \+{0} \\
-        \+{b}
-    \end{bmatrix}
-\end{equation}
-Hence the vector of spline polynomial coefficients for the maximum smoothness curve, $\+{x_{min}}$,
-can be found by solving this system.
-
-\begin{equation}
-    \label{eq:final_linear_prob}
-    \begin{bmatrix}
-        \+{x_{min}} \\
-        \+{\lambda_{min}}
-    \end{bmatrix} = 
-    \begin{bmatrix}
-        \+{2H} & \+{A^T} \\
-        \+{A} & \+{0}
-    \end{bmatrix}^{-1}
-    \begin{bmatrix}
-        \+{0} \\
-        \+{b}
-    \end{bmatrix}
-\end{equation}
-
-Once \ref{eq:final_linear_prob} is solved, the spline parameters are taken from $\+{x_{min}}$
-and the derived forward prices are calculated by evaluating \ref{eq:foward_function}.
 
 \end{document}
