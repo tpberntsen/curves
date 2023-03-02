@@ -133,39 +133,34 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     matrix_size = num_sections * 2 + 2
     h_is = np.empty((num_sections,))
     tension_by_section = np.empty((num_sections,))
-    tensions_expanded = np.empty((num_result_curve_points,))
     t_from_section_start = np.empty((num_result_curve_points,))
     t_to_section_end = np.empty((num_result_curve_points,))
-    h_is_expanded = np.empty((num_result_curve_points,)) # Needed for vectorised calcs
 
+    section_period_indices = []  # 2-tuples of indices for start and (exclusive) end of result periods for each section
     curve_point_idx = 0
     for i, section_start in enumerate(spline_boundaries):
         section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start)
-        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end:
+        section_start_idx = curve_point_idx
+        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end: # TODO IMPORTANT THIS IS ONLY WORKING BY CHANCE DUE TO DATE_RANGE OMITTING THE LAST MONTH
             period = result_curve_index[curve_point_idx]
             t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
             t_to_section_end[curve_point_idx] = _default_time_func(period, section_end)
-            h_is_expanded[curve_point_idx] = h_is[i]
-            tensions_expanded[curve_point_idx] = tension_by_section[i]
             curve_point_idx += 1
+        section_end_idx = None if i == num_sections - 1 else curve_point_idx
+        section_period_indices.append((section_start_idx, section_end_idx))
+
+    h_is_expanded = _create_expanded_np_array(h_is, num_result_curve_points, section_period_indices)
+    tensions_expanded = _create_expanded_np_array(tension_by_section, num_result_curve_points, section_period_indices)
 
     tau_sinh = np.sinh(tension_by_section * h_is) * tension_by_section
     tau_sqrd_sinh = tau_sinh * tension_by_section
-    tau_sqrd_sinh_expanded = np.empty((num_result_curve_points,))
     tau_sqrd_hi = tension_by_section * h_is
     cosh_tau_hi = np.cosh(tension_by_section * h_is)
 
-    tau_sqrd_hi_expanded = np.empty((num_result_curve_points,))
-    curve_point_idx = 0
-    for i, section_start in enumerate(spline_boundaries):
-        section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
-        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end:
-            tau_sqrd_sinh_expanded[curve_point_idx] = tau_sqrd_sinh[i]
-            tau_sqrd_hi_expanded[curve_point_idx] = tau_sqrd_hi[i]
-            curve_point_idx += 1
-
+    tau_sqrd_sinh_expanded = _create_expanded_np_array(tau_sqrd_sinh, num_result_curve_points, section_period_indices)
+    tau_sqrd_hi_expanded = _create_expanded_np_array(tau_sqrd_hi, num_result_curve_points, section_period_indices)
     sinh_tau_t_from_start = np.sinh(t_from_section_start * tensions_expanded)
     sinh_tau_t_to_end = np.sinh(t_to_section_end * tensions_expanded)
 
@@ -296,3 +291,11 @@ def _to_index_element(period, freq, tz):
             return period.to_timestamp().tz_localize(tz)
         else:
             return pd.Timestamp(period, tz=tz)
+
+
+def _create_expanded_np_array(array_from, size, copy_slice_indices):
+    array_to = np.empty((size,))
+    for i in range(len(array_from)):
+        slice_indices = copy_slice_indices[i]
+        array_to[slice_indices[0]:slice_indices[1]] = array_from[i]
+    return array_to
