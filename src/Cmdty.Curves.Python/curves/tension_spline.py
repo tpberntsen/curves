@@ -250,10 +250,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         y_start = solution[i * 2 + 1]
         z_end = solution[(i + 1) * 2]
         y_end = solution[(i + 1) * 2 + 1]
-        spline_parameters.append(SplineParameters(section_start, z_start, z_end))
+        spline_parameters.append(SplineParameters(section_start, z_start, y_start))
         if i == num_sections - 1:
             section_end = last_period  # TODO: do I need to add one to this?
-            spline_parameters.append(SplineParameters(section_end, z_start, z_end))
+            spline_parameters.append(SplineParameters(section_end, z_end, y_end))
         else:
             section_end = spline_boundaries[i + 1]
         h = _default_time_func(section_start, section_end)
