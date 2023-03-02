@@ -99,8 +99,6 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         result_curve_index = pd.date_range(start=first_period, end=last_period,
                                            freq=freq, tz=time_zone)
     num_result_curve_points = len(result_curve_index)
-    # Construct linear system and solve
-    matrix_size = num_result_curve_points * 2 + 2
 
     # Calculate vectors of coefficients
     discount_factors = np.fromiter((discount_factor(key) for key in result_curve_index), dtype=np.float64,
@@ -132,6 +130,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             return tension(p)
 
     num_sections = len(spline_boundaries)
+    matrix_size = num_sections * 2 + 2
     h_is = np.empty((num_sections,))
     tension_by_section = np.empty((num_sections,))
     tensions_expanded = np.empty((num_result_curve_points,))
@@ -144,7 +143,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start)
-        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_start:
+        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end:
             period = result_curve_index[curve_point_idx]
             t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
             t_to_section_end[curve_point_idx] = _default_time_func(period, section_end)
@@ -159,8 +158,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     cosh_tau_hi = np.cosh(tension_by_section * h_is)
 
     tau_sqrd_hi_expanded = np.empty((num_result_curve_points,))
+    curve_point_idx = 0
     for i, section_start in enumerate(spline_boundaries):
-        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_start:
+        section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
+        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end:
             tau_sqrd_sinh_expanded[curve_point_idx] = tau_sqrd_sinh[i]
             tau_sqrd_hi_expanded[curve_point_idx] = tau_sqrd_hi[i]
             curve_point_idx += 1
@@ -221,25 +222,27 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             while result_curve_index[contract_section_end_idx] != contract_section_end_period:
                 contract_section_end_idx += 1
             contract_section_end_idx += 1
-            constraint_matrix[contract_idx, contract_idx * 2 + 1] = np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, contract_idx * 2 + 2] = np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, (contract_idx + 1) * 2 + 1] = np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, (contract_idx + 1) * 2 + 2] = np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            # Forward price constraints
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4] = np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4 + 1] = np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4 + 2] = np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4 + 3] = np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
             spline_boundary_idx += 1
 
     # First derivative continuity constraints
     one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
     for section_idx in range(0, num_sections - 1):
+        row_idx = num_contracts + section_idx + 1
         # TODO doc using 1-based indexing for sections gets annoying now
         next_section_idx = section_idx + 1
         # TODO vectorise these outside of the loop?
-        deriv_z_i_coff = 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx]
-        deriv_z_i_minus1_coff = cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx] + one_over_h_tau_sqrd[next_section_idx] \
-                        - cosh_tau_hi[section_idx]/tau_sinh[section_idx] + one_over_h_tau_sqrd[section_idx]
-        deriv_z_i_minus2_coff = -1.0 / tau_sinh[section_idx] - one_over_h_tau_sqrd[section_idx]
-        deriv_y_i_coff = 1/h_is[next_section_idx]
-        deriv_y_i_minus1_coff = -1/h_is[next_section_idx] - 1/h_is[section_idx]
-        deriv_y_i_minus2_coff = 1/h_is[section_idx]
+        constraint_matrix[row_idx, section_idx * 6] = -1.0 / tau_sinh[section_idx] - one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 6 + 1] = 1/h_is[section_idx] # deriv_y_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 6 + 2] = cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx] + one_over_h_tau_sqrd[next_section_idx] \
+                        - cosh_tau_hi[section_idx]/tau_sinh[section_idx] + one_over_h_tau_sqrd[section_idx] # deriv_z_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 6 + 3] = -1/h_is[next_section_idx] - 1/h_is[section_idx] # deriv_y_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 6 + 4] = 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx] # deriv_z_i_coff
+        constraint_matrix[row_idx, section_idx * 6 + 5] = 1/h_is[next_section_idx] # deriv_y_i_coff
 
     solution = np.zeros(matrix_size)  # TODO set this to the actual solution
 
