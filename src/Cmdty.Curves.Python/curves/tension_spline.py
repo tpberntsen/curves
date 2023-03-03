@@ -45,7 +45,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                    average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                    mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                    add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-                   time_zone=tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]],
+                   time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
                    spline_boundaries=None) -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
