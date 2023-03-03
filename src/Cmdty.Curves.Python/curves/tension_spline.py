@@ -144,7 +144,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start)
         section_start_idx = curve_point_idx
-        while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end: # TODO IMPORTANT THIS IS ONLY WORKING BY CHANCE DUE TO DATE_RANGE OMITTING THE LAST MONTH
+        while curve_point_idx < num_result_curve_points and (result_curve_index[curve_point_idx] < section_end or i == num_sections - 1): # TODO IMPORTANT THIS IS ONLY WORKING BY CHANCE DUE TO DATE_RANGE OMITTING THE LAST MONTH
             period = result_curve_index[curve_point_idx]
             t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
             t_to_section_end[curve_point_idx] = h_is[i]-t_from_section_start[curve_point_idx]
@@ -167,6 +167,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # TODO: research allocation-efficient vectorisation with numpy. Probably just make operations in-place.
     # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs to be zero vectors if tension is zero?
+    # Coefficients used in forward price constraint
     zi_coeffs = (sinh_tau_t_from_start / tau_sqrd_sinh_expanded - t_from_section_start / tau_sqrd_hi_expanded) \
                 * weights_x_discounts_x_mult_adjust
     zi_minus1_coeffs = (sinh_tau_t_to_end / tau_sqrd_sinh_expanded - t_to_section_end / tau_sqrd_hi_expanded) \
@@ -187,9 +188,9 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             contract_end_idx += 1
         contract_end_idx += 1
         weights_times_discounts_slice = weights_times_discounts[contract_start_idx:contract_end_idx]
-        add_season_adjusts_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
+        add_season_adjusts_slice = add_season_adjusts[contract_start_idx:contract_end_idx]
         weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
-        constraint_vector[i] = price * np.sum(weights_times_discounts_slice) + \
+        constraint_vector[i+1] = price * np.sum(weights_times_discounts_slice) - \
                                np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
 
     # Populate constraint matrix
@@ -219,10 +220,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 contract_section_end_idx += 1
             contract_section_end_idx += 1
             # Forward price constraints
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4] = np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4 + 1] = np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4 + 2] = np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 4 + 3] = np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2] += np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 1] += np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 2] += np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 3] += np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
             spline_boundary_idx += 1
 
     # First derivative continuity constraints
@@ -232,20 +233,21 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         # TODO doc using 1-based indexing for sections gets annoying now
         next_section_idx = section_idx + 1
         # TODO vectorise these outside of the loop?
-        constraint_matrix[row_idx, section_idx * 6] = -1.0 / tau_sinh[section_idx] - one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus2_coff
-        constraint_matrix[row_idx, section_idx * 6 + 1] = 1/h_is[section_idx] # deriv_y_i_minus2_coff
-        constraint_matrix[row_idx, section_idx * 6 + 2] = cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx] + one_over_h_tau_sqrd[next_section_idx] \
+        constraint_matrix[row_idx, section_idx * 2] += -1.0 / tau_sinh[section_idx] - one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 2 + 1] += 1/h_is[section_idx] # deriv_y_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 2 + 2] += cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx] + one_over_h_tau_sqrd[next_section_idx] \
                         - cosh_tau_hi[section_idx]/tau_sinh[section_idx] + one_over_h_tau_sqrd[section_idx] # deriv_z_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 6 + 3] = -1/h_is[next_section_idx] - 1/h_is[section_idx] # deriv_y_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 6 + 4] = 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx] # deriv_z_i_coff
-        constraint_matrix[row_idx, section_idx * 6 + 5] = 1/h_is[next_section_idx] # deriv_y_i_coff
+        constraint_matrix[row_idx, section_idx * 2 + 3] += -1/h_is[next_section_idx] - 1/h_is[section_idx] # deriv_y_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx] # deriv_z_i_coff
+        constraint_matrix[row_idx, section_idx * 2 + 5] += 1/h_is[next_section_idx] # deriv_y_i_coff
 
-    solution = np.zeros(matrix_size)  # TODO set this to the actual solution
+    # TODO IMPORTANT: GET RID OF THIS TEMPORARY HACK TO ADD ONE MORE CONSTRAINT
+    constraint_matrix[-2, -4] = 1  # Temporary hack to set 2nd derive at last knot to zero
+    solution = np.linalg.solve(constraint_matrix, constraint_vector)
 
     # Read results off solution
-    result_curve_prices = np.zeros(num_result_curve_points)
+    spline_vals = np.zeros(num_result_curve_points)
     spline_parameters = []
-    result_idx = 0
     for i, section_start in enumerate(spline_boundaries):
         z_start = solution[i * 2]
         y_start = solution[i * 2 + 1]
@@ -253,26 +255,15 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         y_end = solution[(i + 1) * 2 + 1]
         spline_parameters.append(SplineParameters(section_start, z_start, y_start))
         if i == num_sections - 1:
-            section_end = last_period  # TODO: do I need to add one to this?
-            spline_parameters.append(SplineParameters(section_end, z_end, y_end))
-        else:
-            section_end = spline_boundaries[i + 1]
-        h = _default_time_func(section_start, section_end)
+            spline_parameters.append(SplineParameters(last_period, z_end, y_end))
         tension_squared = tension_by_section[i]**2
-        while result_idx < num_result_curve_points and result_curve_index[result_idx] < section_start:
-            period = result_curve_index[result_idx]
-            time_from_section_start = _default_time_func(section_start, period)
-            time_to_section_end = _default_time_func(period, section_end)
-            # TODO vectorise this
-            spline_val = (z_start * sinh_tau_t_to_end[result_idx] +
-                          z_end * sinh_tau_t_from_start[result_idx]) / (
-                                 tau_sqrd_sinh_expanded[result_idx]) + \
-                         ((y_start - z_start / tension_squared) * time_to_section_end +
-                          (y_end - z_end / tension_squared) * time_from_section_start) / h
-            result_curve_prices[result_idx] = (spline_val + add_season_adjusts[result_idx]) * \
-                                              mult_season_adjusts[result_idx]
-            result_idx += 1
+        start_idx, end_idx = section_period_indices[i]
+        spline_vals[start_idx:end_idx] =(z_start * sinh_tau_t_to_end[start_idx:end_idx] + z_end * sinh_tau_t_from_start[start_idx:end_idx]) \
+                    / tau_sqrd_sinh_expanded[start_idx:end_idx] + \
+                         ((y_start - z_start / tension_squared) * t_to_section_end[start_idx:end_idx] +
+                          (y_end - z_end / tension_squared) * t_from_section_start[start_idx:end_idx]) / h_is_expanded[start_idx:end_idx]
 
+    result_curve_prices = (spline_vals + add_season_adjusts) * mult_season_adjusts
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
     return TensionSplineResults(result_curve, spline_parameters)
 

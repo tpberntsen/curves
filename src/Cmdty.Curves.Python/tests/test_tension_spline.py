@@ -24,27 +24,28 @@ from datetime import date
 import unittest
 import pandas as pd
 from curves import tension_spline
+from curves import contract_period as cp
 
 
 class TestTensionSpline(unittest.TestCase):
 
     def test_inputs_constant_outputs_constant(self):
         # Arrange
-        freq = 'H'
-        time_zone = 'Europe/London'
-        flat_price = 0.0
+        freq = 'D'
+        time_zone = None #'Europe/London'
+        flat_price = 10.5
         num_contracts = 3
         monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
         monthly_curve = pd.Series(data=[flat_price] * num_contracts, index=monthly_index)
-        spline_boundaries = ['2023-04-01', date(2023, 5, 12), pd.Period(freq='D', year=2023, month=6, day=21)]
+
         def tension(p):
             return 0.5
 
         # Act
         daily_curve, spline_params = tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
-                                                    discount_factor=lambda x: 1.0, spline_boundaries=spline_boundaries)
+                                                    discount_factor=lambda x: 1.0)
 
         # Assert
-        expect_daily_curve = monthly_curve.resample(freq).fillna('pad').to_timestamp()
-        self.assertEqual(len(daily_curve), len(expect_daily_curve))
+        expect_daily_curve = monthly_curve.resample(freq).fillna('pad')
+        pd.testing.assert_series_equal(daily_curve, expect_daily_curve)
         self.assertEqual(len(spline_params), len(monthly_curve) + 1)
