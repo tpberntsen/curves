@@ -131,10 +131,11 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     num_sections = len(spline_boundaries)
     matrix_size = num_sections * 2 + 2
-    h_is = np.empty((num_sections,))
-    tension_by_section = np.empty((num_sections,))
-    t_from_section_start = np.empty((num_result_curve_points,))
-    t_to_section_end = np.empty((num_result_curve_points,))
+    # Using np.zeros rather than empty because easier to understand when debugging
+    h_is = np.zeros((num_sections,))
+    tension_by_section = np.zeros((num_sections,))
+    t_from_section_start = np.zeros((num_result_curve_points,))
+    t_to_section_end = np.zeros((num_result_curve_points,))
 
     section_period_indices = []  # 2-tuples of indices for start and (exclusive) end of result periods for each section
     curve_point_idx = 0
@@ -146,7 +147,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         while curve_point_idx < num_result_curve_points and result_curve_index[curve_point_idx] < section_end: # TODO IMPORTANT THIS IS ONLY WORKING BY CHANCE DUE TO DATE_RANGE OMITTING THE LAST MONTH
             period = result_curve_index[curve_point_idx]
             t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
-            t_to_section_end[curve_point_idx] = _default_time_func(period, section_end)
+            t_to_section_end[curve_point_idx] = h_is[i]-t_from_section_start[curve_point_idx]
             curve_point_idx += 1
         section_end_idx = None if i == num_sections - 1 else curve_point_idx
         section_period_indices.append((section_start_idx, section_end_idx))
@@ -174,7 +175,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     yi_minus1_coeffs = (t_to_section_end / h_is_expanded) * weights_x_discounts_x_mult_adjust
 
     # Populate constraint vector
-    constraint_vector = np.empty((matrix_size, 1))
+    constraint_vector = np.zeros((matrix_size, 1))
     contract_start_idx = 0
     # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
     for i, (start, end, price) in enumerate(standardised_contracts):
@@ -192,7 +193,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
 
     # Populate constraint matrix
-    constraint_matrix = np.empty((matrix_size, matrix_size))  # TODO: make this banded matrix
+    constraint_matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
     constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start
     constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end
     # Forward price constraints
@@ -294,7 +295,7 @@ def _to_index_element(period, freq, tz):
 
 
 def _create_expanded_np_array(array_from, size, copy_slice_indices):
-    array_to = np.empty((size,))
+    array_to = np.zeros((size,))
     for i in range(len(array_from)):
         slice_indices = copy_slice_indices[i]
         array_to[slice_indices[0]:slice_indices[1]] = array_from[i]
