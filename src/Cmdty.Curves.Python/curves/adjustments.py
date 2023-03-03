@@ -53,7 +53,6 @@ def dayofweek(default: float, monday: Optional[float] = None, tuesday: Optional[
             parameter will be returned.
     """
     adjust_dict = {}
-
     _populate_dict(adjust_dict, monday, 0)
     _populate_dict(adjust_dict, tuesday, 1)
     _populate_dict(adjust_dict, wednesday, 2)

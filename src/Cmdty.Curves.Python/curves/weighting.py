@@ -43,7 +43,6 @@ def num_business_days(holidays: Iterable[Union[date, datetime, pd.Timestamp, pd.
         end_day = period.asfreq('D', 'e').to_timestamp()
         bday_range = pd.bdate_range(start=start_day, end=end_day, freq='C', holidays=holidays)
         return float(len(bday_range))
-
     return num_business_days_func
 
 
@@ -79,11 +78,5 @@ def num_periods(freq: str, tz: str = None) -> Callable[[pd.Period], float]:
         end = period.asfreq(freq, 'e').to_timestamp()
         date_range = pd.date_range(start=start, end=end, freq=freq, tz=tz)
         return float(len(date_range))
-
     return num_periods_func
-
-
-# TODO implement this function
-#def bom_wrapper(wrapped_weighting, pricing_date, pricing_date_fixed):
-#    pass
 

@@ -103,11 +103,8 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
     if freq not in FREQ_TO_PERIOD_TYPE:
         raise ValueError("freq parameter value of '{}' not supported. The allowable values can be found in the keys "
                          "of the dict curves.FREQ_TO_PERIOD_TYPE.".format(freq))
-
     time_period_type = FREQ_TO_PERIOD_TYPE[freq]
-
     spline_builder = ISplineAddOptionalParameters[time_period_type](MaxSmoothnessSplineCurveBuilder[time_period_type]())
-
     if isinstance(contracts, pd.Series):
         for period, price in contracts.items():
             (start, end) = contract_period(period, freq, time_period_type)
@@ -117,32 +114,23 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
             (period, price) = deconstruct_contract(contract)
             (start, end) = contract_period(period, freq, time_period_type)
             MaxSmoothnessSplineCurveBuilderExtensions.AddContract[time_period_type](spline_builder, start, end, price)
-
     if mult_season_adjust is not None:
         transformed_mult_season_adjust = transform_time_func(freq, mult_season_adjust)
         spline_builder.WithMultiplySeasonalAdjustment(Func[time_period_type, Double](transformed_mult_season_adjust))
-
     if add_season_adjust is not None:
         transformed_add_season_adjust = transform_time_func(freq, add_season_adjust)
         spline_builder.WithAdditiveSeasonalAdjustment(Func[time_period_type, Double](transformed_add_season_adjust))
-    
     if average_weight is not None:
         transformed_average_weight = transform_time_func(freq, average_weight)
         spline_builder.WithWeighting(Func[time_period_type, Double](transformed_average_weight))
-
     if time_func is not None:
         transformed_time_func = transform_two_period_func(freq, time_func)
         spline_builder.WithTimeFunc(Func[time_period_type, time_period_type, Double](transformed_time_func))
-
     if front_1st_deriv is not None:
         spline_builder.WithFrontFirstDerivative(front_1st_deriv)
-
     if back_1st_deriv is not None:
         spline_builder.WithBackFirstDerivative(back_1st_deriv)
-
     curve = spline_builder.BuildCurve()
-
     result = net_time_series_to_pandas_series(curve, freq)
-
     return result
 

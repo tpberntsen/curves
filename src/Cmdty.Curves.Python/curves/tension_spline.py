@@ -114,7 +114,6 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     else:
         mult_season_adjusts = np.fromiter((mult_season_adjust(key) for key in result_curve_index), dtype=np.float64,
                                           count=num_result_curve_points)
-
     if add_season_adjust is None:
         add_season_adjusts = np.zeros(num_result_curve_points)
     else:

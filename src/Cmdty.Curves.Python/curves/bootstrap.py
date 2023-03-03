@@ -131,19 +131,14 @@ def bootstrap_contracts(contracts: ContractsType,
         raise ValueError(
             "freq parameter value of '{}' not supported. The allowable values can be found in the keys of the dict curves.FREQ_TO_PERIOD_TYPE.".format(
                 freq))
-
     time_period_type = FREQ_TO_PERIOD_TYPE[freq]
-
     bootstrapper = IBootstrapperAddOptionalParameters[time_period_type](Bootstrapper[time_period_type]())
-
     for contract in contracts:
         (period, price) = deconstruct_contract(contract)
         (start, end) = contract_period(period, freq, time_period_type)
         BootstrapperExtensions.AddContract[time_period_type](bootstrapper, start, end, price)
-
     if allow_redundancy:
         bootstrapper.AllowRedundancy()
-
     if shaping_ratios is not None:
         for (num, denom, ratio) in shaping_ratios:
             (num_start, num_end) = contract_period(num, freq, time_period_type)
@@ -152,7 +147,6 @@ def bootstrap_contracts(contracts: ContractsType,
                 IBetween[time_period_type](Shaping[time_period_type].Ratio).Between(num_start, num_end)).And(
                 denom_start, denom_end)).Is(ratio)
             bootstrapper.AddShaping(shaping_ratio)
-
     if shaping_spreads is not None:
         for (period1, period2, spread) in shaping_spreads:
             (period1_start, period1_end) = contract_period(period1, freq, time_period_type)
@@ -161,22 +155,17 @@ def bootstrap_contracts(contracts: ContractsType,
                 IBetween[time_period_type](Shaping[time_period_type].Spread).Between(period1_start, period1_end)).And(
                 period2_start, period2_end)).Is(spread)
             bootstrapper.AddShaping(shaping_spread)
-
     if average_weight is not None:
         transformed_average_weight = transform_time_func(freq, average_weight)
         bootstrapper.WithAverageWeighting(Func[time_period_type, Double](transformed_average_weight))
-
     if target_curve is not None:
         net_target_curve = series_to_double_time_series(target_curve, time_period_type)
         bootstrapper.WithTargetBootstrappedCurve(net_target_curve)
 
     dotnet_bootstrap_results = bootstrapper.Bootstrap()
-
     piecewise_curve = net_time_series_to_pandas_series(dotnet_bootstrap_results.Curve, freq)
-
     bootstrapped_contracts = []
     for contract in dotnet_bootstrap_results.BootstrappedContracts:
         bootstrapped_contracts.append(Contract(net_time_period_to_pandas_period(contract.Start, freq),
                                                net_time_period_to_pandas_period(contract.End, freq), contract.Price))
-
     return BootstrapResults(piecewise_curve, bootstrapped_contracts)
