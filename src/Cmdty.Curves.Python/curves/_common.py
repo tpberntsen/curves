@@ -165,7 +165,6 @@ ContractsType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple
 
 
 def contract_pandas_periods(input_period, freq):
-
     if isinstance(input_period, tuple):
         start = pd.Period(input_period[0], freq=freq)
         end = pd.Period(input_period[1], freq=freq)
