@@ -30,7 +30,7 @@ from curves.contract_period import quarter, winter, summer, gas_year
 from tests._test_common import weighted_average_slice_curve
 
 
-class TestSpline(unittest.TestCase):
+class TestMaxSmoothnessSpline(unittest.TestCase):
     contracts_list = [
         (date(2019, 1, 1), 32.7),  # date
         ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
@@ -42,10 +42,8 @@ class TestSpline(unittest.TestCase):
         (summer(2020), 19.9),
         (gas_year(2020), 20.01)
     ]
-
     contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
                                  index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
-
     test_case_data = [
         {
             "freq": 'D',
@@ -121,48 +119,36 @@ class TestSpline(unittest.TestCase):
     ]
 
     def test_max_smooth_interp_mult_season_adjust_called_as_expected(self):
-
         adjust_arg_values = []
 
         def mult_season_adjust(period):
             adjust_arg_values.append(period)
             return 1.0
-
-        curve = max_smooth_interp(self.daily_contracts, freq='D', mult_season_adjust=mult_season_adjust)
-
+        _ = max_smooth_interp(self.daily_contracts, freq='D', mult_season_adjust=mult_season_adjust)
         expected_first_arg = pd.Period('2019-5-14', freq='D')
         expected_arg_values = [expected_first_arg + i for i in range(0, 5)] * 2
-
         self.assertListEqual(expected_arg_values, adjust_arg_values)
 
     def test_max_smooth_interp_add_season_adjust_called_as_expected(self):
-
         adjust_arg_values = []
 
         def add_season_adjust(period):
             adjust_arg_values.append(period)
             return 1.0
-
-        curve = max_smooth_interp(self.daily_contracts, freq='D', add_season_adjust=add_season_adjust)
-
+        _ = max_smooth_interp(self.daily_contracts, freq='D', add_season_adjust=add_season_adjust)
         expected_first_arg = pd.Period('2019-5-14', freq='D')
         expected_arg_values = [expected_first_arg + i for i in range(0, 5)] * 2
-
         self.assertListEqual(expected_arg_values, adjust_arg_values)
 
     def test_max_smooth_interp_average_weight_called_as_expected(self):
-
         weight_arg_values = []
 
         def average_weight(period):
             weight_arg_values.append(period)
             return 1.0
-
-        curve = max_smooth_interp(self.daily_contracts, freq='D', average_weight=average_weight)
-
+        _ = max_smooth_interp(self.daily_contracts, freq='D', average_weight=average_weight)
         expected_first_arg = pd.Period('2019-5-14', freq='D')
         expected_arg_values = [expected_first_arg + i for i in range(0, 5)]
-
         self.assertListEqual(expected_arg_values, weight_arg_values)
 
 

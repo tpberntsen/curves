@@ -34,7 +34,7 @@ if os != 'Windows':
         print('Could not load Core CLR runtime, on non-Windows OS, so falling back to Mono.')
 
 from curves.bootstrap import bootstrap_contracts
-from curves.spline import max_smooth_interp
+from curves.max_smoothness_spline import max_smooth_interp
 from curves.tension_spline import tension_spline
 from curves._common import FREQ_TO_PERIOD_TYPE
 from curves.__version__ import __version__

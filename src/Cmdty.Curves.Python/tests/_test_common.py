@@ -25,10 +25,8 @@ import pandas as pd
 
 
 def _num_calendar_days(period):
-
     if period.freqstr == 'D':
         return 1
-
     return (period.asfreq('D', 'e') - period.asfreq('D', 's')).delta.days + 1
 
 
