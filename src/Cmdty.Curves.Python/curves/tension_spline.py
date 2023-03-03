@@ -248,10 +248,10 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     spline_vals = np.zeros(num_result_curve_points)
     spline_parameters = []
     for i, section_start in enumerate(spline_boundaries):
-        z_start = solution[i * 2]
-        y_start = solution[i * 2 + 1]
-        z_end = solution[(i + 1) * 2]
-        y_end = solution[(i + 1) * 2 + 1]
+        z_start = solution[i * 2][0]
+        y_start = solution[i * 2 + 1][0]
+        z_end = solution[i * 2 + 2][0]
+        y_end = solution[i * 2 + 3][0]
         spline_parameters.append(SplineParameters(section_start, z_start, y_start))
         if i == num_sections - 1:
             spline_parameters.append(SplineParameters(last_period, z_end, y_end))
