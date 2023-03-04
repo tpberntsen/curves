@@ -232,11 +232,11 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         # TODO doc using 1-based indexing for sections gets annoying now
         next_section_idx = section_idx + 1
         # TODO vectorise these outside of the loop?
-        constraint_matrix[row_idx, section_idx * 2] += -1.0 / tau_sinh[section_idx] - one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 2] -= (one_over_h_tau_sqrd[section_idx] - 1.0 / tau_sinh[section_idx])  # deriv_z_i_minus2_coff
         constraint_matrix[row_idx, section_idx * 2 + 1] += 1/h_is[section_idx] # deriv_y_i_minus2_coff
-        constraint_matrix[row_idx, section_idx * 2 + 2] += cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx] + one_over_h_tau_sqrd[next_section_idx] \
+        constraint_matrix[row_idx, section_idx * 2 + 2] += one_over_h_tau_sqrd[next_section_idx] - cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx]  \
                         - cosh_tau_hi[section_idx]/tau_sinh[section_idx] + one_over_h_tau_sqrd[section_idx] # deriv_z_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 2 + 3] += -1/h_is[next_section_idx] - 1/h_is[section_idx] # deriv_y_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 2 + 3] -= (1/h_is[next_section_idx] + 1/h_is[section_idx]) # deriv_y_i_minus1_coff
         constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx] # deriv_z_i_coff
         constraint_matrix[row_idx, section_idx * 2 + 5] += 1/h_is[next_section_idx] # deriv_y_i_coff
 

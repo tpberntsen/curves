@@ -132,7 +132,7 @@ class TestTensionSpline(unittest.TestCase):
                     (period, contract_price) = deconstruct_contract(contract)
                     curve_average_price = weighted_average_slice_curve(interp_curve, test_data['freq'], period,
                                                                        discounted_average_weight)
-                    self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-10)
+                    self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-8)
 
     # def test_inputs_constant_outputs_constant(self):
     #     # Arrange

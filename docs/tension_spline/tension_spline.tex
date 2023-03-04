@@ -114,7 +114,7 @@ expression for $p^\prime_i(t)$:
 \end{multline}
 
 \begin{multline}
-    p^\prime_i(t) = \frac{ z_{i-1} \cosh(\tau_i (t_i - t)) + z_i \cosh(\tau_i (t - t_{i-1}))}{\tau_i \sinh(\tau_i h_i)}  \\
+    p^\prime_i(t) = \frac{ -z_{i-1} \cosh(\tau_i (t_i - t)) + z_i \cosh(\tau_i (t - t_{i-1}))}{\tau_i \sinh(\tau_i h_i)}  \\
         + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i}
 \end{multline}
 
@@ -122,7 +122,7 @@ For clarity, rearranging this to highlight the linearity with respect to the par
 
 \begin{multline}
     p^\prime_i(t) = z_i \biggl( \frac{ \cosh(\tau_i (t - t_{i-1}))}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) 
-        + z_{i-1} \biggl( \frac{ \cosh(\tau_i (t_i - t))}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} \biggr)\\
+        + z_{i-1} \biggl( \frac{1}{h_i \tau_i^2} - \frac{ \cosh(\tau_i (t_i - t))}{\tau_i \sinh(\tau_i h_i)} \biggr)\\
         + y_i \frac{1}{h_i} - y_{i - 1} \frac{1}{h_i}
 \end{multline}
 
@@ -130,13 +130,13 @@ Evaluating this about the boundary points:
 
 \begin{multline}
     p^\prime_i(t_{i-1}) = z_i \biggl( \frac{1}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) 
-        + z_{i-1} \biggl( \frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} \biggr)\\
+        + z_{i-1} \biggl( \frac{1}{h_i \tau_i^2} - \frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} \biggr)\\
         + y_i \frac{1}{h_i} - y_{i - 1} \frac{1}{h_i}
 \end{multline}
 
 \begin{multline}
     p^\prime_{i-1}(t_{i-1}) = z_{i-1} \biggl( \frac{ \cosh(\tau_{i-1} h_{i-1})}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} - \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr) 
-        + z_{i-2} \biggl( \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr)\\
+        + z_{i-2} \biggl( \frac{1}{h_{i-1} \tau_{i-1}^2} - \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} \biggr)\\
         + y_{i-1} \frac{1}{h_{i-1}} - y_{i-2} \frac{1}{h_{i-1}}
 \end{multline}
 
@@ -144,9 +144,9 @@ Setting these equal:
 
 \begin{multline}
     0 = z_i \biggl( \frac{1}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) \\
-        + z_{i-1} \biggl( \frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} 
+        + z_{i-1} \biggl( \frac{1}{h_i \tau_i^2} -\frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)}
         - \frac{ \cosh(\tau_{i-1} h_{i-1})}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2}\biggr)\\
-        - z_{i-2} \biggl( \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr)\\
+        - z_{i-2} \biggl( \frac{1}{h_{i-1} \tau_{i-1}^2} - \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} \biggr)\\
         + y_i \frac{1}{h_i} - y_{i - 1} \bigl( \frac{1}{h_i} + \frac{1}{h_{i-1}} \bigr)
         + y_{i-2} \frac{1}{h_{i-1}}
 \end{multline}
@@ -223,17 +223,6 @@ This constraint should be held for $j=1 \hdots n$.
 %Equations \ref{eq:continuity_constraint}, \ref{eq:1st_deriv_constraint}, \ref{eq:2nd_deriv_constraint} and
 % \ref{eq:price_constraint} can be expressed as the linear system $\+{Ax = b}$ where:
 
-1st derivative constraint
-\begin{multline}
-    0 = z_i \biggl( \frac{1}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{h_i \tau_i^2} \biggr) \\
-        + z_{i-1} \biggl( \frac{ \cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} + \frac{1}{h_i \tau_i^2} 
-        - \frac{ \cosh(\tau_{i-1} h_{i-1})}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2}\biggr)\\
-        - z_{i-2} \biggl( \frac{1}{\tau_{i-1} \sinh(\tau_{i-1} h_{i-1})} + \frac{1}{h_{i-1} \tau_{i-1}^2} \biggr)\\
-        + y_i \frac{1}{h_i} - y_{i - 1} \bigl( \frac{1}{h_i} + \frac{1}{h_{i-1}} \bigr)
-        + y_{i-2} \frac{1}{h_{i-1}}
-\end{multline}
-
-This constraint should be held for $i = 2 \hdots n$.
 
 Start with forward price constraint as less lags (probably)
 
