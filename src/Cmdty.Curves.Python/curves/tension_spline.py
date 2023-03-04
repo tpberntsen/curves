@@ -156,7 +156,7 @@ def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     tau_sinh = np.sinh(tension_by_section * h_is) * tension_by_section
     tau_sqrd_sinh = tau_sinh * tension_by_section
-    tau_sqrd_hi = tension_by_section * h_is
+    tau_sqrd_hi = tension_by_section * tension_by_section * h_is
     cosh_tau_hi = np.cosh(tension_by_section * h_is)
 
     tau_sqrd_sinh_expanded = _create_expanded_np_array(tau_sqrd_sinh, num_result_curve_points, section_period_indices)
