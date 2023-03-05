@@ -24,7 +24,7 @@ from datetime import date
 import unittest
 import pandas as pd
 from datetime import date, datetime
-from curves import tension_spline
+from curves import hyperbolic_tension_spline
 from curves.contract_period import quarter, winter, summer, gas_year
 from math import exp
 from tests._test_common import weighted_average_slice_curve
@@ -42,7 +42,7 @@ def discount_factor(delivery_period):
     return exp(-time_to_settle * interest_rate)
 
 
-class TestTensionSpline(unittest.TestCase):
+class TestHyperbolicTensionSpline(unittest.TestCase):
     flat_tension = 0.75
 
     contracts_list = [
@@ -111,9 +111,9 @@ class TestTensionSpline(unittest.TestCase):
         }]
 
     # TODO properly parameterise these tests
-    def test_tension_spline_averages_back_to_inputs(self):
+    def test_hyperbolic_tension_spline_averages_back_to_inputs(self):
         for test_data in self.test_case_data:
-            interp_curve, _ = tension_spline(**test_data)
+            interp_curve, _ = hyperbolic_tension_spline(**test_data)
             average_weight = test_data['average_weight'] if 'average_weight' in test_data else lambda x: 1.0
             discount_factor_func = test_data['discount_factor']
 

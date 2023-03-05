@@ -35,6 +35,6 @@ if os != 'Windows':
 
 from curves.bootstrap import bootstrap_contracts
 from curves.max_smoothness_spline import max_smooth_interp
-from curves.tension_spline import tension_spline
+from curves.hyperbolic_tension_spline import hyperbolic_tension_spline
 from curves._common import FREQ_TO_PERIOD_TYPE
 from curves.__version__ import __version__

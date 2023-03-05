@@ -38,15 +38,15 @@ class TensionSplineResults(tp.NamedTuple):
     spline_parameters: tp.List[SplineParameters]
 
 
-def tension_spline(contracts: tp.Union[ContractsType, pd.Series],
-                   freq: str,
-                   tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
-                   discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
-                   average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-                   mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-                   add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-                   time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
-                   spline_boundaries=None) -> TensionSplineResults:
+def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
+                              freq: str,
+                              tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
+                              discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
+                              average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                              mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                              add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
+                              spline_boundaries=None) -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
         raise ValueError('contracts argument must have length at least 2. Length of contract used is {}.'
