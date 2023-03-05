@@ -46,7 +46,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
-                              spline_boundaries=None) -> TensionSplineResults:
+                              spline_boundaries=None # TODO: type hints for spline_boundaries
+                              ) -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
         raise ValueError('contracts argument must have length at least 2. Length of contract used is {}.'
@@ -196,6 +197,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     constraint_matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
     constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start
     constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end
+    freq_offset = pd.tseries.frequencies.to_offset(freq)
     # Forward price constraints
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
     for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
@@ -208,7 +210,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         contract_section_start_idx = 0
         while spline_boundary_idx < num_sections and spline_boundaries[spline_boundary_idx] <= contract_end:
             section_start = spline_boundaries[spline_boundary_idx]
-            section_end = spline_boundaries[spline_boundary_idx + 1] if spline_boundary_idx < num_sections - 1 else last_period
+            section_end = spline_boundaries[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
             contract_section_start_period = contract_start if contract_start >= section_start else section_start
             contract_section_end_period = contract_end if contract_end <= section_end else section_end
             while result_curve_index[contract_section_start_idx] != contract_section_start_period:

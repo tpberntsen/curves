@@ -25,18 +25,18 @@ import unittest
 import pandas as pd
 from datetime import date, datetime
 from curves import hyperbolic_tension_spline
-from curves.contract_period import quarter, winter, summer, gas_year
+from curves import contract_period as cp
 from math import exp
 from tests._test_common import weighted_average_slice_curve
 from curves._common import deconstruct_contract
-
 
 interest_rate = 0.046
 val_date = pd.Timestamp(2018, 12, 31)
 
 
 def discount_factor(delivery_period):
-    delivery_period = delivery_period if isinstance(delivery_period, pd.Period) else pd.Period(delivery_period, freq='D')
+    delivery_period = delivery_period if isinstance(delivery_period, pd.Period) else pd.Period(delivery_period,
+                                                                                               freq='D')
     settle_date = delivery_period.asfreq('M').asfreq('D', 'end') + 20
     time_to_settle = (settle_date.start_time - val_date).days / 365.0
     return exp(-time_to_settle * interest_rate)
@@ -50,11 +50,11 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
         ((date(2019, 1, 3), date(2019, 1, 7)), 29.3),
         ((date(2019, 1, 8), date(2019, 1, 31)), 24.66),
-        (quarter(year=2019, quarter_num=2), 18.3),
-        (quarter(year=2019, quarter_num=3), 17.1),
-        (winter(2019), 22.4),
-        (summer(2020), 19.9),
-        (gas_year(2020), 20.01)
+        (cp.quarter(year=2019, quarter_num=2), 18.3),
+        (cp.quarter(year=2019, quarter_num=3), 17.1),
+        (cp.winter(2019), 22.4),
+        (cp.summer(2020), 19.9),
+        (cp.gas_year(2020), 20.01)
     ]
     contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
                                  index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
@@ -89,7 +89,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "tension": flat_tension,
             "discount_factor": discount_factor
         }
-        ]
+    ]
 
     intraday_test_case_data = [
         {
@@ -97,7 +97,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "contracts": [
                 (datetime(2019, 3, 31, hour=0, minute=0), datetime(2019, 3, 31, hour=8, minute=30), 56.84),
                 (datetime(2019, 3, 31, hour=9, minute=0), datetime(2019, 3, 31, hour=18, minute=0), 57.05),
-                (datetime(2019, 3, 31, hour=18, minute=30), datetime(2019, 3, 31, hour=23, minute=30), 60.11), # Covers clock change
+                (datetime(2019, 3, 31, hour=18, minute=30), datetime(2019, 3, 31, hour=23, minute=30), 60.11),
+                # Covers clock change
                 (datetime(2019, 4, 1, hour=0, minute=0), datetime(2019, 4, 1, hour=12, minute=30), 43.11),
             ],
             "tension": flat_tension,
@@ -123,6 +124,33 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     def test_hyperbolic_tension_spline_intraday_interpolation_averages_back_to_inputs(self):
         self._interpolate_and_assert_average_back_to_inputs(self.intraday_test_case_data)
+
+    def test_hyperbolic_tension_spline_contracts_overlap_averages_back_to_inputs(self):
+        inputs = [
+            {
+                "freq": 'D',
+                "contracts": [
+                    (cp.jan(2020), 21.3),
+                    (cp.q_1(2020), 18.66),
+                ],
+                "spline_boundaries": ['2020-01-01', '2020-02-01'],
+                "tension": 12.5,
+                "discount_factor": discount_factor
+            },
+            # {
+            #     "freq": 'D',
+            #     "contracts": [
+            #         (cp.cal_year(2020), 21.3),
+            #         (cp.q_1(2020), 18.66),
+            #         (cp.q_2(2020), 19.65),
+            #         (cp.jul(2020), 15.66)
+            #     ],
+            #     "spline_boundaries": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+            #     "tension": 12.5,
+            #     "discount_factor": discount_factor
+            # }
+        ]
+        self._interpolate_and_assert_average_back_to_inputs(inputs)
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data):
         for test_data in test_case_data:
