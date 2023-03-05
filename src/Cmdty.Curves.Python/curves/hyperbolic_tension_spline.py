@@ -68,7 +68,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
     first_period = standardised_contracts[0][0]
-    last_period = standardised_contracts[-1][1]
+    last_period = max((x[1] for x in standardised_contracts))
     if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
         for i in range(1, num_contracts):
             if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
