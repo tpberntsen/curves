@@ -36,7 +36,7 @@ val_date = pd.Timestamp(2018, 12, 31)
 
 
 def discount_factor(delivery_period):
-    delivery_period = delivery_period if isinstance(delivery_period, pd.Period) else delivery_period.to_timestamp()
+    delivery_period = delivery_period if isinstance(delivery_period, pd.Period) else pd.Period(delivery_period, freq='D')
     settle_date = delivery_period.asfreq('M').asfreq('D', 'end') + 20
     time_to_settle = (settle_date.start_time - val_date).days / 365.0
     return exp(-time_to_settle * interest_rate)
@@ -58,7 +58,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     ]
     contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
                                  index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
-    test_case_data = [
+    daily_test_case_data = [
         {
             "freq": 'D',
             "contracts": contracts_list,
@@ -88,16 +88,21 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "contracts": contracts_series,
             "tension": flat_tension,
             "discount_factor": discount_factor
-        },
+        }
+        ]
+
+    intraday_test_case_data = [
         {
             "freq": "30min",
             "contracts": [
-                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=30), 56.84),
-                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
-                (datetime(2019, 6, 7, hour=18, minute=30), datetime(2019, 6, 7, hour=23, minute=30), 60.11),
+                (datetime(2019, 3, 31, hour=0, minute=0), datetime(2019, 3, 31, hour=8, minute=30), 56.84),
+                (datetime(2019, 3, 31, hour=9, minute=0), datetime(2019, 3, 31, hour=18, minute=0), 57.05),
+                (datetime(2019, 3, 31, hour=18, minute=30), datetime(2019, 3, 31, hour=23, minute=30), 60.11), # Covers clock change
+                (datetime(2019, 4, 1, hour=0, minute=0), datetime(2019, 4, 1, hour=12, minute=30), 43.11),
             ],
             "tension": flat_tension,
-            "discount_factor": discount_factor
+            "discount_factor": discount_factor,
+            "time_zone": 'Europe/London'
         },
         {
             "freq": "15min",
@@ -107,12 +112,20 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 (datetime(2019, 6, 7, hour=18, minute=15), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
             ],
             "tension": flat_tension,
-            "discount_factor": discount_factor
-        }]
+            "discount_factor": discount_factor,
+            "time_zone": 'Europe/Paris'
+        }
+    ]
 
     # TODO properly parameterise these tests
-    def test_hyperbolic_tension_spline_averages_back_to_inputs(self):
-        for test_data in self.test_case_data:
+    def test_hyperbolic_tension_spline_daily_interpolation_averages_back_to_inputs(self):
+        self._interpolate_and_assert_average_back_to_inputs(self.daily_test_case_data)
+
+    def test_hyperbolic_tension_spline_intraday_interpolation_averages_back_to_inputs(self):
+        self._interpolate_and_assert_average_back_to_inputs(self.intraday_test_case_data)
+
+    def _interpolate_and_assert_average_back_to_inputs(self, test_case_data):
+        for test_data in test_case_data:
             interp_curve, _ = hyperbolic_tension_spline(**test_data)
             average_weight = test_data['average_weight'] if 'average_weight' in test_data else lambda x: 1.0
             discount_factor_func = test_data['discount_factor']
