@@ -25,6 +25,7 @@ import pandas as pd
 import numpy as np
 import typing as tp
 from curves._common import ContractsType, _last_period, deconstruct_contract, contract_pandas_periods
+from datetime import date, datetime
 
 
 class SplineParameters(tp.NamedTuple):
@@ -46,7 +47,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
-                              spline_boundaries=None # TODO: type hints for spline_boundaries
+                              spline_knots: tp.Optional[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]] = None
                               ) -> TensionSplineResults:
     num_contracts = len(contracts)
     if num_contracts < 2:
@@ -70,30 +71,30 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
     first_period = standardised_contracts[0][0]
     last_period = max((x[1] for x in standardised_contracts))
-    if spline_boundaries is None:  # Default to use contract boundaries but check they are contiguous
+    if spline_knots is None:  # Default to use contract boundaries but check they are contiguous
         for i in range(1, num_contracts):
             if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
                 raise ValueError('contracts should not have delivery periods which overlap. Elements '
                                  '{} and {} have overlaps.'.format(i - 1, i))
-        spline_boundaries = [contract[0] for contract in standardised_contracts]
+        spline_knots = [contract[0] for contract in standardised_contracts]
     else:
         # TODO allow len(spline_boundaries) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
-        if len(spline_boundaries) != num_contracts:
+        if len(spline_knots) != num_contracts:
             raise ValueError('len(spline_boundaries) should equal len(contracts). However, len(spline_boundaries) '
-                             'equals {} and len(contracts) equals {}.'.format(len(spline_boundaries), num_contracts))
-        spline_boundaries = [_to_index_element(sb, freq, time_zone) for sb in spline_boundaries]
-        if spline_boundaries[0] != first_period:
+                             'equals {} and len(contracts) equals {}.'.format(len(spline_knots), num_contracts))
+        spline_knots = [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
+        if spline_knots[0] != first_period:
             raise ValueError('First element of spline_boundaries should equal {}, the start of the first contract.'
-                             ' However, it equals {}.'.format(standardised_contracts[0][0], spline_boundaries[0]))
+                             ' However, it equals {}.'.format(standardised_contracts[0][0], spline_knots[0]))
         for i in range(1, num_contracts):
-            if spline_boundaries[i] <= spline_boundaries[i - 1]:
+            if spline_knots[i] <= spline_knots[i - 1]:
                 raise ValueError('spline_boundaries should be in ascending order. Elements {} and'
                                  '{} have values {} and {}, hence are not in order.'
-                                 .format(i - 1, i, spline_boundaries[i - 1], spline_boundaries[i]))
-            if spline_boundaries[i] > last_period:
+                                 .format(i - 1, i, spline_knots[i - 1], spline_knots[i]))
+            if spline_knots[i] > last_period:
                 raise ValueError('spline_boundaries should not contain items after the latest contract delivery period.'
                                  'Element {} contains {} which is after the latest delivery of {}.'
-                                 .format(i, spline_boundaries[i], last_period))
+                                 .format(i, spline_knots[i], last_period))
     if time_zone is None:
         result_curve_index = pd.period_range(start=first_period, end=last_period)
     else:
@@ -129,7 +130,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         def get_tension(p) -> float:
             return tension(p)
 
-    num_sections = len(spline_boundaries)
+    num_sections = len(spline_knots)
     matrix_size = num_sections * 2 + 2
     # Using np.zeros rather than empty because easier to understand when debugging
     h_is = np.zeros((num_sections,))
@@ -139,8 +140,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     section_period_indices = []  # 2-tuples of indices for start and (exclusive) end of result periods for each section
     curve_point_idx = 0
-    for i, section_start in enumerate(spline_boundaries):
-        section_end = last_period if i == num_sections - 1 else spline_boundaries[i + 1]
+    for i, section_start in enumerate(spline_knots):
+        section_end = last_period if i == num_sections - 1 else spline_knots[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start)
         section_start_idx = curve_point_idx
@@ -204,13 +205,13 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         spline_boundary_idx = 0
         # Find first spline section
         # TODO use quicker search than this linear scan
-        while spline_boundary_idx < num_sections and contract_start > spline_boundaries[spline_boundary_idx]:
+        while spline_boundary_idx < num_sections and contract_start > spline_knots[spline_boundary_idx]:
             spline_boundary_idx += 1
         # Loop through spline sections which overlap contract
         contract_section_start_idx = 0
-        while spline_boundary_idx < num_sections and spline_boundaries[spline_boundary_idx] <= contract_end:
-            section_start = spline_boundaries[spline_boundary_idx]
-            section_end = spline_boundaries[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
+        while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
+            section_start = spline_knots[spline_boundary_idx]
+            section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
             contract_section_start_period = contract_start if contract_start >= section_start else section_start
             contract_section_end_period = contract_end if contract_end <= section_end else section_end
             while result_curve_index[contract_section_start_idx] != contract_section_start_period:
@@ -249,7 +250,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     # Read results off solution
     spline_vals = np.zeros(num_result_curve_points)
     spline_parameters = []
-    for i, section_start in enumerate(spline_boundaries):
+    for i, section_start in enumerate(spline_knots):
         z_start = solution[i * 2][0]
         y_start = solution[i * 2 + 1][0]
         z_end = solution[i * 2 + 2][0]

@@ -133,7 +133,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                     (cp.jan(2020), 21.3),
                     (cp.q_1(2020), 18.66),
                 ],
-                "spline_boundaries": ['2020-01-01', '2020-02-01'],
+                "spline_knots": ['2020-01-01', '2020-02-01'],
                 "tension": 12.5,
                 "discount_factor": discount_factor
             },
@@ -145,7 +145,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             #         (cp.q_2(2020), 19.65),
             #         (cp.jul(2020), 15.66)
             #     ],
-            #     "spline_boundaries": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+            #     "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
             #     "tension": 12.5,
             #     "discount_factor": discount_factor
             # }
