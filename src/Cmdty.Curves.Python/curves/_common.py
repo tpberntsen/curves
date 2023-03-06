@@ -146,10 +146,12 @@ def series_to_double_time_series(series, time_period_type):
 
 
 ContractsType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple[pd.Period, float],
-                               Tuple[date, date, float], Tuple[datetime, datetime, float], Tuple[
-                                  pd.Period, pd.Period, float],
+                               Tuple[pd.Timestamp, float],
+                               Tuple[date, date, float], Tuple[datetime, datetime, float],
+                               Tuple[pd.Period, pd.Period, float],
+                               Tuple[pd.Timestamp, pd.Timestamp, float],
                                Tuple[Tuple[date, date], float], Tuple[Tuple[datetime, datetime], float],
-                               Tuple[Tuple[pd.Period, pd.Period], float]]]
+                               Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[pd.Timestamp, pd.Timestamp], float]]]
 
 
 def contract_pandas_periods(input_period, freq):

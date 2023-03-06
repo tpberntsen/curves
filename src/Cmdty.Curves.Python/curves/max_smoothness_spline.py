@@ -75,7 +75,7 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
             evaluated for each index period, added to it to derive each price in the resulting curve.
         average_weight (callable, optional): Mapping from pandas.Period type to float which describes the weighting
             that each forward period contributes to a price for delivery which spans multiple periods. The
-            pandas. Period parameter will have freq equal to the freq parameter. An example of such weighting is
+            pandas.Period parameter will have freq equal to the freq parameter. An example of such weighting is
             a monthly curve (freq='M') of a commodity which delivers on every calendar day. In this example average_weight would be
             a callable which returns the number of calendar days in the month, e.g.:
                 lambda p: p.asfreq('D', 'e').day

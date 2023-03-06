@@ -46,15 +46,81 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
-                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
-                              spline_knots: tp.Optional[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]] = None
+                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None, # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
+                              spline_knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None
                               ) -> TensionSplineResults:
+    """
+    Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using hyperbolic tension spline algorithm.
+
+    Generally this function is used to increase the granularity of a curve from a collection of forward prices.
+    The resulting curve will be smooth, and of homogenous granularity. For example a smooth monthly curve can be
+    created from a collection of monthly, quarterly and season granularity forward market prices. This algorithm also
+    handles input contracts with overlapping delivery periods, i.e. the bootstrapping step of forward curve construction.
+
+    Args:
+        contracts (pd.Series or iterable): The input contracts to be interpolated.
+            If iterable of tuples, with each tuple describing a forward delivery period and price in one
+            of the following forms:
+                ([period], [price])
+                ([period start], [period end], [price])
+                (([period start], [period end]), [price])
+            Where:
+                [price] is a float, being the price of commodity delivered over the delivery period.
+                [period] specifies the delivery period.
+                [period start] specifies the start of the contract delivery period.
+                [period end] specifies the inclusive end of the contract delivery period.
+            [period], [period start] and [period end] can be any of the following types:
+                pandas.Period
+                pandas.Timestamp
+                date
+                datetime
+            The delivery periods of all input contracts can be contiguous, overlapping or have gaps. If there are
+            overlaps then the spline_knots argument must be provided.
+        freq (str): Describes the granularity of curve being constructed using pandas Offset Alias notation.
+        tension (float or callable): parameter which specifies the "tension" TODO complete this
+            A higher tension value makes the curve less smooth, and closer to piecewise linear function.
+        discount_factor (callable): Callable which maps from delivery period to the discount factor for the settlement
+            date of this period. This function will be called with an argument of either pandas Period or Timestamp to
+            describe the delivery period, at the granularity of the interpolated curve.
+        average_weight (callable, optional): Mapping from pandas Period or Timestamp instances to float which describes the weighting
+            that each forward period contributes to a price for delivery which spans multiple periods. The
+            parameter will be at the granularity of the interpolated curve, as specified by the freq argument. An example of such weighting is
+            a monthly curve (freq='M') of a commodity which delivers on every calendar day. In this example average_weight would be
+            a callable which returns the number of calendar days in the month, e.g.:
+                lambda p: p.asfreq('D', 'e').day
+            Defaults to None, in which case each period has equal weighting.
+        mult_season_adjust (callable, optional): Callable with single parameter of type pandas Period or Timestamp and return type float.
+            If this argument is supplied, the value from the underlying spline function is multiplied by the result of mult_season_adjust,
+            evaluated for each index period in the resulting curve.
+        add_season_adjust (callable, optional): Callable with single parameter of type pandas Period or Timestamp and return type float.
+            If this argument is supplied, the value from the underlying spline function has the result of add_season_adjust,
+            evaluated for each index period, added to it to derive each price in the resulting curve.
+        time_zone (str, pytz.timezone or dateutil.tz.tzfile, optional): Time zone applicable for the delivery periods of
+            the interpolated curve. This should be specified if interpolating to higher than daily granularity (e.g. hourly)
+            as time zone information is necessary to determine lost or gain hours due to clock changes. If omitted,
+            defaults to UTC-like behaviour with no clock changes. It is not advisable to specify time_zone if
+            interpolating to daily or lower granularity.
+        spline_knots (iterable, optional): Knots of the spline constructed, i.e. the points in time which serve as boundaries
+            between the piecewise hyperbolic functions. If provided, must have the same number of elements as contracts, with
+            the first element equal to the start of the element of contracts with earliest delivery start. Must be provided
+            by caller if contracts argument contains elements with overlapping delivery periods. Defaults to a collection of
+            the starts of each input contract plus the end of the last contract.
+
+    Notes:
+        Whether time_zone is provided by the caller determines whether pandas Period or Timestamp type is used to
+        represent delivery periods in the returned data and as an argument when calling callable arguments. If time_zone is not specified
+        then pandas.Period type is used, as instances of Period are not time zone aware type. If time_zone is specified pandas.Timestamp
+        type is as used, with the tz property of instances being set accordingly.
+
+        See the following technical document for full details of the tension spline algorithm:
+            https://github.com/cmdty/curves/blob/master/docs/tension_spline/tension_spline.pdf
+    """
     num_contracts = len(contracts)
     if num_contracts < 2:
         raise ValueError('contracts argument must have length at least 2. Length of contract used is {}.'
                          .format(num_contracts))
 
-    standardised_contracts = []  # Contract as tuples of (Period, Period, price)
+    standardised_contracts = []  # Contract as tuples of (Period or Timestamp, Period or Timestamp, price)
     if isinstance(contracts, pd.Series):
         for period, price in contracts.items(): # TODO check this works with Series of Timestamps
             start_period = _to_index_element(period.asfreq(freq, 's'), freq, time_zone)
@@ -123,12 +189,21 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                          count=num_result_curve_points)
     weights_x_discounts_x_mult_adjust = weights_times_discounts * mult_season_adjusts
     # Precalculate sinh vectors
-    if isinstance(tension, float):
+    if isinstance(tension, float):  # TODO handle case if tension is int type?
+        if tension <= 0:
+            raise ValueError('tension argument should be a positive number, but value of {} has been provided.'
+                             .format(tension))
+
         def get_tension(p) -> float:
             return tension
     else:
         def get_tension(p) -> float:
-            return tension(p)
+            tension_val = tension(p)
+            if tension_val <= 0:
+                raise ValueError('If callable, tension argument should always returns positive number, but value of {} '
+                                 'has been returned for period {}.'
+                                 .format(tension_val, p))
+            return tension_val
 
     num_sections = len(spline_knots)
     matrix_size = num_sections * 2 + 2
