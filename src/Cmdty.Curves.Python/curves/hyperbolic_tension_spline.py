@@ -29,7 +29,7 @@ from datetime import date, datetime
 
 
 class SplineParameters(tp.NamedTuple):
-    period: tp.Union[pd.Period, pd.Timestamp]
+    t: float
     z: float
     y: float
 
@@ -105,6 +105,14 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             the first element equal to the start of the element of contracts with earliest delivery start. Must be provided
             by caller if contracts argument contains elements with overlapping delivery periods. Defaults to a collection of
             the starts of each input contract plus the end of the last contract.
+
+    Returns:
+            (pandas.Series, list of tuples): named tuple with the following elements:
+            forward_curve: contiguous forward curve, consistent with the contracts parameter.
+                This pandas.Series will have an index of type PeriodIndex or DatetimeIndex (if caller provides time_zone)
+                 and freq equal to the freq parameter.
+            spline_parameters: list of named tuples, with each tuple containing the time t variable and solved z_i and y_i
+                spline parameters solved  at each knot.
 
     Notes:
         Whether time_zone is provided by the caller determines whether pandas Period or Timestamp type is used to
@@ -323,6 +331,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     solution = np.linalg.solve(constraint_matrix, constraint_vector)
 
     # Read results off solution
+    knot_t = 0.0
     spline_vals = np.zeros(num_result_curve_points)
     spline_parameters = []
     for i, section_start in enumerate(spline_knots):
@@ -330,9 +339,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         y_start = solution[i * 2 + 1][0]
         z_end = solution[i * 2 + 2][0]
         y_end = solution[i * 2 + 3][0]
-        spline_parameters.append(SplineParameters(section_start, z_start, y_start))
+
+        spline_parameters.append(SplineParameters(knot_t, z_start, y_start))
+        knot_t += h_is[i]
         if i == num_sections - 1:
-            spline_parameters.append(SplineParameters(last_period, z_end, y_end))
+            spline_parameters.append(SplineParameters(knot_t, z_end, y_end))
         tension_squared = tension_by_section[i]**2
         start_idx, end_idx = section_period_indices[i]
         spline_vals[start_idx:end_idx] =(z_start * sinh_tau_t_to_end[start_idx:end_idx] + z_end * sinh_tau_t_from_start[start_idx:end_idx]) \

@@ -119,7 +119,7 @@ def bootstrap_contracts(contracts: ContractsType,
             following doc: https://github.com/cmdty/curves/blob/master/docs/bootstrap/bootstrapping_commodity_forwards.pdf
 
     Returns:
-        (pandas.Series, list of tuple): named tuple with the following elements:
+        (pandas.Series, list of tuples): named tuple with the following elements:
         piecewise_curve: A contiguous forward curve, consistent with the contracts parameter.
             This pandas.Series will have an index of type PeriodIndex and freq equal to the freq parameter.
         bootstrapped_contracts: Equivalent to contracts parameter, but with overlapping periods removed, represented by a 3-item named tuple (start, end, price):
