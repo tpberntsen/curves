@@ -152,21 +152,21 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                  '{} and {} have overlaps.'.format(i - 1, i))
         spline_knots = [contract[0] for contract in standardised_contracts]
     else:
-        # TODO allow len(spline_boundaries) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
+        # TODO allow len(spline_knots) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
         if len(spline_knots) != num_contracts:
-            raise ValueError('len(spline_boundaries) should equal len(contracts). However, len(spline_boundaries) '
+            raise ValueError('len(spline_knots) should equal len(contracts). However, len(spline_knots) '
                              'equals {} and len(contracts) equals {}.'.format(len(spline_knots), num_contracts))
         spline_knots = [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
         if spline_knots[0] != first_period:
-            raise ValueError('First element of spline_boundaries should equal {}, the start of the first contract.'
+            raise ValueError('First element of spline_knots should equal {}, the start of the first contract.'
                              ' However, it equals {}.'.format(standardised_contracts[0][0], spline_knots[0]))
         for i in range(1, num_contracts):
             if spline_knots[i] <= spline_knots[i - 1]:
-                raise ValueError('spline_boundaries should be in ascending order. Elements {} and'
+                raise ValueError('spline_knots should be in ascending order. Elements {} and'
                                  '{} have values {} and {}, hence are not in order.'
                                  .format(i - 1, i, spline_knots[i - 1], spline_knots[i]))
             if spline_knots[i] > last_period:
-                raise ValueError('spline_boundaries should not contain items after the latest contract delivery period.'
+                raise ValueError('spline_knots should not contain items after the latest contract delivery period.'
                                  'Element {} contains {} which is after the latest delivery of {}.'
                                  .format(i, spline_knots[i], last_period))
     if time_zone is None:
