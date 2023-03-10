@@ -137,6 +137,21 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 "tension": 12.5,
                 "discount_factor": discount_factor
             },
+        ]
+        self._interpolate_and_assert_average_back_to_inputs(inputs)
+
+    # def test_hyperbolic_tension_spline_knots_specified_averages_back_to_inputs(self):
+    #     inputs = [
+    #         {
+    #             "freq": 'D',
+    #             "contracts": [
+    #                 (cp.q_1(2020), 18.66),
+    #                 (cp.q_2(2020), 19.68),
+    #             ],
+    #             "spline_knots": ['2020-01-01', '2020-02-15'],
+    #             "tension": 12.5,
+    #             "discount_factor": discount_factor
+    #         },
             # {
             #     "freq": 'D',
             #     "contracts": [
@@ -149,8 +164,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             #     "tension": 12.5,
             #     "discount_factor": discount_factor
             # }
-        ]
-        self._interpolate_and_assert_average_back_to_inputs(inputs)
+        # ]
+        # self._interpolate_and_assert_average_back_to_inputs(inputs)
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data):
         for test_data in test_case_data:

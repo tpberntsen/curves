@@ -169,6 +169,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 raise ValueError('spline_knots should not contain items after the latest contract delivery period.'
                                  'Element {} contains {} which is after the latest delivery of {}.'
                                  .format(i, spline_knots[i], last_period))
+
     if time_zone is None:
         result_curve_index = pd.period_range(start=first_period, end=last_period)
     else:
@@ -213,6 +214,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                  .format(tension_val, p))
             return tension_val
 
+    freq_offset = pd.tseries.frequencies.to_offset(freq)
+
+    def int_index(del_period):
+        return round((del_period - first_period) / freq_offset)
+
     num_sections = len(spline_knots)
     matrix_size = num_sections * 2 + 2
     # Using np.zeros rather than empty because easier to understand when debugging
@@ -221,7 +227,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     t_from_section_start = np.zeros((num_result_curve_points,))
     t_to_section_end = np.zeros((num_result_curve_points,))
 
-    section_period_indices = []  # 2-tuples of indices for start and (exclusive) end of result periods for each section
+    section_period_indices = []  # 2-tuples of indices for start and (exclusive) end indices of result periods for each section
     curve_point_idx = 0
     for i, section_start in enumerate(spline_knots):
         section_end = last_period if i == num_sections - 1 else spline_knots[i + 1]
@@ -250,7 +256,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     sinh_tau_t_to_end = np.sinh(t_to_section_end * tensions_expanded)
 
     # TODO: research allocation-efficient vectorisation with numpy. Probably just make operations in-place.
-    # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs to be zero vectors if tension is zero?
+    # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs if tension is zero?
     # Coefficients used in forward price constraint
     zi_coeffs = (sinh_tau_t_from_start / tau_sqrd_sinh_expanded - t_from_section_start / tau_sqrd_hi_expanded) \
                 * weights_x_discounts_x_mult_adjust
@@ -264,13 +270,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     contract_start_idx = 0
     # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
     for i, (start, end, price) in enumerate(standardised_contracts):
-        while result_curve_index[contract_start_idx] != start:
-            contract_start_idx += 1
-        # TODO: search end in more efficient way, i.e. binary search of remaining vector?
-        contract_end_idx = contract_start_idx
-        while result_curve_index[contract_end_idx] != end:
-            contract_end_idx += 1
-        contract_end_idx += 1
+        contract_start_idx = int_index(start)
+        contract_end_idx = int_index(end) + 1
         weights_times_discounts_slice = weights_times_discounts[contract_start_idx:contract_end_idx]
         add_season_adjusts_slice = add_season_adjusts[contract_start_idx:contract_end_idx]
         weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
@@ -281,7 +282,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     constraint_matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
     constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start
     constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end
-    freq_offset = pd.tseries.frequencies.to_offset(freq)
     # Forward price constraints
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
     for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
