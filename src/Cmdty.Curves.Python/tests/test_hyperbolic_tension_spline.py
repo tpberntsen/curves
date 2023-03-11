@@ -192,8 +192,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     # def test_inputs_constant_outputs_constant(self):
     #     # Arrange
-    #     freq = 'D'
-    #     time_zone = None  # 'Europe/London'
+    #     freq = '15min'
+    #     time_zone = None # 'Europe/London'
     #     flat_price = 10.5
     #     num_contracts = 3
     #     monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
@@ -201,11 +201,11 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     #
     #     def tension(p):
     #         return 0.05
-    #
-    #     # Act
-    #     daily_curve, spline_params = tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
-    #                                                 discount_factor=lambda x: 1.0)
-    #     # Assert
-    #     expect_daily_curve = monthly_curve.resample(freq).fillna('pad')
-    #     pd.testing.assert_series_equal(daily_curve, expect_daily_curve)
-    #     self.assertEqual(len(spline_params), len(monthly_curve) + 1)
+
+        # Act
+        # daily_curve, spline_params = hyperbolic_tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
+        #                                             discount_factor=lambda x: 1.0)
+        # Assert
+        # expect_daily_curve = monthly_curve.resample(freq).fillna('pad')
+        # pd.testing.assert_series_equal(daily_curve, expect_daily_curve)
+        # self.assertEqual(len(spline_params), len(monthly_curve) + 1)

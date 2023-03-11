@@ -39,6 +39,9 @@ class TensionSplineResults(tp.NamedTuple):
     spline_parameters: tp.List[SplineParameters]
 
 
+_years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
+
+
 def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               freq: str,
                               tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
@@ -171,10 +174,15 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                  .format(i, spline_knots[i], last_period))
 
     if time_zone is None:
-        result_curve_index = pd.period_range(start=first_period, end=last_period)
+        result_curve_index = pd.period_range(start=first_period, end=last_period, freq=freq)
+        datetime_index = pd.date_range(start=first_period.start_time, end=last_period.start_time,
+                                       freq=freq)
+        t_from_start = (datetime_index - first_period.start_time).total_seconds().to_numpy() * _years_per_second
+        del datetime_index
     else:
         result_curve_index = pd.date_range(start=first_period, end=last_period,
                                            freq=freq, tz=time_zone)
+        t_from_start = (result_curve_index - first_period).total_seconds().to_numpy() * _years_per_second
     num_result_curve_points = len(result_curve_index)
 
     # Calculate vectors of coefficients
@@ -224,25 +232,26 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     # Using np.zeros rather than empty because easier to understand when debugging
     h_is = np.zeros((num_sections,))
     tension_by_section = np.zeros((num_sections,))
-    t_from_section_start = np.zeros((num_result_curve_points,))
-    t_to_section_end = np.zeros((num_result_curve_points,))
 
     section_period_indices = []  # 2-tuples of indices for start and (exclusive) end indices of result periods for each section
     curve_point_idx = 0
+    # TODO get rid of below loop in favour of something more optimised
     for i, section_start in enumerate(spline_knots):
         section_end = last_period if i == num_sections - 1 else spline_knots[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start)
         section_start_idx = curve_point_idx
         while curve_point_idx < num_result_curve_points and (result_curve_index[curve_point_idx] < section_end or i == num_sections - 1): # TODO IMPORTANT THIS IS ONLY WORKING BY CHANCE DUE TO DATE_RANGE OMITTING THE LAST MONTH
-            period = result_curve_index[curve_point_idx]
-            t_from_section_start[curve_point_idx] = _default_time_func(section_start, period)
-            t_to_section_end[curve_point_idx] = h_is[i]-t_from_section_start[curve_point_idx]
             curve_point_idx += 1
         section_end_idx = None if i == num_sections - 1 else curve_point_idx
         section_period_indices.append((section_start_idx, section_end_idx))
 
     h_is_expanded = _create_expanded_np_array(h_is, num_result_curve_points, section_period_indices)
+    section_end_times = np.cumsum(h_is)
+    section_end_t_expanded = _create_expanded_np_array(section_end_times, num_result_curve_points, section_period_indices)
+    t_to_section_end = section_end_t_expanded - t_from_start
+    t_from_section_start = h_is_expanded - t_to_section_end
+
     tensions_expanded = _create_expanded_np_array(tension_by_section, num_result_curve_points, section_period_indices)
 
     tau_sinh = np.sinh(tension_by_section * h_is) * tension_by_section
@@ -267,7 +276,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # Populate constraint vector
     constraint_vector = np.zeros((matrix_size, 1))
-    contract_start_idx = 0
     # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
     for i, (start, end, price) in enumerate(standardised_contracts):
         contract_start_idx = int_index(start)
@@ -284,13 +292,14 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end
     # Forward price constraints
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
+    first_spline_section_idx = 0
     for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
-        spline_boundary_idx = 0
         # Find first spline section
         # TODO use quicker search than this linear scan
-        while spline_boundary_idx < num_sections and contract_start > spline_knots[spline_boundary_idx]:
-            spline_boundary_idx += 1
+        while first_spline_section_idx < num_sections and contract_start > spline_knots[first_spline_section_idx]:
+            first_spline_section_idx += 1
         # Loop through spline sections which overlap contract
+        spline_boundary_idx = first_spline_section_idx
         contract_section_start_idx = 0
         while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
             section_start = spline_knots[spline_boundary_idx]
@@ -360,7 +369,7 @@ def _default_time_func(period1, period2):
     time_stamp1 = period1.start_time if isinstance(period1, pd.Period) else period1
     time_stamp2 = period2.start_time if isinstance(period2, pd.Period) else period2
     time_delta = time_stamp2 - time_stamp1
-    return time_delta.total_seconds() / 60.0 / 60.0 / 24.0 / 365.0  # Convert to years with ACT/365
+    return time_delta.total_seconds() * _years_per_second  # Convert to years with ACT/365
 
 
 def _to_index_element(period, freq, tz):
