@@ -233,17 +233,16 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     h_is = np.zeros((num_sections,))
     tension_by_section = np.zeros((num_sections,))
 
-    section_period_indices = []  # 2-tuples of indices for start and (exclusive) end indices of result periods for each section
-    curve_point_idx = 0
-    # TODO get rid of below loop in favour of something more optimised
+    section_period_indices = [] # 2-tuples of indices for start and (exclusive) end indices of result periods for each section
+    last_section_end_idx = 0
+    # TODO vectorise below loop?
     for i, section_start in enumerate(spline_knots):
         section_end = last_period if i == num_sections - 1 else spline_knots[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start)
-        section_start_idx = curve_point_idx
-        while curve_point_idx < num_result_curve_points and (result_curve_index[curve_point_idx] < section_end or i == num_sections - 1): # TODO IMPORTANT THIS IS ONLY WORKING BY CHANCE DUE TO DATE_RANGE OMITTING THE LAST MONTH
-            curve_point_idx += 1
-        section_end_idx = None if i == num_sections - 1 else curve_point_idx
+        section_start_idx = last_section_end_idx
+        section_end_idx = None if i == num_sections - 1 else int_index(spline_knots[i + 1])
+        last_section_end_idx = section_end_idx
         section_period_indices.append((section_start_idx, section_end_idx))
 
     h_is_expanded = _create_expanded_np_array(h_is, num_result_curve_points, section_period_indices)

@@ -190,21 +190,22 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                                                                        discounted_average_weight)
                     self.assertAlmostEqual(curve_average_price, contract_price, delta=1E-8)
 
-    # def test_inputs_constant_outputs_constant(self):
-    #     # Arrange
-    #     freq = '15min'
-    #     time_zone = None # 'Europe/London'
-    #     flat_price = 10.5
-    #     num_contracts = 3
-    #     monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
-    #     monthly_curve = pd.Series(data=[10.2, 11.69, 10.98], index=monthly_index)
-    #
-    #     def tension(p):
-    #         return 0.05
+    @unittest.skip('This test is currently just used for investigations.')
+    def test_inputs_constant_outputs_constant(self):
+        # Arrange
+        freq = '15min'
+        time_zone = None # 'Europe/London'
+        flat_price = 10.5
+        num_contracts = 30
+        monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
+        monthly_curve = pd.Series(data=[10.2, 11.69, 10.98]*10, index=monthly_index)
+
+        def tension(p):
+            return 0.05
 
         # Act
-        # daily_curve, spline_params = hyperbolic_tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
-        #                                             discount_factor=lambda x: 1.0)
+        daily_curve, spline_params = hyperbolic_tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
+                                                    discount_factor=lambda x: 1.0)
         # Assert
         # expect_daily_curve = monthly_curve.resample(freq).fillna('pad')
         # pd.testing.assert_series_equal(daily_curve, expect_daily_curve)
