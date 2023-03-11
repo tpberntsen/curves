@@ -36,7 +36,7 @@ class SplineParameters(tp.NamedTuple):
 
 class TensionSplineResults(tp.NamedTuple):
     forward_curve: pd.Series
-    spline_parameters: tp.List[SplineParameters]
+    spline_parameters: tp.List[SplineParameters]  # TODO change this to pd.DataFrame
 
 
 _years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
@@ -299,19 +299,14 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             first_spline_section_idx += 1
         # Loop through spline sections which overlap contract
         spline_boundary_idx = first_spline_section_idx
-        contract_section_start_idx = 0
+        # contract_section_start_idx = 0
         while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
             section_start = spline_knots[spline_boundary_idx]
             section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
             contract_section_start_period = contract_start if contract_start >= section_start else section_start
             contract_section_end_period = contract_end if contract_end <= section_end else section_end
-            while result_curve_index[contract_section_start_idx] != contract_section_start_period:
-                contract_section_start_idx += 1
-            # TODO use quicker search than this linear scan
-            contract_section_end_idx = contract_section_start_idx
-            while result_curve_index[contract_section_end_idx] != contract_section_end_period:
-                contract_section_end_idx += 1
-            contract_section_end_idx += 1
+            contract_section_start_idx = int_index(contract_section_start_period)
+            contract_section_end_idx = int_index(contract_section_end_period) + 1
             # Forward price constraints
             constraint_matrix[contract_idx + 1, spline_boundary_idx * 2] += np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
             constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 1] += np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
