@@ -255,7 +255,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     tau_sinh = np.sinh(tension_by_section * h_is) * tension_by_section
     tau_sqrd_sinh = tau_sinh * tension_by_section
-    tau_sqrd_hi = tension_by_section * tension_by_section * h_is
+    tension_by_section_sqrd = tension_by_section * tension_by_section
+    tau_sqrd_hi = tension_by_section_sqrd * h_is
     cosh_tau_hi = np.cosh(tension_by_section * h_is)
 
     tau_sqrd_sinh_expanded = _create_expanded_np_array(tau_sqrd_sinh, num_result_curve_points, section_period_indices)
@@ -299,7 +300,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             first_spline_section_idx += 1
         # Loop through spline sections which overlap contract
         spline_boundary_idx = first_spline_section_idx
-        # contract_section_start_idx = 0
         while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
             section_start = spline_knots[spline_boundary_idx]
             section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
@@ -347,13 +347,18 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         knot_t += h_is[i]
         if i == num_sections - 1:
             spline_parameters.append(SplineParameters(knot_t, z_end, y_end))
-        tension_squared = tension_by_section[i]**2
+        tension_squared = tension_by_section_sqrd[i]
         start_idx, end_idx = section_period_indices[i]
         spline_vals[start_idx:end_idx] =(z_start * sinh_tau_t_to_end[start_idx:end_idx] + z_end * sinh_tau_t_from_start[start_idx:end_idx]) \
                     / tau_sqrd_sinh_expanded[start_idx:end_idx] + \
                          ((y_start - z_start / tension_squared) * t_to_section_end[start_idx:end_idx] +
                           (y_end - z_end / tension_squared) * t_from_section_start[start_idx:end_idx]) / h_is_expanded[start_idx:end_idx]
-
+    # TODO: handling of periods with zero weight, e.g. power offpeak hours when interpolating peak. Could be:
+    # periods aren't included in index
+    # NaN price for zero-weight periods
+    # Current behaviour: zero price
+    # Controls this behaviour with argument?
+    # TODO: skip adjustments if these aren't provided
     result_curve_prices = (spline_vals + add_season_adjusts) * mult_season_adjusts
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
     return TensionSplineResults(result_curve, spline_parameters)
