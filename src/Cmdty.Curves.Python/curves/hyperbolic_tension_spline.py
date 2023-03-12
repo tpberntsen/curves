@@ -44,7 +44,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None, # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
-                              spline_knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None
+                              spline_knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None,
+                              back_1st_deriv: tp.Optional[float] = None
                               ) -> TensionSplineResults:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using hyperbolic tension spline algorithm.
@@ -102,6 +103,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             the first element equal to the start of the element of contracts with earliest delivery start. Must be provided
             by caller if contracts argument contains elements with overlapping delivery periods. Defaults to a collection of
             the starts of each input contract plus the end of the last contract.
+        back_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the end of the
+            curve must be. Used to add some optional control of the curve generated. If this parameter is omitted TODO implement default
 
     Returns:
             (pandas.Series, pandas.DataFrame): named tuple with the following elements:
@@ -282,8 +285,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # Populate constraint matrix
     constraint_matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
-    constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start
-    constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end
+    constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start, i.e z_0 = 0
+    constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end, i.e. z_n = 0
     # Forward price constraints
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
     first_spline_section_idx = 0
@@ -323,10 +326,16 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx] # deriv_z_i_coff
         constraint_matrix[row_idx, section_idx * 2 + 5] += 1/h_is[next_section_idx] # deriv_y_i_coff
 
-    # TODO IMPORTANT: GET RID OF THIS TEMPORARY HACK TO ADD ONE MORE CONSTRAINT
-    constraint_matrix[-2, -4] = 1  # Temporary hack to set 2nd derive at last knot to zero
+    if back_1st_deriv is None:
+        # TODO IMPORTANT: GET RID OF THIS TEMPORARY HACK AND DECIDE HOW TO HANDLE PROPERLY
+        constraint_matrix[-2, -4] = 1  # Temporary hack to set 2nd derive at penultimate knot to zero
+    else:
+        constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - 1.0 / tau_sinh[-1] # z_{n-1}
+        constraint_matrix[-2, -3] = 1.0 / h_is[-1]  # y_{n-1}
+        constraint_matrix[-2, -2] = cosh_tau_hi[-1]/tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
+        constraint_matrix[-2, -1] = 1.0 / h_is[-1]  # y_n
+        constraint_vector[-2] = back_1st_deriv
     solution = np.linalg.solve(constraint_matrix, constraint_vector)
-
     # Read results off solution
     spline_vals = np.zeros(num_result_curve_points)
     spline_params_data = np.zeros(shape=(num_sections+1, 3))

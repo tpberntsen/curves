@@ -66,7 +66,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
-            "discount_factor": discount_factor
+            "discount_factor": discount_factor,
+            "back_1st_deriv" : -0.3
         },
         {
             "freq": 'D',
@@ -75,19 +76,22 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
-            "discount_factor": discount_factor
+            "discount_factor": discount_factor,
+            "back_1st_deriv" : -0.3
         },
         {
             "freq": 'D',
             "contracts": contracts_list,
             "tension": flat_tension,
-            "discount_factor": discount_factor
+            "discount_factor": discount_factor,
+            "back_1st_deriv" : -0.3
         },
         {
             "freq": 'D',
             "contracts": contracts_series,
             "tension": flat_tension,
-            "discount_factor": discount_factor
+            "discount_factor": discount_factor,
+            "back_1st_deriv" : -0.3
         }
     ]
 
@@ -103,7 +107,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             ],
             "tension": flat_tension,
             "discount_factor": discount_factor,
-            "time_zone": 'Europe/London'
+            "time_zone": 'Europe/London',
+            # "back_1st_deriv" : 0.0 TODO figure out why adding this constrain causes bigger error
         },
         {
             "freq": "15min",
@@ -114,7 +119,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             ],
             "tension": flat_tension,
             "discount_factor": discount_factor,
-            "time_zone": 'Europe/Paris'
+            "time_zone": 'Europe/Paris',
+            # "back_1st_deriv" : -0.3
         }
     ]
 
@@ -135,7 +141,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 ],
                 "spline_knots": ['2020-01-01', '2020-02-01'],
                 "tension": 12.5,
-                "discount_factor": discount_factor
+                "discount_factor": discount_factor,
+                "back_1st_deriv" : -0.3
             },
         ]
         self._interpolate_and_assert_average_back_to_inputs(inputs)
@@ -196,16 +203,19 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         freq = '15min'
         time_zone = None # 'Europe/London'
         flat_price = 10.5
-        num_contracts = 30
+        num_contracts = 300
         monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
-        monthly_curve = pd.Series(data=[10.2, 11.69, 10.98]*10, index=monthly_index)
+        monthly_curve = pd.Series(data=[10.2, 11.69, 10.98]*100, index=monthly_index)
+        back_1st_derive = -0.1
 
         def tension(p):
             return 0.05
 
         # Act
         daily_curve, spline_params = hyperbolic_tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
-                                                    discount_factor=lambda x: 1.0)
+                                discount_factor=lambda x: 1.0, back_1st_deriv=back_1st_derive)
+        print('Curve length:')
+        print(len(daily_curve))
         # Assert
         # expect_daily_curve = monthly_curve.resample(freq).fillna('pad')
         # pd.testing.assert_series_equal(daily_curve, expect_daily_curve)
