@@ -241,9 +241,11 @@ parameters which minimise the integral of the second derivative.
 \begin{eqnarray}
     \label{eq:11}
     \nonumber
-    min \int_{t_0}^{t_n}p''(t)^2 dt = \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p''_i(t)^2dt \\
+    min \int_{t_0}^{t_n} \bigl( p^{\prime\prime}(t)^2 + \tau p^{\prime}(t)^2 \bigr) dt 
+    = \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau p^{\prime}(t)^2 dt \\
     \nonumber
-    =\sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i} (2 c_i + 6 d_i t + 12 e_i t^2)^2dt \\
+    =\sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i} \bigl( 2 c_i + 6 d_i t + 12 e_i t^2\bigr)^2 
+    + \tau \bigl( b_i + 2 c_i t + 3 d_i t^2 + 4 e_i t^3 \bigr)^2 dt \\
     \nonumber
     =\sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i} (4 c_i^2 + 24 c_i d_i t + 48 c_i e_i t^2 +
     36 d_i^2 t^2 + 144 d_i e_i t^3 + 144 e_i^2 t^4)dt \\

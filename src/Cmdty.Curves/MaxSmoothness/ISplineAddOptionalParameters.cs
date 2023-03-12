@@ -38,6 +38,7 @@ namespace Cmdty.Curves
         ISplineAddOptionalParameters<T> WithFrontFirstDerivative(double firstDerivative);
         ISplineAddOptionalParameters<T> WithBackFirstDerivative(double firstDerivative);
         ISplineAddOptionalParameters<T> WithTimeFunc(Func<T, T, double> timeFunc);
+        ISplineAddOptionalParameters<T> WithTensionParameter(double tension);
         DoubleCurve<T> BuildCurve();
     }
 }

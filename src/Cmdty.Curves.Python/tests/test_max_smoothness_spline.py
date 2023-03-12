@@ -54,6 +54,7 @@ class TestMaxSmoothnessSpline(unittest.TestCase):
             "average_weight": lambda x: 0.1,
             "front_1st_deriv": 0.0,
             "back_1st_deriv": 0.0,
+            "tension": 2.6
         },
         {
             "freq": 'D',

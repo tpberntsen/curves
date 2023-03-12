@@ -39,7 +39,8 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
                       average_weight: Optional[Callable[[pd.Period], float]] = None,
                       time_func: Optional[Callable[[pd.Period, pd.Period], float]] = None,
                       front_1st_deriv: Optional[float] = None,
-                      back_1st_deriv: Optional[float] = None) -> pd.Series:
+                      back_1st_deriv: Optional[float] = None,
+                      tension: Optional[float] = None) -> pd.Series:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using maximum smoothness algorithm.
 
@@ -89,6 +90,8 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
             curve must be. Used to add some optional control of the curve generated. If this parameter is omitted no constraint is applied.
         back_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the end of the 
             curve must be. Used to add some optional control of the curve generated. If this parameter is omitted no constraint is applied.
+        tension (float, optional): Non-negative parameter, a higher value of which makes the resulting spline closer to a linear spline.
+            Increase the tension argument to reduce oscillations in the fitted spline. Defaults to 0 if omitted.
 
     Returns:
         pandas.Series: Series with index of type PeriodIndex and freqstr equal to the freq parameter. This Series will
@@ -130,6 +133,8 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
         spline_builder.WithFrontFirstDerivative(front_1st_deriv)
     if back_1st_deriv is not None:
         spline_builder.WithBackFirstDerivative(back_1st_deriv)
+    if tension is not None:
+        spline_builder.WithTensionParameter(tension)
     curve = spline_builder.BuildCurve()
     result = net_time_series_to_pandas_series(curve, freq)
     return result

@@ -42,6 +42,7 @@ namespace Cmdty.Curves
         private double? _frontFirstDerivative;
         private double? _backFirstDerivative;
         private Func<T, T, double> _timeFunc;
+        private double _tension;
         
         public MaxSmoothnessSplineCurveBuilder()
         {
@@ -100,6 +101,14 @@ namespace Cmdty.Curves
             return this;
         }
 
+        public ISplineAddOptionalParameters<T> WithTensionParameter(double tension)
+        {
+            if (tension < 0) throw new ArgumentOutOfRangeException(nameof(tension),
+                $"Tension must be non-negative. However, negative value of {tension} was provided.");
+            _tension = tension;
+            return this;
+        }
+
         public DoubleCurve<T> BuildCurve()
         {
             return Build(_contracts.OrderBy(contract => contract.Start).ToList(),
@@ -108,13 +117,14 @@ namespace Cmdty.Curves
                 _addAdjust ?? (timePeriod => 0.0),
                 _timeFunc ?? ((period1, period2) => period2.OffsetFrom(period1)),
                 _frontFirstDerivative,
-                _backFirstDerivative
+                _backFirstDerivative,
+                _tension
             ); 
         }
 
         private static DoubleCurve<T> Build(List<Contract<T>> contracts, Func<T, double> weighting,
             Func<T, double> multAdjustFunc, Func<T, double> addAdjustFunc, Func<T, T, double> timeFunc,
-            double? frontFirstDerivative, double? backFirstDerivative)
+            double? frontFirstDerivative, double? backFirstDerivative, double tension)
         {
             if (contracts.Count < 2)
                 throw new ArgumentException("contracts must have at least two elements", nameof(contracts));
@@ -257,7 +267,7 @@ namespace Cmdty.Curves
                     vector[numPolynomials * 5 + priceConstraintRow] = sumWeight * contract.Price - sumWeightMultAdd;
 
                     twoHMatrix.SetSubMatrix(i * 5 + 2, i * 5 + 2,
-                                Create2HBottomRightSubMatrix(contract, curveStartPeriod, timeFunc));
+                                Create2HBottomRightSubMatrix(contract, curveStartPeriod, timeFunc, tension));
 
                     inputContractIndex++;
                     rowNum += 4;
@@ -360,7 +370,7 @@ namespace Cmdty.Curves
         }
 
         private static Matrix<double> Create2HBottomRightSubMatrix(Contract<T> contract, T curveStartPeriod,
-                                                        Func<T, T, double> timeFunc)
+                                                        Func<T, T, double> timeFunc, double tension)
         {
             double timeToStart = timeFunc(curveStartPeriod, contract.Start);
             double timeToEnd = timeFunc(curveStartPeriod, contract.End.Offset(1));
