@@ -28,15 +28,9 @@ from curves._common import ContractsType, _last_period, deconstruct_contract, co
 from datetime import date, datetime
 
 
-class SplineParameters(tp.NamedTuple):
-    t: float
-    z: float
-    y: float
-
-
 class TensionSplineResults(tp.NamedTuple):
     forward_curve: pd.Series
-    spline_parameters: tp.List[SplineParameters]  # TODO change this to pd.DataFrame
+    spline_parameters: pd.DataFrame
 
 
 _years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
@@ -110,12 +104,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             the starts of each input contract plus the end of the last contract.
 
     Returns:
-            (pandas.Series, list of tuples): named tuple with the following elements:
+            (pandas.Series, pandas.DataFrame): named tuple with the following elements:
             forward_curve: contiguous forward curve, consistent with the contracts parameter.
                 This pandas.Series will have an index of type PeriodIndex or DatetimeIndex (if caller provides time_zone)
                  and freq equal to the freq parameter.
-            spline_parameters: list of named tuples, with each tuple containing the time t variable and solved z_i and y_i
-                spline parameters solved  at each knot.
+            spline_parameters: pandas.DataFrame containing the time t variable and solved z_i and y_i
+                spline parameters at each spline knot.
 
     Notes:
         Whether time_zone is provided by the caller determines whether pandas Period or Timestamp type is used to
@@ -334,19 +328,17 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     solution = np.linalg.solve(constraint_matrix, constraint_vector)
 
     # Read results off solution
-    knot_t = 0.0
     spline_vals = np.zeros(num_result_curve_points)
-    spline_parameters = []
+    spline_params_data = np.zeros(shape=(num_sections+1, 3))
+    spline_params_data[1:, 0] = section_end_times # Knot times
+    spline_params_data[:, 1] = solution[1::2, 0]  # y params
+    spline_params_data[:, 2] = solution[::2, 0]  # z params
+    spline_params = pd.DataFrame(data=spline_params_data, index=spline_knots + [last_period], columns=['t', 'y', 'z'])
     for i, section_start in enumerate(spline_knots):
-        z_start = solution[i * 2][0]
-        y_start = solution[i * 2 + 1][0]
-        z_end = solution[i * 2 + 2][0]
-        y_end = solution[i * 2 + 3][0]
-
-        spline_parameters.append(SplineParameters(knot_t, z_start, y_start))
-        knot_t += h_is[i]
-        if i == num_sections - 1:
-            spline_parameters.append(SplineParameters(knot_t, z_end, y_end))
+        z_start = solution[i * 2, 0]
+        y_start = solution[i * 2 + 1, 0]
+        z_end = solution[i * 2 + 2, 0]
+        y_end = solution[i * 2 + 3, 0]
         tension_squared = tension_by_section_sqrd[i]
         start_idx, end_idx = section_period_indices[i]
         spline_vals[start_idx:end_idx] =(z_start * sinh_tau_t_to_end[start_idx:end_idx] + z_end * sinh_tau_t_from_start[start_idx:end_idx]) \
@@ -361,7 +353,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     # TODO: skip adjustments if these aren't provided
     result_curve_prices = (spline_vals + add_season_adjusts) * mult_season_adjusts
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
-    return TensionSplineResults(result_curve, spline_parameters)
+    return TensionSplineResults(result_curve, spline_params)
 
 
 def _default_time_func(period1, period2):
