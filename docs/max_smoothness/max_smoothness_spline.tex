@@ -6,7 +6,7 @@
 
 \title{Maximum Smoothness Algorithm for Building Commodity Forward Curves}
 \author{Jake C. Fowler}
-\date{June 2019 - (Updated March 2023)}
+\date{June 2019 (Updated March 2023)}
 
 \begin{document}
 \newcommand{\+}[1]{\ensuremath{\mathbf{#1}}}
@@ -264,12 +264,19 @@ Writing the penalty function and integrating:
     \nonumber
     =\sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i} \biggl( b_i^2\tau + 4 b_i c_i \tau t + c_i^2(4 + 4 \tau t^2) 
     + 6 b_i d_i \tau t^2 + c_i d_i (24 t + 12 \tau t^3) + \\
+    \nonumber
     c_i e_i (48 t^2 + 16 \tau t^4) + d_i^2 (36 t^2 + 9 \tau t^4) + \\
+    \nonumber
     8 b_i e_i \tau t^3 + d_i e_i (144 t^3 + 24 \tau t^5) + 
      e_i^2 (144 t^4 + 16 \tau t^6) \biggr) dt \\
-    =\sum_{i=1}^{n} 4 c_i^2 \Delta_i^1 + 12 c_i d_i \Delta_i^2
-    + 16 c_i e_i \Delta_i^3 + 12 d_i^2 \Delta_i^3 + 36 d_i e_i \Delta_i^4 +
-    \frac{144}{5} e_i^2 \Delta_i^5
+    \nonumber
+    =\sum_{i=1}^{n} b_i^2 \tau \Delta_i^1 + 2 b_i c_i \tau \Delta_i^2  + 4 c_i^2 (\Delta_i^1 + \frac{1}{3} \tau \Delta_i^3  ) 
+    + 2 b_i d_i \tau \Delta_i^3 + c_i d_i (12 \Delta_i^2 + 3 \tau \Delta_i^4 ) \\
+    \nonumber
+    + 2 b_i e_i \tau \Delta_i^4 + c_i e_i ( 16 \Delta_i^3 + \frac{16}{5} \tau \Delta_i^5 ) + d_i^2 (12 \Delta_i^3 + 
+    \frac{9}{5} \tau \Delta_i^5 ) + \\
+    d_i e_i ( 36 \Delta_i^4 + 4 \tau \Delta_i^6 ) + 
+    e_i^2 ( \frac{144}{5} \Delta_i^5 + \frac{16}{7} \tau \Delta_i^7 )
 \end{eqnarray}
 Where $\Delta_i^j$ is defined as the difference between $t^j$ at the polynomial boundary points, 
 i.e. $\Delta_i^j = t_i^j - t_{i-1}^j$.
