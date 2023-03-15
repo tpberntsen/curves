@@ -266,7 +266,7 @@ namespace Cmdty.Curves
 
                     vector[numPolynomials * 5 + priceConstraintRow] = sumWeight * contract.Price - sumWeightMultAdd;
 
-                    twoHMatrix.SetSubMatrix(i * 5 + 2, i * 5 + 2,
+                    twoHMatrix.SetSubMatrix(i * 5 + 1, i * 5 + 1,
                                 Create2HBottomRightSubMatrix(contract, curveStartPeriod, timeFunc, tension));
 
                     inputContractIndex++;
@@ -375,23 +375,35 @@ namespace Cmdty.Curves
             double timeToStart = timeFunc(curveStartPeriod, contract.Start);
             double timeToEnd = timeFunc(curveStartPeriod, contract.End.Offset(1));
 
-            var subMatrix = Matrix<double>.Build.Dense(3, 3);
+            var subMatrix = Matrix<double>.Build.Dense(4, 4);
 
+            double deltaPow1 = timeToEnd - timeToStart;
             double deltaPow2 = DeltaPow(timeToStart, timeToEnd, 2.0);
             double deltaPow3 = DeltaPow(timeToStart, timeToEnd, 3.0);
             double deltaPow4 = DeltaPow(timeToStart, timeToEnd, 4.0);
+            double deltaPow5 = DeltaPow(timeToStart, timeToEnd, 5.0);
+            double deltaPow6 = DeltaPow(timeToStart, timeToEnd, 6.0);
+            double deltaPow7 = DeltaPow(timeToStart, timeToEnd, 7.0);
 
-            subMatrix[0, 0] = 8.0 * (timeToEnd - timeToStart);
-            subMatrix[0, 1] = 12.0 * deltaPow2;
-            subMatrix[0, 2] = 16.0 * deltaPow3;
+            subMatrix[0, 0] = 2.0 * tension * deltaPow1;
+            subMatrix[0, 1] = 2.0 * tension * deltaPow2;
+            subMatrix[0, 2] = 2.0 * tension * deltaPow3;
+            subMatrix[0, 3] = 2.0 * tension * deltaPow4;
 
-            subMatrix[1, 0] = 12.0 * deltaPow2;
-            subMatrix[1, 1] = 24.0 * deltaPow3;
-            subMatrix[1, 2] = 36.0 * deltaPow4;
+            subMatrix[1, 0] = 2.0 * tension * deltaPow2;
+            subMatrix[1, 1] = 8.0 * deltaPow1 + 8.0/3.0 * tension * deltaPow3;
+            subMatrix[1, 2] = 12.0 * deltaPow2 + 3.0 * tension * deltaPow4;
+            subMatrix[1, 3] = 16.0 * deltaPow3 + 16.0/5.0 * tension * deltaPow5;
 
-            subMatrix[2, 0] = 16.0 * deltaPow3;
-            subMatrix[2, 1] = 36.0 * deltaPow4;
-            subMatrix[2, 2] = 57.6 * DeltaPow(timeToStart, timeToEnd, 5.0);
+            subMatrix[2, 0] = 2.0 * tension * deltaPow3;
+            subMatrix[2, 1] = 12.0 * deltaPow2 + 3.0 * tension * deltaPow4;
+            subMatrix[2, 2] = 24.0 * deltaPow3 + 18.0/5.0 * tension * deltaPow5;
+            subMatrix[2, 3] = 36.0 * deltaPow4 + 4.0 * tension * deltaPow6;
+
+            subMatrix[3, 0] = 2.0 * tension * deltaPow4;
+            subMatrix[3, 1] = 16.0 * deltaPow3 + 16.0/5.0 * tension * deltaPow5;
+            subMatrix[3, 2] = 36.0 * deltaPow4 + 4.0 * tension * deltaPow6;
+            subMatrix[3, 3] = 57.6 * deltaPow5 + 32.0 / 7.0 * tension * deltaPow7;
             
             return subMatrix;
         }
