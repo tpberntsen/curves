@@ -248,6 +248,11 @@ minimised. Both the first and second derivative terms penalise oscillations, but
 ways. The first derivative penalises the increased total curve length of oscillations, whereas the second
 derivative term penalises changes in curve direction. The non-negative tension parameter 
 $\tau$ is used to control the contribution of curve length to the penalty function being minimised.
+Note that although this spline includes a tension parameter, it's behaviour with respect to this
+parameter is very different to \emph{usual} tension splines which will tend towards linear splines
+as the tension parameter increases. The effect of the tension parameter $\tau$ in this 
+algorithm is more subtle, with the curve alway remaining smooth, but with oscillations generally
+becoming smaller in amplitude, but with sharper changes in direction when $\tau$ is increased.
 
 \bigskip
 
