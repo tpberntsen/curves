@@ -278,11 +278,12 @@ Writing the penalty function and integrating:
     =\sum_{i=1}^{n} b_i^2 \tau \Delta_i^1 + 2 b_i c_i \tau \Delta_i^2  + 4 c_i^2 (\Delta_i^1 + \frac{1}{3} \tau \Delta_i^3  ) 
     + 2 b_i d_i \tau \Delta_i^3 + c_i d_i (12 \Delta_i^2 + 3 \tau \Delta_i^4 ) \\
     \nonumber
-    + 2 b_i e_i \tau \Delta_i^4 + c_i e_i ( 16 \Delta_i^3 + \frac{16}{5} \tau \Delta_i^5 ) + d_i^2 (12 \Delta_i^3 + 
-    \frac{9}{5} \tau \Delta_i^5 ) + \\
-    d_i e_i ( 36 \Delta_i^4 + 4 \tau \Delta_i^6 ) + 
+    + c_i e_i ( 16 \Delta_i^3 + \frac{16}{5} \tau \Delta_i^5 ) + d_i^2 (12 \Delta_i^3 + 
+    \frac{9}{5} \tau \Delta_i^5 ) \\
+    + 2 b_i e_i \tau \Delta_i^4 + d_i e_i ( 36 \Delta_i^4 + 4 \tau \Delta_i^6 ) + 
     e_i^2 ( \frac{144}{5} \Delta_i^5 + \frac{16}{7} \tau \Delta_i^7 )
 \end{eqnarray}
+
 Where $\Delta_i^j$ is defined as the difference between $t^j$ at the polynomial boundary points, 
 i.e. $\Delta_i^j = t_i^j - t_{i-1}^j$.
 Recognising \ref{eq:11} as a quadratic form it can be reformulating in the following matrix form:
