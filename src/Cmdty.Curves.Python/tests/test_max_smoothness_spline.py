@@ -81,6 +81,7 @@ class TestMaxSmoothnessSpline(unittest.TestCase):
                 (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
                 (datetime(2019, 6, 7, hour=18, minute=30), datetime(2019, 6, 7, hour=23, minute=30), 60.11),
             ],
+            "tension": 1.5
         },
         {
             "freq": "15min",
