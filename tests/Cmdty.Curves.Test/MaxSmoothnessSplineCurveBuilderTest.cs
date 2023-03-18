@@ -40,13 +40,14 @@ namespace Cmdty.Curves.Test
         public void Build_InputContractsAllEqualAndNoSeasonalAdjustments_ResultsInFlatCurve()
         {
             const double flatPrice = 84.54;
-            var curve = new MaxSmoothnessSplineCurveBuilder<Day>()
+            var (curve, _) = new MaxSmoothnessSplineCurveBuilder<Day>()
                 .AddContract(Month.CreateJanuary(2019), flatPrice)
                 .AddContract(Month.CreateFebruary(2019), flatPrice)
                 .AddContract(Month.CreateMarch(2019), flatPrice)
                 .AddContract(Quarter.CreateQuarter2(2019), flatPrice)
                 .AddContract(Quarter.CreateQuarter3(2019), flatPrice)
                 .AddContract(Season.CreateWinter(2019), flatPrice)
+                .WithTensionParameter(0.5)
                 .BuildCurve();
 
             foreach (double price in curve.Data)
@@ -56,6 +57,7 @@ namespace Cmdty.Curves.Test
 
         }
 
+        // TODO: investigate test below failing with positive tension.
         [Test]
         public void Build_InputContractsInLinearTrend_ResultsLinear()
         {
@@ -74,7 +76,7 @@ namespace Cmdty.Curves.Test
                 dailyPrice += dailySlope;
             }
 
-            var curve = new MaxSmoothnessSplineCurveBuilder<Hour>()
+            var (curve, splineParams) = new MaxSmoothnessSplineCurveBuilder<Hour>()
                 .AddContracts(contracts)
                 .BuildCurve();
 
@@ -90,9 +92,9 @@ namespace Cmdty.Curves.Test
         }
 
         [TestCaseSource(nameof(MonthContractTestCases))]
-        public void Build_WithMonthTypeParameter_CurveConsistentWithInputs(List<Contract<Month>> contracts)
+        public void Build_WithMonthTypeParameterZeroTension_CurveConsistentWithInputs(List<Contract<Month>> contracts)
         {
-            var results = new MaxSmoothnessSplineCurveBuilder<Month>()
+            var (curve, _) = new MaxSmoothnessSplineCurveBuilder<Month>()
                 .AddContracts(contracts)
                 .WithMultiplySeasonalAdjustment(MonthlySeasonalAdjust)
                 // TODO add additive seasonal adjustment
@@ -100,7 +102,22 @@ namespace Cmdty.Curves.Test
                 .WithBackFirstDerivative(-1.5) // TODO pass in as parameter?
                 .BuildCurve();
 
-            TestHelper.AssertCurveConsistentWithInputs(contracts, period => period.End.Subtract(period.Start).Days, results, Tolerance);
+            TestHelper.AssertCurveConsistentWithInputs(contracts, period => period.End.Subtract(period.Start).Days, curve, Tolerance);
+        }
+
+        [TestCaseSource(nameof(MonthContractTestCases))]
+        public void Build_WithMonthTypeParameterNonZeroTension_CurveConsistentWithInputs(List<Contract<Month>> contracts)
+        {
+            var (curve, _) = new MaxSmoothnessSplineCurveBuilder<Month>()
+                .AddContracts(contracts)
+                .WithMultiplySeasonalAdjustment(MonthlySeasonalAdjust)
+                // TODO add additive seasonal adjustment
+                .WithFrontFirstDerivative(0.8) // TODO pass in as parameter?
+                .WithBackFirstDerivative(-1.5) // TODO pass in as parameter?
+                .WithTensionParameter(0.9)
+                .BuildCurve();
+
+            TestHelper.AssertCurveConsistentWithInputs(contracts, period => period.End.Subtract(period.Start).Days, curve, Tolerance);
         }
 
         private double MonthlySeasonalAdjust(Month month)

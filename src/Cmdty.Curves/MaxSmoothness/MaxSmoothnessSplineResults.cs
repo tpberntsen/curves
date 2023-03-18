@@ -1,5 +1,5 @@
 ﻿#region License
-// Copyright (c) 2019 Jake Fowler
+// Copyright (c) 2023 Jake Fowler
 //
 // Permission is hereby granted, free of charge, to any person 
 // obtaining a copy of this software and associated documentation 
@@ -23,22 +23,14 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
+using System.Collections.Generic;
 using Cmdty.TimePeriodValueTypes;
 
 namespace Cmdty.Curves
 {
-    public interface ISplineAddOptionalParameters<T>
-        where T : ITimePeriod<T>
-    {
-        ISplineAddOptionalParameters<T> AddContract(Contract<T> contract);
-        ISplineAddOptionalParameters<T> WithWeighting(Func<T, double> weighting);
-        ISplineAddOptionalParameters<T> WithMultiplySeasonalAdjustment(Func<T, double> adjustment);
-        ISplineAddOptionalParameters<T> WithAdditiveSeasonalAdjustment(Func<T, double> adjustment);
-        ISplineAddOptionalParameters<T> WithFrontFirstDerivative(double firstDerivative);
-        ISplineAddOptionalParameters<T> WithBackFirstDerivative(double firstDerivative);
-        ISplineAddOptionalParameters<T> WithTimeFunc(Func<T, T, double> timeFunc);
-        ISplineAddOptionalParameters<T> WithTensionParameter(double tension);
-        MaxSmoothnessSplineResults<T> BuildCurve();
-    }
+    public sealed record MaxSmoothnessSplineResults<T>(DoubleCurve<T> Curve, IReadOnlyCollection<SplineParameters<T>> SolvedSplineParameters)
+        where T : ITimePeriod<T>;
+
+    public sealed record SplineParameters<T>(T StartPeriod, double StartTime, double A, double B, double C, double D, double E) 
+        where T : ITimePeriod<T>;
 }

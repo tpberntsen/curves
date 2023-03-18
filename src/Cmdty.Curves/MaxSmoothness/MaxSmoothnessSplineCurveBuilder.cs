@@ -109,7 +109,7 @@ namespace Cmdty.Curves
             return this;
         }
 
-        public DoubleCurve<T> BuildCurve()
+        public MaxSmoothnessSplineResults<T> BuildCurve()
         {
             return Build(_contracts.OrderBy(contract => contract.Start).ToList(),
                 _weighting ?? (timePeriod => (timePeriod.End - timePeriod.Start).TotalMinutes),
@@ -122,7 +122,7 @@ namespace Cmdty.Curves
             ); 
         }
 
-        private static DoubleCurve<T> Build(List<Contract<T>> contracts, Func<T, double> weighting,
+        private static MaxSmoothnessSplineResults<T> Build(List<Contract<T>> contracts, Func<T, double> weighting,
             Func<T, double> multAdjustFunc, Func<T, double> addAdjustFunc, Func<T, T, double> timeFunc,
             double? frontFirstDerivative, double? backFirstDerivative, double tension)
         {
@@ -311,6 +311,7 @@ namespace Cmdty.Curves
             Vector<double> solution = matrix.Solve(vector);
 
             // Read off results from polynomial
+            var splineParametersArray = new SplineParameters<T>[numPolynomials];
             T curveEndPeriod = contracts[contracts.Count - 1].End;
             int numOutputPeriods = curveEndPeriod.OffsetFrom(curveStartPeriod) + 1;
             var outputCurvePeriods = new T[numOutputPeriods];
@@ -322,16 +323,22 @@ namespace Cmdty.Curves
 
             for (int i = 0; i < numPolynomials; i++)
             {
+                int solutionOffset = i * 5;
+                double a = solution[solutionOffset];
+                double b = solution[solutionOffset + 1];
+                double c =  solution[solutionOffset + 2];
+                double d = solution[solutionOffset + 3];
+                double e = solution[solutionOffset + 4];
+
                 double EvaluateSpline(T timePeriod)
                 {
                     double timeToPeriod = timeFunc(curveStartPeriod, timePeriod);
 
-                    int solutionOffset = i * 5;
-                    double splineValue = solution[solutionOffset] +
-                                         solution[solutionOffset + 1] * timeToPeriod +
-                                         solution[solutionOffset + 2] * Math.Pow(timeToPeriod, 2) +
-                                         solution[solutionOffset + 3] * Math.Pow(timeToPeriod, 3) +
-                                         solution[solutionOffset + 4] * Math.Pow(timeToPeriod, 4);
+                    double splineValue = a +
+                                         b * timeToPeriod +
+                                         c * Math.Pow(timeToPeriod, 2) +
+                                         d * Math.Pow(timeToPeriod, 3) +
+                                         e * Math.Pow(timeToPeriod, 4);
 
                     double multAdjust = multAdjustFunc(timePeriod);
                     double addAdjust = addAdjustFunc(timePeriod);
@@ -358,6 +365,9 @@ namespace Cmdty.Curves
                     gapFilled = true;
                 }
 
+                double timeToStart = timeFunc(curveStartPeriod, start);
+                splineParametersArray[i] = new SplineParameters<T>(start, timeToStart, a, b, c, d, e);
+
                 foreach (var timePeriod in start.EnumerateTo(end))
                 {
                     outputCurvePrices[outputContractIndex] = EvaluateSpline(timePeriod);
@@ -365,8 +375,9 @@ namespace Cmdty.Curves
                     outputContractIndex++;
                 }
             }
+            var smoothCurve = new DoubleCurve<T>(outputCurvePeriods, outputCurvePrices, weighting);
 
-            return new DoubleCurve<T>(outputCurvePeriods, outputCurvePrices, weighting);
+            return new MaxSmoothnessSplineResults<T>(smoothCurve, splineParametersArray);
         }
 
         private static Matrix<double> Create2HBottomRightSubMatrix(Contract<T> contract, T curveStartPeriod,

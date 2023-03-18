@@ -102,7 +102,7 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
         prices, under the criteria of maximising the smoothness. In this implementation maximising the smoothness is defined as
         minimising the integral of the second derivative squared.
     """
-    
+
     if freq not in FREQ_TO_PERIOD_TYPE:
         raise ValueError("freq parameter value of '{}' not supported. The allowable values can be found in the keys "
                          "of the dict curves.FREQ_TO_PERIOD_TYPE.".format(freq))
@@ -135,7 +135,8 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
         spline_builder.WithBackFirstDerivative(back_1st_deriv)
     if tension is not None:
         spline_builder.WithTensionParameter(tension)
-    curve = spline_builder.BuildCurve()
-    result = net_time_series_to_pandas_series(curve, freq)
+    spline_results = spline_builder.BuildCurve()
+    result = net_time_series_to_pandas_series(spline_results.Curve, freq)
+    # TODO change return type to include spline_results.SolvedSplineParameters. Breaking change so require major version increment.
     return result
 
