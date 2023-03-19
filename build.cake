@@ -273,7 +273,6 @@ else
 
 
 Task("Default")
-	.IsDependentOn("Verify-TryDotNetDocs")
 	.IsDependentOn("Pack-NuGet")
     .IsDependentOn("Pack-Python");
 
