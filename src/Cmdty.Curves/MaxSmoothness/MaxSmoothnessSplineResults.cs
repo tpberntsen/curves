@@ -28,7 +28,7 @@ using Cmdty.TimePeriodValueTypes;
 
 namespace Cmdty.Curves
 {
-    public sealed record MaxSmoothnessSplineResults<T>(DoubleCurve<T> Curve, IReadOnlyCollection<SplineParameters<T>> SolvedSplineParameters)
+    public sealed record MaxSmoothnessSplineResults<T>(DoubleCurve<T> Curve, IReadOnlyList<SplineParameters<T>> SolvedSplineParameters)
         where T : ITimePeriod<T>;
 
     public sealed record SplineParameters<T>(T StartPeriod, double StartTime, double A, double B, double C, double D, double E) 
