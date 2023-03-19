@@ -90,8 +90,9 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
             curve must be. Used to add some optional control of the curve generated. If this parameter is omitted no constraint is applied.
         back_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the end of the 
             curve must be. Used to add some optional control of the curve generated. If this parameter is omitted no constraint is applied.
-        tension (float, optional): Non-negative parameter, a higher value of which makes the resulting spline closer to a linear spline.
-            Increase the tension argument to reduce oscillations in the fitted spline. Defaults to 0 if omitted.
+        tension (float, optional): Non-negative parameter, which specifies the proportional amount to which curve length is penalised
+            when finding the maximum smoothness spline. Increase the tension argument to reduce the amplitude of oscillations in the
+            fitted spline. Defaults to 0 if omitted.
 
     Returns:
         pandas.Series: Series with index of type PeriodIndex and freqstr equal to the freq parameter. This Series will
