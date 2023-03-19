@@ -51,15 +51,11 @@ namespace Cmdty.Curves.Test
                 .BuildCurve();
 
             foreach (double price in curve.Data)
-            {
                 Assert.AreEqual(flatPrice, price, 1E-12);
-            }
-
         }
 
-        // TODO: investigate test below failing with positive tension.
         [Test]
-        public void Build_InputContractsInLinearTrend_ResultsLinear()
+        public void Build_InputContractsInLinearTrendZeroTension_ResultsLinear()
         {
             // Parameters of linear trend
             const double intercept = 45.7;
@@ -81,15 +77,75 @@ namespace Cmdty.Curves.Test
                 .BuildCurve();
 
             double hourlySlope = dailySlope / 24;
-
             foreach (var pricePair in curve.Data.Zip(curve.Data.Skip(1), 
                         (priceHour1, priceHour2) => new {priceHour1, priceHour2}))
             {
                 double hourlyChange = pricePair.priceHour2 - pricePair.priceHour1;
                 Assert.AreEqual(hourlySlope, hourlyChange, 1E-12);
             }
-
         }
+
+        [Test]
+        public void Build_TensionIncreases_IntegralOfFirstDerivativeSquaredDescreases()
+        {
+            var contracts = MonthContractTestCases.First();
+            var tensions = new double[] { 0.0, 0.01, 0.1, 0.5, 0.9, 1.5, 10.0, 1000, 10000};
+            double integralOfFirstDerivativeSquared;
+            double lastIntegralOfFirstDerivativeSquared = 0.0;
+            for (int i = 0; i < tensions.Length; i++)
+            {
+                double tension = tensions[i];
+                (DoubleCurve<Month> _, IReadOnlyList<SplineParameters<Month>> splineParams) = new MaxSmoothnessSplineCurveBuilder<Month>()
+                    .AddContracts(contracts)
+                    .WithTensionParameter(tension)
+                    .BuildCurve();
+                integralOfFirstDerivativeSquared = IntegralOfFirstDerivativeSquared(splineParams, splineParams[splineParams.Count-1].StartPeriod + 1);
+                if (i > 0)
+                    Assert.Less(integralOfFirstDerivativeSquared, lastIntegralOfFirstDerivativeSquared, 
+                        $"Tension increase from {tensions[i-1]} to {tension} does not result in a descreate in integral of first derivative squared.");
+                lastIntegralOfFirstDerivativeSquared = integralOfFirstDerivativeSquared;
+            }
+        }
+
+        private static double IntegralOfFirstDerivativeSquared<T>(IReadOnlyList<SplineParameters<T>> splineParams, T lastPeriod)
+            where T : ITimePeriod<T>
+        {
+            T curveStartPeriod = splineParams[0].StartPeriod;
+            double lengthSquared = 0.0;
+            for (int i = 0; i < splineParams.Count; i++)
+            {
+                T lastHour = (i == splineParams.Count - 1) ? lastPeriod : splineParams[i + 1].StartPeriod;
+                lengthSquared += IntegralOfFirstDerivativeSquared(splineParams[i], curveStartPeriod, lastHour);
+            }
+            return lengthSquared;
+        }
+
+        private static double IntegralOfFirstDerivativeSquared<T>(SplineParameters<T> splineParams, T curveStartPeriod, T lastPeriod)
+            where T : ITimePeriod<T>
+        {
+            (T startPeriod, double startTime, double a, double b, double c, double d, double e) = splineParams;
+
+            double timeToStart = startTime;
+            double timeToEnd = lastPeriod.OffsetFrom(curveStartPeriod);
+
+            double deltaPow1 = timeToEnd - timeToStart;
+            double deltaPow2 = DeltaPow(timeToStart, timeToEnd, 2.0);
+            double deltaPow3 = DeltaPow(timeToStart, timeToEnd, 3.0);
+            double deltaPow4 = DeltaPow(timeToStart, timeToEnd, 4.0);
+            double deltaPow5 = DeltaPow(timeToStart, timeToEnd, 5.0);
+            double deltaPow6 = DeltaPow(timeToStart, timeToEnd, 6.0);
+            double deltaPow7 = DeltaPow(timeToStart, timeToEnd, 7.0);
+
+            double lengthSquared = b * b * deltaPow1 + 2 * b * c * deltaPow2 +
+                (2 * b * d + 4.0 / 3.0 * c * c) * deltaPow3 + (2.0 * b * e + 3.0 * c * d) * deltaPow4 +
+                (16.0 * c * e + 9.0 * d * d) * deltaPow5 / 5.0 + 4.0 * d * e * deltaPow6 +
+                16.0 / 7.0 * e * e * deltaPow7;
+
+            return lengthSquared;
+        }
+
+        private static double DeltaPow(double timeToStart, double timeToEnd, double power) =>
+            Math.Pow(timeToEnd, power) - Math.Pow(timeToStart, power);
 
         [TestCaseSource(nameof(MonthContractTestCases))]
         public void Build_WithMonthTypeParameterZeroTension_CurveConsistentWithInputs(List<Contract<Month>> contracts)
