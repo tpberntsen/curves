@@ -26,3 +26,4 @@ more .NET types.
 ### 1.4.0 (not yet released)
 * Include target_curve parameter to bootstrap_contracts function.
 * Add tension parameter to maximum smoothness spline.
+* Add hyberbolic_tension_spline function.
