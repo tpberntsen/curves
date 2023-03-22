@@ -327,8 +327,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         constraint_matrix[row_idx, section_idx * 2 + 5] += 1/h_is[next_section_idx] # deriv_y_i_coff
 
     if back_1st_deriv is None:
-        # TODO IMPORTANT: GET RID OF THIS TEMPORARY HACK AND DECIDE HOW TO HANDLE PROPERLY
-        constraint_matrix[-2, -4] = 1  # Temporary hack to set 2nd derive at penultimate knot to zero
+        constraint_matrix[-2, -5] = 1.0 / (h_is[-1] + h_is[-2])   # y_{n-2}
+        constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - cosh_tau_hi[-1] / tau_sinh[-1]  # z_{n-1}
+        constraint_matrix[-2, -3] = -1.0 / h_is[-1]  # y_{n-1}
+        constraint_matrix[-2, -2] = 1.0/tau_sinh[-1] - one_over_h_tau_sqrd[-1] # z_n
+        constraint_matrix[-2, -1] = 1.0 / h_is[-1] - 1.0/(h_is[-1] + h_is[-2])  # y_n
+        constraint_vector[-2] = 0.0
     else:
         constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - 1.0 / tau_sinh[-1] # z_{n-1}
         constraint_matrix[-2, -3] = 1.0 / h_is[-1]  # y_{n-1}
