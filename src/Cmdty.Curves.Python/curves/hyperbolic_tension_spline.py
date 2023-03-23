@@ -236,7 +236,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     for i, section_start in enumerate(spline_knots):
         section_end = last_period if i == num_sections - 1 else spline_knots[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
-        tension_by_section[i] = get_tension(section_start)
+        tension_by_section[i] = get_tension(section_start) / h_is[i]
         section_start_idx = last_section_end_idx
         section_end_idx = None if i == num_sections - 1 else int_index(spline_knots[i + 1])
         last_section_end_idx = section_end_idx
