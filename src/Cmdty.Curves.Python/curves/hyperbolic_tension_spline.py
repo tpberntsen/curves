@@ -39,7 +39,7 @@ _years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
 def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               freq: str,
                               tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
-                              discount_factor: tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float],
+                              discount_factor: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
@@ -77,9 +77,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         freq (str): Describes the granularity of curve being constructed using pandas Offset Alias notation.
         tension (float or callable): parameter which specifies the "tension" TODO complete this
             A higher tension value makes the curve less smooth, and closer to piecewise linear function.
-        discount_factor (callable): Callable which maps from delivery period to the discount factor for the settlement
+        discount_factor (callable, optional): Callable which maps from delivery period to the discount factor for the settlement
             date of this period. This function will be called with an argument of either pandas Period or Timestamp to
-            describe the delivery period, at the granularity of the interpolated curve.
+            describe the delivery period, at the granularity of the interpolated curve. The discount factor is necessary
+            as a no-arbitrage forward price should equal weighted average of it's constituent delivery period forward prices,
+            with the weighting being the product of the discount factor and the delivery volume. If omitted, defaults to None, in
+            which case a discount factor of 1.0 will be used for all delivery periods, as is suitable for futures.
         average_weight (callable, optional): Mapping from pandas Period or Timestamp instances to float which describes the weighting
             that each forward period contributes to a price for delivery which spans multiple periods. The
             parameter will be at the granularity of the interpolated curve, as specified by the freq argument. An example of such weighting is
@@ -183,8 +186,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     num_result_curve_points = len(result_curve_index)
 
     # Calculate vectors of coefficients
-    discount_factors = np.fromiter((discount_factor(key) for key in result_curve_index), dtype=np.float64,
-                                   count=num_result_curve_points)
+    if discount_factor is None:
+        discount_factors = np.ones(num_result_curve_points)
+    else:
+        discount_factors = np.fromiter((discount_factor(key) for key in result_curve_index), dtype=np.float64,
+                                       count=num_result_curve_points)
     if average_weight is None:
         average_weights = np.ones(num_result_curve_points)
     else:

@@ -66,8 +66,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
-            "discount_factor": discount_factor,
-            "back_1st_deriv" : -0.3
+            "back_1st_deriv": -0.3
         },
         {
             "freq": 'D',
@@ -83,7 +82,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "contracts": contracts_list,
             "tension": flat_tension,
             "discount_factor": discount_factor,
-            "back_1st_deriv" : -0.3
+            "back_1st_deriv": -0.3
         },
         {
             "freq": 'D',
@@ -118,7 +117,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "tension": flat_tension,
             "discount_factor": discount_factor,
             "time_zone": 'Europe/Paris',
-            "back_1st_deriv" : -0.3
+            "back_1st_deriv": -0.3
         }
     ]
 
@@ -141,7 +140,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 "spline_knots": ['2020-01-01', '2020-02-01'],
                 "tension": 12.5,
                 "discount_factor": discount_factor,
-                "back_1st_deriv" : -0.3
+                "back_1st_deriv": -0.3
             },
         ]
         self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
@@ -158,26 +157,30 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     #             "tension": 12.5,
     #             "discount_factor": discount_factor
     #         },
-            # {
-            #     "freq": 'D',
-            #     "contracts": [
-            #         (cp.cal_year(2020), 21.3),
-            #         (cp.q_1(2020), 18.66),
-            #         (cp.q_2(2020), 19.65),
-            #         (cp.jul(2020), 15.66)
-            #     ],
-            #     "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
-            #     "tension": 12.5,
-            #     "discount_factor": discount_factor
-            # }
-        # ]
-        # self._interpolate_and_assert_average_back_to_inputs(inputs)
+    # {
+    #     "freq": 'D',
+    #     "contracts": [
+    #         (cp.cal_year(2020), 21.3),
+    #         (cp.q_1(2020), 18.66),
+    #         (cp.q_2(2020), 19.65),
+    #         (cp.jul(2020), 15.66)
+    #     ],
+    #     "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+    #     "tension": 12.5,
+    #     "discount_factor": discount_factor
+    # }
+    # ]
+    # self._interpolate_and_assert_average_back_to_inputs(inputs)
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data, tol):
         for test_data in test_case_data:
             interp_curve, _ = hyperbolic_tension_spline(**test_data)
             average_weight = test_data['average_weight'] if 'average_weight' in test_data else lambda x: 1.0
-            discount_factor_func = test_data['discount_factor']
+            if 'discount_factor' in test_data:
+                discount_factor_func = test_data['discount_factor']
+            else:
+                def discount_factor_func(p):  # PyCharm doesn't like lambdas for some reason
+                    return 1.0
 
             def discounted_average_weight(del_period):
                 df = discount_factor_func(del_period)
@@ -200,11 +203,11 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     def test_inputs_constant_outputs_constant(self):
         # Arrange
         freq = '15min'
-        time_zone = None # 'Europe/London'
+        time_zone = None  # 'Europe/London'
         flat_price = 10.5
         num_contracts = 300
         monthly_index = pd.period_range(start='2023-04-01', periods=num_contracts, freq='M')
-        monthly_curve = pd.Series(data=[10.2, 11.69, 10.98]*100, index=monthly_index)
+        monthly_curve = pd.Series(data=[10.2, 11.69, 10.98] * 100, index=monthly_index)
         back_1st_derive = -0.1
 
         def tension(p):
@@ -212,7 +215,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
         # Act
         daily_curve, spline_params = hyperbolic_tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
-                                discount_factor=lambda x: 1.0, back_1st_deriv=back_1st_derive)
+                                                               discount_factor=lambda x: 1.0, back_1st_deriv=back_1st_derive)
         print('Curve length:')
         print(len(daily_curve))
         # Assert
