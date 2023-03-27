@@ -23,7 +23,9 @@ Update .NET Cmdty.TimeSeries reference to avoid clash with cmdty-storage package
 more .NET types.
 * For non-Windows OS default to trying .NET (Core), rather than Mono as default runtime.
 
-### 1.4.0 (not yet released)
+### 2.0.0 (not yet released)
+* BREAKING CHANGES:
+	* bootstrap_contracts return type includes target_curve.
 * Include target_curve parameter to bootstrap_contracts function.
 * Add tension parameter to maximum smoothness spline.
 * Add hyberbolic_tension_spline function.

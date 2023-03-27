@@ -63,7 +63,7 @@ class TestBootstrap(unittest.TestCase):
                 return 1.0
             else:
                 return 0.0
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='D', shaping_ratios=ratios,
+        piecewise_curve, bootstrapped_contracts, _ = bootstrap_contracts(input_contracts, freq='D', shaping_ratios=ratios,
                                                                       shaping_spreads=spreads,
                                                                       average_weight=peakload_weight)
         self.assertEqual(16, len(bootstrapped_contracts))
@@ -85,7 +85,7 @@ class TestBootstrap(unittest.TestCase):
         ]
         monthly_index = pd.period_range(start='2019-01-01', periods=3, freq='M')
         target_curve = pd.Series(data=[52.3, 0.88, 1.87], index=monthly_index)
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='M',
+        piecewise_curve, bootstrapped_contracts, _ = bootstrap_contracts(input_contracts, freq='M',
                                                                       target_curve=target_curve)
         for input_contract in input_contracts:
             (period, contract_price) = deconstruct_contract(input_contract)
@@ -98,7 +98,7 @@ class TestBootstrap(unittest.TestCase):
             (datetime(2019, 6, 7, hour=0, minute=30), 47.705),
             (datetime(2019, 6, 7, hour=0, minute=30), datetime(2019, 6, 7, hour=1, minute=30), 46.625),
         ]
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='30min')
+        piecewise_curve, bootstrapped_contracts, _ = bootstrap_contracts(input_contracts, freq='30min')
         for input_contract in input_contracts:
             (period, contract_price) = deconstruct_contract(input_contract)
             output_weighted_average_price = weighted_average_slice_curve(piecewise_curve, '30min', period)
@@ -110,7 +110,7 @@ class TestBootstrap(unittest.TestCase):
             (datetime(2019, 6, 7, hour=0, minute=30), 47.705),
             (datetime(2019, 6, 7, hour=0, minute=0), datetime(2019, 6, 7, hour=1, minute=45), 46.625),
         ]
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='15min')
+        piecewise_curve, bootstrapped_contracts, _ = bootstrap_contracts(input_contracts, freq='15min')
         for input_contract in input_contracts:
             (period, contract_price) = deconstruct_contract(input_contract)
             output_weighted_average_price = weighted_average_slice_curve(piecewise_curve, '15min', period)
@@ -149,7 +149,7 @@ class TestBootstrap(unittest.TestCase):
             (month(2019, 3), 55.48),
             (quarter(2019, 1), 62.64),
         ]
-        piecewise_curve, bootstrapped_contracts = bootstrap_contracts(input_contracts, freq='M', allow_redundancy=True)
+        piecewise_curve, bootstrapped_contracts, _ = bootstrap_contracts(input_contracts, freq='M', allow_redundancy=True)
         self.assertEqual(len(piecewise_curve), 3)
         self.assertEqual(len(bootstrapped_contracts), 3)
 

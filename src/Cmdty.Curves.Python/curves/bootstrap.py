@@ -44,6 +44,7 @@ class Contract(NamedTuple):
 class BootstrapResults(NamedTuple):
     piecewise_curve: pd.Series
     bootstrapped_contracts: List[Contract]
+    target_curve: pd.Series
 
 
 ShapingTypes = Iterable[
@@ -164,8 +165,9 @@ def bootstrap_contracts(contracts: ContractsType,
 
     dotnet_bootstrap_results = bootstrapper.Bootstrap()
     piecewise_curve = net_time_series_to_pandas_series(dotnet_bootstrap_results.Curve, freq)
+    target_curve = net_time_series_to_pandas_series(dotnet_bootstrap_results.TargetCurve, freq)
     bootstrapped_contracts = []
     for contract in dotnet_bootstrap_results.BootstrappedContracts:
         bootstrapped_contracts.append(Contract(net_time_period_to_pandas_period(contract.Start, freq),
                                                net_time_period_to_pandas_period(contract.End, freq), contract.Price))
-    return BootstrapResults(piecewise_curve, bootstrapped_contracts)
+    return BootstrapResults(piecewise_curve, bootstrapped_contracts, target_curve)
