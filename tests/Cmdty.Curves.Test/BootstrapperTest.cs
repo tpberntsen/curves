@@ -39,7 +39,7 @@ namespace Cmdty.Curves.Test
         public void Bootstrap_WithMonthTypeParameter_CurveConsistentWithInputs(List<Contract<Month>> contracts, 
                                                                             List<Shaping<Month>> shapings)
         {
-            var (curve, _) = new Bootstrapper<Month>()
+            var (curve, _, _) = new Bootstrapper<Month>()
                     .AddContracts(contracts)
                     .AddShapings(shapings)
                     .Bootstrap();
@@ -50,7 +50,7 @@ namespace Cmdty.Curves.Test
         public void Bootstrap_WithMonthTypeParameter_BootstrappedContractsConsistentWithCurve(List<Contract<Month>> contracts,
                                                                                         List<Shaping<Month>> shapings)
         {
-            var (curve, bootstrappedContracts) = new Bootstrapper<Month>()
+            var (curve, bootstrappedContracts, _) = new Bootstrapper<Month>()
                 .AddContracts(contracts)
                 .AddShapings(shapings)
                 .Bootstrap();
@@ -508,7 +508,7 @@ namespace Cmdty.Curves.Test
         public void Bootstrap_SingleShapingRatio_AsExpected()
         {
             const double inputPriceRatio = 1.2;
-            var (curve, _) = new Bootstrapper<Month>()
+            var (curve, _, _) = new Bootstrapper<Month>()
                 .AddContract(Quarter.CreateQuarter1(2018), 25.5)
                 .AddShaping(Shaping<Month>.Ratio.Between(Month.CreateJanuary(2018))
                     .And(Month.CreateFebruary(2018)).Is(inputPriceRatio))
@@ -525,7 +525,7 @@ namespace Cmdty.Curves.Test
         public void Bootstrap_SingleShapingSpread_AsExpected()
         {
             const double inputPriceSpread = -0.88;
-            var (curve, _) = new Bootstrapper<Month>()
+            var (curve, _, _) = new Bootstrapper<Month>()
                 .AddContract(Quarter.CreateQuarter1(2018), 25.5)
                 .AddShaping(Shaping<Month>.Spread.Between(Month.CreateJanuary(2018))
                     .And(Month.CreateFebruary(2018)).Is(inputPriceSpread))
@@ -542,7 +542,8 @@ namespace Cmdty.Curves.Test
         public void Bootstrap_AllInputsSamePrice_OutputsAllSamePrice()
         {
             const double flatPrice = 10.0;
-            (DoubleCurve<Day> piecewiseFlatCurve, IReadOnlyList<Contract<Day>> bootstrappedContracts) = new Bootstrapper<Day>()
+            (DoubleCurve<Day> piecewiseFlatCurve, IReadOnlyList<Contract<Day>> bootstrappedContracts, DoubleCurve<Day> targetCurve) 
+                = new Bootstrapper<Day>()
                 .AddContract(new Day(2020, 8, 24), new Day(2020, 8, 30), flatPrice)
                 .AddContract(new Day(2020, 8, 31), new Day(2020, 9, 6), flatPrice)
                 .AddContract(new Day(2020, 9, 1), new Day(2020, 9, 30), flatPrice)
@@ -556,12 +557,15 @@ namespace Cmdty.Curves.Test
 
             foreach(Contract<Day> contract in bootstrappedContracts)
                 Assert.AreEqual(flatPrice, contract.Price, Tolerance);
+
+            foreach (double targetCurvePrice in targetCurve.Data)
+                Assert.AreEqual(flatPrice, targetCurvePrice, Tolerance);
         }
 
         [Test]
         public void Bootstrap_GapsInInputContracts_PiecewiseFlatCurveIsZeroInGaps()
         {
-            var (piecewiseFlatCurve, _) = new Bootstrapper<Month>()
+            var (piecewiseFlatCurve, _, _) = new Bootstrapper<Month>()
                 .AddContract(Month.CreateJanuary(2019), Month.CreateMarch(2019), 13.55)
                 .AddContract(Month.CreateJanuary(2019), 12.1)
                 .AddContract(Month.CreateFebruary(2019), 14.72)

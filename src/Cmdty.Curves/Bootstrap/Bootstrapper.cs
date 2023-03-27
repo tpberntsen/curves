@@ -306,7 +306,8 @@ namespace Cmdty.Curves
             }
 
             var curve = new DoubleCurve<T>(curvePeriods, curvePrices, weighting);
-            return new BootstrapResults<T>(curve, bootstrappedContracts);
+            var targetCurve = new DoubleCurve<T>(curvePeriods, targetVector, weighting);
+            return new BootstrapResults<T>(curve, bootstrappedContracts, targetCurve);
         }
 
         private static Vector<double> CalculateTargetVector(List<Contract<T>> contracts, T minTimePeriod, int numTimePeriods)

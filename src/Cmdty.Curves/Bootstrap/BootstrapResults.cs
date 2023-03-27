@@ -29,6 +29,6 @@ using JetBrains.Annotations;
 
 namespace Cmdty.Curves
 {
-    public sealed record BootstrapResults<T>([NotNull] DoubleCurve<T> Curve,
-                [NotNull] List<Contract<T>> BootstrappedContracts) where T : ITimePeriod<T>;
+    public sealed record BootstrapResults<T>([NotNull] DoubleCurve<T> Curve, [NotNull] List<Contract<T>> BootstrappedContracts,
+        [NotNull] DoubleCurve<T> TargetCurve) where T : ITimePeriod<T>;
 }
