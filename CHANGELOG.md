@@ -25,7 +25,8 @@ more .NET types.
 
 ### 2.0.0 (not yet released)
 * BREAKING CHANGES:
-	* bootstrap_contracts return type includes target_curve.
+	* bootstrap_contracts return type includes target_curve attribute.
+	* max_smooth_interp return type include spline_parameters attribute.
 * Include target_curve parameter to bootstrap_contracts function.
 * Add tension parameter to maximum smoothness spline.
 * Add hyberbolic_tension_spline function.

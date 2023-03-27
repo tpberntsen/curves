@@ -23,13 +23,19 @@
 
 import clr
 import pandas as pd
-from typing import Optional, Callable, Union
+import numpy as np
+from typing import Optional, Callable, Union, NamedTuple
 from System import Func, Double
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, \
-    net_time_series_to_pandas_series, contract_period, deconstruct_contract, ContractsType
+    net_time_series_to_pandas_series, contract_period, deconstruct_contract, ContractsType, net_time_period_to_pandas_period
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCurveBuilderExtensions, ISplineAddOptionalParameters
+
+
+class MaxSmoothSplineResults(NamedTuple):
+    forward_curve: pd.Series
+    spline_parameters: pd.DataFrame
 
 
 def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
@@ -40,7 +46,7 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
                       time_func: Optional[Callable[[pd.Period, pd.Period], float]] = None,
                       front_1st_deriv: Optional[float] = None,
                       back_1st_deriv: Optional[float] = None,
-                      tension: Optional[float] = None) -> pd.Series:
+                      tension: Optional[float] = None) -> MaxSmoothSplineResults:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using maximum smoothness algorithm.
 
@@ -137,7 +143,19 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
     if tension is not None:
         spline_builder.WithTensionParameter(tension)
     spline_results = spline_builder.BuildCurve()
-    result = net_time_series_to_pandas_series(spline_results.Curve, freq)
-    # TODO change return type to include spline_results.SolvedSplineParameters. Breaking change so require major version increment.
-    return result
+    curve = net_time_series_to_pandas_series(spline_results.Curve, freq)
+    spline_parameters = _net_solved_spline_parameters_to_data_frame(spline_results.SolvedSplineParameters, freq)
+    return MaxSmoothSplineResults(curve, spline_parameters)
 
+
+def _net_solved_spline_parameters_to_data_frame(net_solved_spline_parameters, freq):
+    indices = [net_time_period_to_pandas_period(p.StartPeriod, freq) for p in net_solved_spline_parameters]
+    data = np.zeros(shape=(net_solved_spline_parameters.Count, 6))
+    for (i, p) in enumerate(net_solved_spline_parameters):
+        data[i, 0] = p.StartTime
+        data[i, 1] = p.A
+        data[i, 2] = p.B
+        data[i, 3] = p.C
+        data[i, 4] = p.D
+        data[i, 5] = p.E
+    return pd.DataFrame(data=data, index=indices, columns=['t', 'a', 'b', 'c', 'd', 'e'])
