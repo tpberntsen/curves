@@ -23,29 +23,12 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 #endregion
 
-using System;
 using System.Collections.Generic;
 using Cmdty.TimePeriodValueTypes;
 using JetBrains.Annotations;
 
 namespace Cmdty.Curves
 {
-    public sealed class BootstrapResults<T> where T : ITimePeriod<T>
-    {
-        public DoubleCurve<T> Curve { get; }
-        public IReadOnlyList<Contract<T>> BootstrappedContracts { get; }
-
-        public BootstrapResults([NotNull] DoubleCurve<T> curve, [NotNull] List<Contract<T>> bootstrappedContracts)
-        {
-            Curve = curve ?? throw new ArgumentNullException(nameof(curve));
-            BootstrappedContracts = bootstrappedContracts ?? throw new ArgumentNullException(nameof(bootstrappedContracts));
-        }
-
-        public void Deconstruct(out DoubleCurve<T> curve, out IReadOnlyList<Contract<T>> bootstrappedContracts)
-        {
-            curve = Curve;
-            bootstrappedContracts = BootstrappedContracts;
-        }
-
-    }
+    public sealed record BootstrapResults<T>([NotNull] DoubleCurve<T> Curve,
+                [NotNull] List<Contract<T>> BootstrappedContracts) where T : ITimePeriod<T>;
 }
