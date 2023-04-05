@@ -24,7 +24,7 @@
 import pandas as pd
 import numpy as np
 import typing as tp
-from curves._common import ContractsType, _last_period, deconstruct_contract, contract_pandas_periods
+from curves._common import ContractsType, _last_period, deconstruct_contract, contract_pandas_periods, ShapingTypes
 from datetime import date, datetime
 
 
@@ -43,6 +43,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               average_weight: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               mult_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
+                              shaping_ratios: tp.Optional[ShapingTypes] = None,
+                              shaping_spreads: tp.Optional[ShapingTypes] = None,
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None, # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
                               spline_knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None,
                               back_1st_deriv: tp.Optional[float] = None
@@ -96,6 +98,30 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         add_season_adjust (callable, optional): Callable with single parameter of type pandas Period or Timestamp and return type float.
             If this argument is supplied, the value from the underlying spline function has the result of add_season_adjust,
             evaluated for each index period, added to it to derive each price in the resulting curve.
+        shaping_ratios (iterable, optional): iterable of tuples, with each tuple describing a constraint on the ratio
+            between the prices of different periods on the derived forward curve in the form:
+                ([numerator period], [denominator period], [ratio])
+            Where:
+                [ratio] (float) is the ratio between the forward prices.
+                [numerator period] is the delivery period corresponding to the numerator part of the ratio.
+                [denominator period] is the delivery period corresponding to the denomintor part of the ratio.
+            [numerator period] and [denominator period] can be any of the following types:
+                pandas.Period
+                date
+                datetime
+                A 2-tuple of any of the above three types, with the elements specifying the period start and end respectively.
+        shaping_spreads (iterable, optional): iterable of tuples, with each tuple describing a constraint on the spread
+            between the prices of different periods on the derived forward curve in the form:
+                ([period long], [period short], [spread])
+            Where:
+                [spread] (float) is the spread between the forward prices.
+                [period long] is the delivery period for the long part of the spread.
+                [period short] is the delivery period for the short part of the spread.
+            [period long] and [period short] can be any of the following types:
+                pandas.Period
+                date
+                datetime
+                A 2-tuple of any of the above three types, with the elements specifying the period start and end respectively.
         time_zone (str, pytz.timezone or dateutil.tz.tzfile, optional): Time zone applicable for the delivery periods of
             the interpolated curve. This should be specified if interpolating to higher than daily granularity (e.g. hourly)
             as time zone information is necessary to determine lost or gain hours due to clock changes. If omitted,

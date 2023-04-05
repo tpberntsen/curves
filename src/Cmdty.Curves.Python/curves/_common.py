@@ -27,7 +27,7 @@ import System as dotnet
 import pandas as pd
 import re
 from datetime import datetime, date
-from typing import Union, Tuple, Iterable
+from typing import Union, Tuple, Iterable, Collection
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.TimePeriodValueTypes")))
 from Cmdty.TimePeriodValueTypes import QuarterHour, HalfHour, Hour, Day, Month, Quarter, TimePeriodFactory
@@ -152,6 +152,11 @@ ContractsType = Iterable[Union[Tuple[date, float], Tuple[datetime, float], Tuple
                                Tuple[pd.Timestamp, pd.Timestamp, float],
                                Tuple[Tuple[date, date], float], Tuple[Tuple[datetime, datetime], float],
                                Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[pd.Timestamp, pd.Timestamp], float]]]
+
+ShapingTypes = Iterable[
+    Union[Tuple[pd.Period, pd.Period, float], Tuple[date, date, float], Tuple[datetime, datetime, float],
+          Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[date, date], float], Tuple[
+              Tuple[datetime, datetime], float]]]
 
 
 def contract_pandas_periods(input_period, freq):

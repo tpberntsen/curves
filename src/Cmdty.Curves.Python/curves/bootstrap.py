@@ -28,10 +28,9 @@ from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IBootstrapperAddOptionalParameters, \
     IBetween, Shaping, IIs, IAnd
-from typing import NamedTuple, Union, List, Optional, Callable, Tuple, Iterable
-from datetime import date, datetime
+from typing import NamedTuple, List, Optional, Callable
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, \
-    net_time_period_to_pandas_period, deconstruct_contract, ContractsType, series_to_double_time_series
+    net_time_period_to_pandas_period, deconstruct_contract, ContractsType, series_to_double_time_series, ShapingTypes
 import pandas as pd
 
 
@@ -45,12 +44,6 @@ class BootstrapResults(NamedTuple):
     piecewise_curve: pd.Series
     bootstrapped_contracts: List[Contract]
     target_curve: pd.Series
-
-
-ShapingTypes = Iterable[
-    Union[Tuple[pd.Period, pd.Period, float], Tuple[date, date, float], Tuple[datetime, datetime, float],
-          Tuple[Tuple[pd.Period, pd.Period], float], Tuple[Tuple[date, date], float], Tuple[
-              Tuple[datetime, datetime], float]]]
 
 
 def bootstrap_contracts(contracts: ContractsType,
