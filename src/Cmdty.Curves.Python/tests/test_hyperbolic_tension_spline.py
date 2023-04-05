@@ -145,32 +145,32 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         ]
         self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
 
-    # def test_hyperbolic_tension_spline_knots_specified_averages_back_to_inputs(self):
-    #     inputs = [
-    #         {
-    #             "freq": 'D',
-    #             "contracts": [
-    #                 (cp.q_1(2020), 18.66),
-    #                 (cp.q_2(2020), 19.68),
-    #             ],
-    #             "spline_knots": ['2020-01-01', '2020-02-15'],
-    #             "tension": 12.5,
-    #             "discount_factor": discount_factor
-    #         },
-    # {
-    #     "freq": 'D',
-    #     "contracts": [
-    #         (cp.cal_year(2020), 21.3),
-    #         (cp.q_1(2020), 18.66),
-    #         (cp.q_2(2020), 19.65),
-    #         (cp.jul(2020), 15.66)
-    #     ],
-    #     "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
-    #     "tension": 12.5,
-    #     "discount_factor": discount_factor
-    # }
-    # ]
-    # self._interpolate_and_assert_average_back_to_inputs(inputs)
+    def test_hyperbolic_tension_spline_knots_specified_averages_back_to_inputs(self):
+        inputs = [
+            {
+                "freq": 'D',
+                "contracts": [
+                    (cp.q_1(2020), 18.66),
+                    (cp.q_2(2020), 19.68),
+                ],
+                "spline_knots": ['2020-01-01', '2020-02-15'],
+                "tension": 12.5,
+                "discount_factor": discount_factor
+            },
+        {
+            "freq": 'D',
+            "contracts": [
+                (cp.cal_year(2020), 21.3),
+                (cp.q_1(2020), 18.66),
+                (cp.q_2(2020), 19.65),
+                (cp.jul(2020), 15.66)
+            ],
+            "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+            "tension": 12.5,
+            "discount_factor": discount_factor
+        }
+        ]
+        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data, tol):
         for test_data in test_case_data:

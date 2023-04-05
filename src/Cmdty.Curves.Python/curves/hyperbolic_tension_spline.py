@@ -296,10 +296,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     # Forward price constraints
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
     first_spline_section_idx = 0
+    # TODO tidy this up
+    spline_knots_updated = spline_knots + [last_period + freq_offset]
     for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
         # Find first spline section
-        # TODO use quicker search than this linear scan
-        while first_spline_section_idx < num_sections and contract_start > spline_knots[first_spline_section_idx]:
+        # TODO use quicker search than this linear scan?
+        while not (spline_knots_updated[first_spline_section_idx] <= contract_start < spline_knots_updated[first_spline_section_idx + 1]):
             first_spline_section_idx += 1
         # Loop through spline sections which overlap contract
         spline_boundary_idx = first_spline_section_idx
