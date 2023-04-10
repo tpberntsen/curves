@@ -23,6 +23,7 @@
 from datetime import date
 import unittest
 import pandas as pd
+import numpy as np
 from datetime import date, datetime
 from curves import hyperbolic_tension_spline
 from curves import contract_period as cp
@@ -198,6 +199,23 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                     curve_average_price = weighted_average_slice_curve(interp_curve, test_data['freq'], period,
                                                                        discounted_average_weight)
                     self.assertAlmostEqual(curve_average_price, contract_price, delta=tol)
+
+    def test_input_contracts_in_linear_trend_results_linear(self):
+        intercept = 45.7
+        daily_slope = 0.8
+        hourly_slope = daily_slope/24.0
+        num_daily_curve_points = 5
+
+        daily_index = pd.period_range(start='2023-03-19', periods=num_daily_curve_points, freq='D')
+        daily_prices = [intercept + daily_slope * i for i in range(num_daily_curve_points)]
+        daily_curve = pd.Series(data=daily_prices, index=daily_index)
+
+        expected_hourly_diffs = np.repeat(hourly_slope,  num_daily_curve_points*24-1)
+        tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
+        for tension in tensions:
+            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension)
+            hourly_diffs = np.diff(hourly_curve)
+            np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=10)
 
     @unittest.skip('This test is currently just used for investigations.')
     def test_inputs_constant_outputs_constant(self):
