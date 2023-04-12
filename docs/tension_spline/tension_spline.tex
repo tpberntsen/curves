@@ -4,6 +4,7 @@
 \usepackage{url}
 \usepackage{hyperref}
 \setcounter{MaxMatrixCols}{20}
+\DeclareMathOperator{\csch}{csch}
 
 \title{Tension Spline Algorithm for Building Forward Curves}
 \author{Jake C. Fowler}
@@ -295,6 +296,24 @@ Superscript is for contract, supersci
     \end{bmatrix}
 \end{equation*}
 
+\subsection{Smoothness Criteria}
+% TODO add reference to Andersen paper
+
+\begin{multline}
+    min \int_{t_0}^{t_n} \bigl( p^{\prime\prime}(t)^2 + \tau_i^2 p^{\prime}(t)^2 \bigr) dt = 
+    \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt \\
+    = \sum_{i=1}^{n} \frac{(z_{i-1}-z_i)^2 - \tau_i^4 (y_{i-1}-y_i)^2 -\tau_i h_i \left(-(z_{i-1}^2+z_i^2) 
+    \coth (-\tau_i h_i) + 2 z_{i-1} z_i \csch (-\tau_i h_i)\right)}{-\tau_i^2 h_i}
+\end{multline}
+
+The term inside the summation is a quadratic form, which can be seen from rearranging:
+
+\begin{multline}
+    = 
+\end{multline}
+
+Writing this in matrix form, as upper triangular, rather than the more typically seen symmetric
+to aid more efficient inversion later.
 
 
 
