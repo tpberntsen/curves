@@ -305,74 +305,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # Populate constraint vector
     constraint_vector = np.zeros((matrix_size, 1))
-    # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
-    for i, (start, end, price) in enumerate(standardised_contracts):
-        contract_start_idx = int_index(start)
-        contract_end_idx = int_index(end) + 1
-        weights_times_discounts_slice = weights_times_discounts[contract_start_idx:contract_end_idx]
-        add_season_adjusts_slice = add_season_adjusts[contract_start_idx:contract_end_idx]
-        weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
-        constraint_vector[i+1] = price * np.sum(weights_times_discounts_slice) - \
-                               np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
-
-    # Populate constraint matrix
     constraint_matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
-    constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start, i.e z_0 = 0
-    constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end, i.e. z_n = 0
-    # Forward price constraints
-    # This is made more complicated by flexibility of allowing contracts and spline sections to differ
-    first_spline_section_idx = 0
-    # TODO tidy this up
-    spline_knots_updated = spline_knots + [last_period + freq_offset]
-    for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
-        # Find first spline section
-        # TODO use quicker search than this linear scan?
-        while not (spline_knots_updated[first_spline_section_idx] <= contract_start < spline_knots_updated[first_spline_section_idx + 1]):
-            first_spline_section_idx += 1
-        # Loop through spline sections which overlap contract
-        spline_boundary_idx = first_spline_section_idx
-        while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
-            section_start = spline_knots[spline_boundary_idx]
-            section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
-            contract_section_start_period = contract_start if contract_start >= section_start else section_start
-            contract_section_end_period = contract_end if contract_end <= section_end else section_end
-            contract_section_start_idx = int_index(contract_section_start_period)
-            contract_section_end_idx = int_index(contract_section_end_period) + 1
-            # Forward price constraints
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2] += np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 1] += np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 2] += np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 3] += np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            spline_boundary_idx += 1
 
-    # First derivative continuity constraints
-    one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
-    for section_idx in range(0, num_sections - 1):
-        row_idx = num_contracts + section_idx + 1
-        # TODO doc using 1-based indexing for sections gets annoying now
-        next_section_idx = section_idx + 1
-        # TODO vectorise these outside of the loop?
-        constraint_matrix[row_idx, section_idx * 2] -= (one_over_h_tau_sqrd[section_idx] - 1.0 / tau_sinh[section_idx])  # deriv_z_i_minus2_coff
-        constraint_matrix[row_idx, section_idx * 2 + 1] += 1/h_is[section_idx] # deriv_y_i_minus2_coff
-        constraint_matrix[row_idx, section_idx * 2 + 2] += one_over_h_tau_sqrd[next_section_idx] - cosh_tau_hi[next_section_idx] / tau_sinh[next_section_idx]  \
-                        - cosh_tau_hi[section_idx]/tau_sinh[section_idx] + one_over_h_tau_sqrd[section_idx] # deriv_z_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 2 + 3] -= (1/h_is[next_section_idx] + 1/h_is[section_idx]) # deriv_y_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0/tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx] # deriv_z_i_coff
-        constraint_matrix[row_idx, section_idx * 2 + 5] += 1/h_is[next_section_idx] # deriv_y_i_coff
-
-    if back_1st_deriv is None:
-        constraint_matrix[-2, -5] = 1.0 / (h_is[-1] + h_is[-2])   # y_{n-2}
-        constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - cosh_tau_hi[-1] / tau_sinh[-1]  # z_{n-1}
-        constraint_matrix[-2, -3] = -1.0 / h_is[-1]  # y_{n-1}
-        constraint_matrix[-2, -2] = 1.0/tau_sinh[-1] - one_over_h_tau_sqrd[-1] # z_n
-        constraint_matrix[-2, -1] = 1.0 / h_is[-1] - 1.0/(h_is[-1] + h_is[-2])  # y_n
-        constraint_vector[-2] = 0.0
-    else:
-        constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - 1.0 / tau_sinh[-1] # z_{n-1}
-        constraint_matrix[-2, -3] = 1.0 / h_is[-1]  # y_{n-1}
-        constraint_matrix[-2, -2] = cosh_tau_hi[-1]/tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
-        constraint_matrix[-2, -1] = 1.0 / h_is[-1]  # y_n
-        constraint_vector[-2] = back_1st_deriv
+    _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, back_1st_deriv, cosh_tau_hi, freq_offset,
+                                       h_is, int_index, last_period, num_contracts, num_sections, spline_knots, standardised_contracts,
+                                       tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust, yi_coeffs,
+                                       yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs)
     solution = np.linalg.solve(constraint_matrix, constraint_vector)
     # Read results off solution
     spline_vals = np.zeros(num_result_curve_points)
@@ -401,6 +339,84 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     result_curve_prices = (spline_vals + add_season_adjusts) * mult_season_adjusts
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
     return TensionSplineResults(result_curve, spline_params)
+
+
+def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, back_1st_deriv, cosh_tau_hi, freq_offset,
+                                       h_is, int_index, last_period, num_contracts, num_sections, spline_knots, standardised_contracts,
+                                       tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust, yi_coeffs,
+                                       yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs):
+    # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
+    for i, (start, end, price) in enumerate(standardised_contracts):
+        contract_start_idx = int_index(start)
+        contract_end_idx = int_index(end) + 1
+        weights_times_discounts_slice = weights_times_discounts[contract_start_idx:contract_end_idx]
+        add_season_adjusts_slice = add_season_adjusts[contract_start_idx:contract_end_idx]
+        weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
+        constraint_vector[i + 1] = price * np.sum(weights_times_discounts_slice) - \
+                                   np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
+    # Populate constraint matrix
+    constraint_matrix[0, 0] = 1.0  # 2nd derivative zero at start, i.e z_0 = 0
+    constraint_matrix[-1, -2] = 1.0  # 2nd derivative zero at end, i.e. z_n = 0
+    # Forward price constraints
+    # This is made more complicated by flexibility of allowing contracts and spline sections to differ
+    first_spline_section_idx = 0
+    # TODO tidy this up
+    spline_knots_updated = spline_knots + [last_period + freq_offset]
+    for contract_idx, (contract_start, contract_end, price) in enumerate(standardised_contracts):
+        # Find first spline section
+        # TODO use quicker search than this linear scan?
+        while not (spline_knots_updated[first_spline_section_idx] <= contract_start < spline_knots_updated[first_spline_section_idx + 1]):
+            first_spline_section_idx += 1
+        # Loop through spline sections which overlap contract
+        spline_boundary_idx = first_spline_section_idx
+        while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
+            section_start = spline_knots[spline_boundary_idx]
+            section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
+            contract_section_start_period = contract_start if contract_start >= section_start else section_start
+            contract_section_end_period = contract_end if contract_end <= section_end else section_end
+            contract_section_start_idx = int_index(contract_section_start_period)
+            contract_section_end_idx = int_index(contract_section_end_period) + 1
+            # Forward price constraints
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2] += np.sum(
+                zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 1] += np.sum(
+                yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 2] += np.sum(
+                zi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx + 1, spline_boundary_idx * 2 + 3] += np.sum(
+                yi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            spline_boundary_idx += 1
+    # First derivative continuity constraints
+    one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
+    for section_idx in range(0, num_sections - 1):
+        row_idx = num_contracts + section_idx + 1
+        # TODO doc using 1-based indexing for sections gets annoying now
+        next_section_idx = section_idx + 1
+        # TODO vectorise these outside of the loop?
+        constraint_matrix[row_idx, section_idx * 2] -= (
+                    one_over_h_tau_sqrd[section_idx] - 1.0 / tau_sinh[section_idx])  # deriv_z_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 2 + 1] += 1 / h_is[section_idx]  # deriv_y_i_minus2_coff
+        constraint_matrix[row_idx, section_idx * 2 + 2] += one_over_h_tau_sqrd[next_section_idx] - cosh_tau_hi[next_section_idx] / tau_sinh[
+            next_section_idx] \
+                                                           - cosh_tau_hi[section_idx] / tau_sinh[section_idx] + one_over_h_tau_sqrd[
+                                                               section_idx]  # deriv_z_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 2 + 3] -= (1 / h_is[next_section_idx] + 1 / h_is[section_idx])  # deriv_y_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0 / tau_sinh[next_section_idx] - one_over_h_tau_sqrd[
+            next_section_idx]  # deriv_z_i_coff
+        constraint_matrix[row_idx, section_idx * 2 + 5] += 1 / h_is[next_section_idx]  # deriv_y_i_coff
+    if back_1st_deriv is None:
+        constraint_matrix[-2, -5] = 1.0 / (h_is[-1] + h_is[-2])  # y_{n-2}
+        constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - cosh_tau_hi[-1] / tau_sinh[-1]  # z_{n-1}
+        constraint_matrix[-2, -3] = -1.0 / h_is[-1]  # y_{n-1}
+        constraint_matrix[-2, -2] = 1.0 / tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
+        constraint_matrix[-2, -1] = 1.0 / h_is[-1] - 1.0 / (h_is[-1] + h_is[-2])  # y_n
+        constraint_vector[-2] = 0.0
+    else:
+        constraint_matrix[-2, -4] = one_over_h_tau_sqrd[-1] - 1.0 / tau_sinh[-1]  # z_{n-1}
+        constraint_matrix[-2, -3] = 1.0 / h_is[-1]  # y_{n-1}
+        constraint_matrix[-2, -2] = cosh_tau_hi[-1] / tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
+        constraint_matrix[-2, -1] = 1.0 / h_is[-1]  # y_n
+        constraint_vector[-2] = back_1st_deriv
 
 
 def _default_time_func(period1, period2):
