@@ -183,9 +183,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         spline_knots = [contract[0] for contract in standardised_contracts]
     else:
         # TODO allow len(spline_knots) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
-        if len(spline_knots) != num_contracts:
-            raise ValueError('len(spline_knots) should equal len(contracts). However, len(spline_knots) '
-                             'equals {} and len(contracts) equals {}.'.format(len(spline_knots), num_contracts))
+        if not maximum_smoothness:
+            if len(spline_knots) != num_contracts:
+                raise ValueError('len(spline_knots) should equal len(contracts). However, len(spline_knots) '
+                                 'equals {} and len(contracts) equals {}.'.format(len(spline_knots), num_contracts))
+        # TODO put condition on number of knots in maximum smoothness case
         spline_knots = [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
         if spline_knots[0] != first_period:
             raise ValueError('First element of spline_knots should equal {}, the start of the first contract.'
