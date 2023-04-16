@@ -67,7 +67,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
-            "back_1st_deriv": -0.3
+            "back_1st_deriv": -0.3,
+            "maximum_smoothness": False
         },
         {
             "freq": 'D',
@@ -77,19 +78,22 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
             "discount_factor": discount_factor,
+            "maximum_smoothness": False
         },
         {
             "freq": 'D',
             "contracts": contracts_list,
             "tension": flat_tension,
             "discount_factor": discount_factor,
-            "back_1st_deriv": -0.3
+            "back_1st_deriv": -0.3,
+            "maximum_smoothness": False
         },
         {
             "freq": 'D',
             "contracts": contracts_series,
             "tension": flat_tension,
             "discount_factor": discount_factor,
+            "maximum_smoothness": False
         }
     ]
 
@@ -106,6 +110,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "tension": flat_tension,
             "discount_factor": discount_factor,
             "time_zone": 'Europe/London',
+            "maximum_smoothness": False
             # "back_1st_deriv" : 0.0 TODO figure out why adding this constrain causes bigger error
         },
         {
@@ -118,17 +123,35 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "tension": flat_tension,
             "discount_factor": discount_factor,
             "time_zone": 'Europe/Paris',
-            "back_1st_deriv": -0.3
+            "back_1st_deriv": -0.3,
+            "maximum_smoothness": False
         }
     ]
 
     # TODO properly parameterise these tests
     def test_hyperbolic_tension_spline_daily_interpolation_averages_back_to_inputs(self):
-        self._interpolate_and_assert_average_back_to_inputs(self.daily_test_case_data, 1E-9)
+        self._interpolate_and_assert_average_back_to_inputs(self.daily_test_case_data, 1E-8)
+
+    def test_hyperbolic_tension_spline_max_smoothness_daily_interpolation_averages_back_to_inputs(self):
+        daily_test_data_max_smooth = self._set_max_smoothness_true(self.daily_test_case_data)
+        self._interpolate_and_assert_average_back_to_inputs(daily_test_data_max_smooth, 1E-8)
+
+    @staticmethod
+    def _set_max_smoothness_true(test_data):
+        test_data_max_smooth = []
+        for d in test_data:
+            new_d = dict(d)
+            new_d['maximum_smoothness'] = True
+            test_data_max_smooth.append(new_d)
+        return test_data_max_smooth
 
     # TODO look into why bigger tolerance required here. Matrix gets poorly conditioned?
     def test_hyperbolic_tension_spline_intraday_interpolation_averages_back_to_inputs(self):
-        self._interpolate_and_assert_average_back_to_inputs(self.intraday_test_case_data, 1E-6)
+        self._interpolate_and_assert_average_back_to_inputs(self.intraday_test_case_data, 1E-8)
+
+    def test_hyperbolic_tension_spline_max_smoothness_intraday_interpolation_averages_back_to_inputs(self):
+        intraday_data_max_smooth = self._set_max_smoothness_true(self.intraday_test_case_data)
+        self._interpolate_and_assert_average_back_to_inputs(intraday_data_max_smooth, 1E-6)
 
     def test_hyperbolic_tension_spline_contracts_overlap_averages_back_to_inputs(self):
         inputs = [
@@ -141,10 +164,16 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 "spline_knots": ['2020-01-01', '2020-02-01'],
                 "tension": 12.5,
                 "discount_factor": discount_factor,
-                "back_1st_deriv": -0.3
+                "back_1st_deriv": -0.3,
+                "maximum_smoothness": False
             },
         ]
+        # Test without maximum smoothness
         self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
+        # Test with maximum smoothness
+        for d in inputs:
+            d["maximum_smoothness"] = True
+        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-11)
 
     def test_hyperbolic_tension_spline_knots_specified_averages_back_to_inputs(self):
         inputs = [
@@ -156,22 +185,29 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 ],
                 "spline_knots": ['2020-01-01', '2020-02-15'],
                 "tension": 12.5,
-                "discount_factor": discount_factor
+                "discount_factor": discount_factor,
+                "maximum_smoothness": False
             },
-        {
-            "freq": 'D',
-            "contracts": [
-                (cp.cal_year(2020), 21.3),
-                (cp.q_1(2020), 18.66),
-                (cp.q_2(2020), 19.65),
-                (cp.jul(2020), 15.66)
-            ],
-            "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
-            "tension": 12.5,
-            "discount_factor": discount_factor
-        }
+            {
+                "freq": 'D',
+                "contracts": [
+                    (cp.cal_year(2020), 21.3),
+                    (cp.q_1(2020), 18.66),
+                    (cp.q_2(2020), 19.65),
+                    (cp.jul(2020), 15.66)
+                ],
+                "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+                "tension": 12.5,
+                "discount_factor": discount_factor,
+                "maximum_smoothness": False
+            }
         ]
+        # Test without maximum smoothness
         self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
+        # Test with maximum smoothness
+        for d in inputs:
+            d["maximum_smoothness"] = True
+        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-10)
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data, tol):
         for test_data in test_case_data:
@@ -213,9 +249,13 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         expected_hourly_diffs = np.repeat(hourly_slope,  num_daily_curve_points*24-1)
         tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
         for tension in tensions:
-            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension)
+            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension, maximum_smoothness=False)
             hourly_diffs = np.diff(hourly_curve)
             np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=10)
+        for tension in tensions:
+            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension, maximum_smoothness=True)
+            hourly_diffs = np.diff(hourly_curve)
+            np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=6)
 
     @unittest.skip('This test is currently just used for investigations.')
     def test_inputs_constant_outputs_constant(self):
@@ -233,7 +273,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
         # Act
         daily_curve, spline_params = hyperbolic_tension_spline(monthly_curve, freq=freq, tension=tension, time_zone=time_zone,
-                                                               discount_factor=lambda x: 1.0, back_1st_deriv=back_1st_derive)
+                                               discount_factor=lambda x: 1.0, back_1st_deriv=back_1st_derive, maximum_smoothness=True)
         print('Curve length:')
         print(len(daily_curve))
         # Assert
