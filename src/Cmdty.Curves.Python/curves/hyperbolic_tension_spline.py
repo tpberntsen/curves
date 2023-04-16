@@ -426,7 +426,7 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
 
     if back_1st_deriv is not None: # TODO do I need not None?
         constraint_matrix[-1, -4] = one_over_h_tau_sqrd[-1] - 1.0 / tau_sinh[-1]  # z_{n-1}
-        constraint_matrix[-1, -3] = 1.0 / h_is[-1]  # y_{n-1}
+        constraint_matrix[-1, -3] = -1.0 / h_is[-1]  # y_{n-1}
         constraint_matrix[-1, -2] = cosh_tau_hi[-1] / tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
         constraint_matrix[-1, -1] = 1.0 / h_is[-1]  # y_n
         constraint_vector[-1] = back_1st_deriv
