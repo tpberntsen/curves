@@ -3,6 +3,7 @@
 \usepackage[round]{natbib}
 \usepackage{url}
 \usepackage{hyperref}
+\usepackage[toc,page]{appendix}
 \setcounter{MaxMatrixCols}{20}
 \DeclareMathOperator{\csch}{csch}
 
@@ -349,5 +350,70 @@ to aid more efficient inversion later.
     \end{bmatrix}
 \end{equation}
 
+\newpage
+\appendix
+\appendixpage
+\section{Maximum Smoothness Integral}
+\label{appendix:max_smooth_integral}
+This section evaluated the integral used in the maximum smoothness criteria. First writing
+the squares as multiples, and splitting the integral into two:
+
+\begin{equation}
+    \int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}_i(t)^2 dt
+    = \int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t) p^{\prime\prime}_i(t) dt +
+    \int_{t_{i - 1}}^{t_i} \tau_i^2 p^{\prime}_i(t) p^{\prime}_i(t) dt
+\end{equation}
+
+The first integral on the right-hand-side can be evaluated using integration by parts.
+
+\begin{equation}
+    \int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t) p^{\prime\prime}_i(t) dt = 
+    p^{\prime\prime}_i(t_i) p^{\prime}_i(t_i) - p^{\prime\prime}_i(t_{i - 1}) p^{\prime}_i(t_{i - 1})
+    - \int_{t_{i - 1}}^{t_i} p^{\prime\prime\prime}_i(t) p^{\prime}_i(t_{i - 1}) dt
+\end{equation}
+
+Substituing this into the first equation in this appendix and combining the last two integrals
+into a single integral.
+
+\begin{equation}
+    \int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt
+    = p^{\prime\prime}_i(t_i) p^{\prime}_i(t_i) - p^{\prime\prime}_i(t_{i - 1}) p^{\prime}_i(t_{i - 1})
+    - \int_{t_{i - 1}}^{t_i} \bigl( p^{\prime\prime\prime}_i(t) - \tau_i^2 p^{\prime}_i(t) \bigr) p^{\prime}_i(t) dt
+\end{equation}
+
+Next, focussing on the $p^{\prime\prime\prime}_i(t) - \tau_i^2 p^{\prime}_i(t)$ term. It has previously been
+shown that the first derivative is as follows:
+
+\begin{multline}
+    p^\prime_i(t) = \frac{ -z_{i-1} \cosh(\tau_i (t_i - t)) + z_i \cosh(\tau_i (t - t_{i-1}))}{\tau_i \sinh(\tau_i h_i)}  \\
+        + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i}
+\end{multline}
+
+Differentiating:
+
+\begin{equation}
+    p^{\prime\prime}_i(t) = \frac{ z_{i-1} \sinh(\tau_i (t_i - t)) + z_i \sinh(\tau_i (t - t_{i-1}))}{\sinh(\tau_i h_i)}
+\end{equation}
+
+Differentiating again:
+
+\begin{equation}
+    p^{\prime\prime\prime}_i(t) = \frac{ -z_{i-1} \tau_i \cosh(\tau_i (t_i - t)) + z_i \tau_i \cosh(\tau_i (t - t_{i-1}))}{\sinh(\tau_i h_i)}
+\end{equation}
+
+Using the above it can be seen that:
+
+\begin{equation}
+    p^{\prime\prime\prime}_i(t) - \tau_i^2 p^{\prime}_i(t) =
+    - \frac{(y_i - y_{i-1})\tau_i^2 +  z_{i-1} - z_i}{h_i}
+\end{equation}
+
+Crucially this is independent of $t$, hence can be used to simply the equation.
+
+\begin{multline}
+    \int_{t_{i - 1}}^{t_i} \bigl( p^{\prime\prime\prime}_i(t) - \tau_i^2 p^{\prime}_i(t) \bigr) p^{\prime}_i(t) dt
+    = - \frac{(y_i - y_{i-1})\tau_i^2 +  z_{i-1} - z_i}{h_i} \int_{t_{i - 1}}^{t_i} p^{\prime}_i(t) dt \\
+    = - \frac{(y_i - y_{i-1})\tau_i^2 +  z_{i-1} - z_i}{h_i} \bigl(p_i(t_i) - p_i(t_{i-1}) \bigr)
+\end{multline}
 
 \end{document}
