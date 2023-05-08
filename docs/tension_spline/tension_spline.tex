@@ -416,4 +416,31 @@ Crucially this is independent of $t$, hence can be used to simply the equation.
     = - \frac{(y_i - y_{i-1})\tau_i^2 +  z_{i-1} - z_i}{h_i} \bigl(p_i(t_i) - p_i(t_{i-1}) \bigr)
 \end{multline}
 
+Putting these results together.
+
+\begin{equation}
+    \int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt
+    = p^{\prime\prime}_i(t_i) p^{\prime}_i(t_i) - p^{\prime\prime}_i(t_{i - 1}) p^{\prime}_i(t_{i - 1})
+    + \frac{(y_i - y_{i-1})\tau_i^2 +  z_{i-1} - z_i}{h_i} \bigl(p_i(t_i) - p_i(t_{i-1}) \bigr)
+\end{equation}
+
+Evaluating the above involves substituting in for $p_i$ and it's first two derivatives at the integral
+boundary points $t_i$ and $t_{i-1}$. By construction we already know $p_i(t_i) = y_i$, $p_i(t_{i-1}) = y_{i-1}$,
+$p^{\prime\prime}_i = z_i$ and $p^{\prime\prime}_{i-1} = z_{i-1}$. The expressions for the first
+derivatives can be simplied by subsituting $\cosh(0)=1$ and $t_i - t_{i-1} = h_i$.
+
+\begin{equation}
+    p^\prime_i(t_i) = \frac{ z_i \cosh(\tau_i h_i) -z_{i-1} }{\tau_i \sinh(\tau_i h_i)}
+        + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i}
+\end{equation}
+
+\begin{equation}
+    p^\prime_i(t_{i-1}) = \frac{ z_i - z_{i-1} \cosh(\tau_i h_i) }{\tau_i \sinh(\tau_i h_i)}
+        + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i}
+\end{equation}
+
+Substituting these in:
+
+
+
 \end{document}
