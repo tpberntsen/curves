@@ -426,7 +426,7 @@ Putting these results together.
 
 Evaluating the above involves substituting in for $p_i$ and it's first two derivatives at the integral
 boundary points $t_i$ and $t_{i-1}$. By construction we already know $p_i(t_i) = y_i$, $p_i(t_{i-1}) = y_{i-1}$,
-$p^{\prime\prime}_i = z_i$ and $p^{\prime\prime}_{i-1} = z_{i-1}$. The expressions for the first
+$p^{\prime\prime}_i(t_i) = z_i$ and $p^{\prime\prime}_{i-1}(t_{i-1}) = z_{i-1}$. The expressions for the first
 derivatives can be simplied by subsituting $\cosh(0)=1$ and $t_i - t_{i-1} = h_i$.
 
 \begin{equation}
@@ -441,6 +441,58 @@ derivatives can be simplied by subsituting $\cosh(0)=1$ and $t_i - t_{i-1} = h_i
 
 Substituting these in:
 
+\begin{multline}
+    \int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt
+    = z_i\biggl( \frac{ z_i \cosh(\tau_i h_i) -z_{i-1} }{\tau_i \sinh(\tau_i h_i)}
+    + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i} \biggr) \\
+    - z_{i-1} \biggl(\frac{ z_i - z_{i-1} \cosh(\tau_i h_i) }{\tau_i \sinh(\tau_i h_i)}
+    + \frac{y_i - y_{i-1} +  (z_{i-1} - z_i)/\tau_i^2}{h_i} \biggr) \\
+    + \frac{(y_i - y_{i-1})^2\tau_i^2 + (y_i - y_{i-1})(z_{i-1} - z_i)}{h_i} 
+\end{multline}
 
+Rearranging.
+
+\begin{multline}
+    = z_i\biggl( \frac{ z_i \cosh(\tau_i h_i) -z_{i-1} }{\tau_i \sinh(\tau_i h_i)} \biggr)
+    - z_{i-1} \biggl(\frac{ z_i - z_{i-1} \cosh(\tau_i h_i) }{\tau_i \sinh(\tau_i h_i)} \biggr) \\
+    - \frac{(y_i - y_{i-1})(z_{i-1} - z_i) +  (z_{i-1} - z_i)^2/\tau_i^2}{h_i}  \\
+    + \frac{(y_i - y_{i-1})^2\tau_i^2 + (y_i - y_{i-1})(z_{i-1} - z_i)}{h_i} 
+\end{multline}
+
+Cancelling terms.
+
+\begin{multline}
+    = z_i\biggl( \frac{ z_i \cosh(\tau_i h_i) -z_{i-1} }{\tau_i \sinh(\tau_i h_i)} \biggr)
+    - z_{i-1} \biggl(\frac{ z_i - z_{i-1} \cosh(\tau_i h_i) }{\tau_i \sinh(\tau_i h_i)} \biggr) \\
+    + \frac{(y_i - y_{i-1})^2\tau_i^2 - (z_{i-1} - z_i)^2/\tau_i^2 }{h_i} 
+\end{multline}
+
+Rearranging.
+
+\begin{multline}
+    = (z_i^2 + z_{i-1}^2) \frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)}
+    -z_i z_{i-1} \frac{2}{\tau_i \sinh(\tau_i h_i)} \\
+    + \frac{(y_i - y_{i-1})^2\tau_i^2 - (z_{i-1} - z_i)^2/\tau_i^2 }{h_i} 
+\end{multline}
+
+Multiplying out the squared differences.
+
+\begin{multline}
+    = (z_i^2 + z_{i-1}^2) \frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)}
+    -z_i z_{i-1} \frac{2}{\tau_i \sinh(\tau_i h_i)} \\
+    + \frac{(y_i^2 + y_{i-1}^2 -2 y_i y_{i-1} )\tau_i^2 - (z_i^2 + z_{i-1}^2 - 2 z_i z_{i-1} )/\tau_i^2 }{h_i} 
+\end{multline}
+
+Rearranging again so it can be seen that this is a quadratic form.
+
+\begin{multline}
+    = z_i^2 \biggl( \frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} -
+    \frac{1}{\tau_i^2 h_i} \biggr) 
+    + z_{i-1}^2 \biggl( \frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} -
+    \frac{1}{\tau_i^2 h_i} \biggr) \\
+    + y_i^2 \frac{\tau_i^2}{h_i} + y_{i-1}^2 \frac{\tau_i^2}{h_i} 
+    + z_i z_{i-1} 2 \biggl( \frac{1}{\tau_i^2 h_i} - \frac{1}{\tau_i \sinh(\tau_i h_i)} \biggr) \\
+    - y_i y_{i-1} \frac{2 \tau_i^2}{h_i}
+\end{multline}
 
 \end{document}
