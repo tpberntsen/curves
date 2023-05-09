@@ -453,7 +453,7 @@ def _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau
     # csch (hyperbolic cosecant) = 1/sinh
     zi_zi_minus1_coeff = 4.0 * (one_over_tau_sqrd_hi + 1.0/(np.sinh(minus_tau_h) * tension_by_section))
     # coth (hyperbolic cotangent) = 1/tanh
-    zis_sqrd_coeff = -2.0 * (one_over_tau_sqrd_hi + 1.0/np.tanh(minus_tau_h) * tension_by_section)
+    zis_sqrd_coeff = -2.0 * (one_over_tau_sqrd_hi + 1.0/(np.tanh(minus_tau_h) * tension_by_section))
     num_sections = len(tension_by_section)
     # TODO make matrix population more efficient
     for i in range(0, num_sections):
@@ -465,9 +465,11 @@ def _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau
 
 def _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi, minus_4_tau_sqrd_over_hi, zi_zi_minus1_coeff, zis_sqrd_coeff):
     sub_matrix[0, 0] += zis_sqrd_coeff
-    sub_matrix[0, 2] += zi_zi_minus1_coeff  # TODO think this can be switched from += to =
+    sub_matrix[0, 2] += zi_zi_minus1_coeff/2.0  # TODO think this can be switched from += to =
+    sub_matrix[2, 0] = -sub_matrix[0, 2]
     sub_matrix[1, 1] += two_tau_sqrd_over_hi
-    sub_matrix[1, 3] += minus_4_tau_sqrd_over_hi  # TODO think this can be switched from += to =
+    sub_matrix[1, 3] += minus_4_tau_sqrd_over_hi/2.0  # TODO think this can be switched from += to =
+    sub_matrix[3, 1] = -sub_matrix[1, 3]
     sub_matrix[2, 2] += zis_sqrd_coeff
     sub_matrix[3, 3] += two_tau_sqrd_over_hi
 
