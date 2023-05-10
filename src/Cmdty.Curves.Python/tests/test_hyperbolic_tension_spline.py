@@ -30,6 +30,7 @@ from curves import contract_period as cp
 from math import exp
 from tests._test_common import weighted_average_slice_curve
 from curves._common import deconstruct_contract
+from curves.hyperbolic_tension_spline import _populate_2h_matrix
 
 interest_rate = 0.046
 val_date = pd.Timestamp(2018, 12, 31)
@@ -236,8 +237,15 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                                                                        discounted_average_weight)
                     self.assertAlmostEqual(curve_average_price, contract_price, delta=tol)
 
+    def test_input_contracts_in_linear_trend_results_linear_no_max_smoothness(self):
+        self._input_contracts_in_linear_trend_results_linear(False, 10)
+
     @unittest.skip('Failures need investigation.')
-    def test_input_contracts_in_linear_trend_results_linear(self):
+    def test_input_contracts_in_linear_trend_results_linear_max_smoothness(self):
+        self._input_contracts_in_linear_trend_results_linear(True, 4)
+
+    @staticmethod
+    def _input_contracts_in_linear_trend_results_linear(max_smoothness, decimals_tol):
         intercept = 45.7
         daily_slope = 0.8
         hourly_slope = daily_slope/24.0
@@ -250,16 +258,106 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         expected_hourly_diffs = np.repeat(hourly_slope,  num_daily_curve_points*24-1)
         tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
         for tension in tensions:
-            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension, maximum_smoothness=False)
+            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension, maximum_smoothness=max_smoothness)
             hourly_diffs = np.diff(hourly_curve)
-            np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=10)
-        for tension in tensions:
-            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension, maximum_smoothness=True)
-            hourly_diffs = np.diff(hourly_curve)
-            np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=6)
+            np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=decimals_tol)
+
+    flat_price = 32.87
+    flat_price_test_case_data = [
+        {
+            "freq": 'D',
+            "contracts": [
+                (cp.q_1(2020), flat_price),
+                (cp.q_2(2020), flat_price),
+            ],
+            "spline_knots": ['2020-01-01', '2020-02-15'],
+            "discount_factor": discount_factor,
+        },
+        {
+            "freq": 'D',
+            "contracts": [
+                (cp.cal_year(2020), flat_price),
+                (cp.q_1(2020), flat_price),
+                (cp.q_2(2020), flat_price),
+                (cp.jul(2020), flat_price)
+            ],
+            "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+            "discount_factor": discount_factor,
+        }
+    ]
+
+    def test_contracts_all_same_price_flat_curve_no_max_smooth(self):
+        self._contracts_all_same_price_flat_curve(False, 12)
+
+    def test_contracts_all_same_price_flat_curve_max_smooth(self):
+        self._contracts_all_same_price_flat_curve(True, 11)
+
+    def _contracts_all_same_price_flat_curve(self, max_smoothness, decimals_tol):
+        tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
+        for data in self.flat_price_test_case_data:
+            new_data = dict(data)
+            new_data['maximum_smoothness'] = max_smoothness
+            for tension in tensions:
+                new_data['tension'] = tension
+                interp_curve, spline_params = hyperbolic_tension_spline(**new_data)
+                pen_val_1 = self.max_smooth_penalty(spline_params, tension)
+                pen_val_2 = self.max_smooth_penalty_from_private(spline_params, tension)
+                expected_values = np.repeat(self.flat_price, len(interp_curve))
+                np.testing.assert_array_almost_equal(expected_values, interp_curve.values, decimal=decimals_tol)
+
+    @staticmethod
+    def max_smooth_penalty(spline_params, tension):
+        sum_penalty = 0.0
+        last_params = spline_params.iloc[0]
+        for i in range(1, len(spline_params)):
+            this_params = spline_params.iloc[i]
+            h = this_params['t'] - last_params['t']
+            effective_tension = tension / h
+            z_i = this_params['z']
+            y_i = this_params['y']
+            z_i_minus_1 = last_params['z']
+            y_i_minus_1 = last_params['y']
+            tau_h = tension
+            cosh_tau_h = np.cosh(tau_h)
+            sinh_tau_h = np.sinh(tau_h)
+            z_terms = cosh_tau_h / (effective_tension * sinh_tau_h) - 1.0 / (effective_tension * effective_tension * h)
+            tau_sqrd_over_h = effective_tension * effective_tension / h
+            sum_penalty += z_i ** 2 * z_terms + z_i_minus_1 ** 2 * z_terms + y_i ** 2 * tau_sqrd_over_h + y_i_minus_1 ** 2 * tau_sqrd_over_h \
+                           + z_i * z_i_minus_1 * 2.0 * (1.0 / (effective_tension ** 2 * h) - 1.0 / (effective_tension * sinh_tau_h)) \
+                           - y_i * y_i_minus_1 * 2.0 * tau_sqrd_over_h
+            last_params = this_params
+        return sum_penalty
+
+    # TODO delete this?
+    @staticmethod
+    def max_smooth_penalty_from_private(spline_params, tension):
+        zs = spline_params['z'].values
+        ys = spline_params['y'].values
+        num_coeffs = len(spline_params) * 2
+        coeffs_array = np.zeros(num_coeffs)
+        coeffs_array[::2] = zs
+        coeffs_array[1::2] = ys
+        num_sections = len(spline_params) - 1
+        tension_by_section = np.zeros(num_sections)
+        h_is = np.zeros(num_sections)
+        last_params = spline_params.iloc[0]
+        for i in range(1, len(spline_params)):
+            this_params = spline_params.iloc[i]
+            h = this_params['t'] - last_params['t']
+            effective_tension = tension / h
+            tension_by_section[i - 1] = effective_tension
+            h_is[i - 1] = h
+            last_params = this_params
+        tension_by_section_sqrd = tension_by_section * tension_by_section
+        tau_h = tension_by_section * h_is
+        tau_sqrd_hi = tau_h * tension_by_section
+        matrix = np.zeros((num_coeffs, num_coeffs))
+        _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_h, tau_sqrd_hi, h_is)
+        penalty = np.matmul(np.matmul(coeffs_array.T, matrix), coeffs_array) / 2
+        return penalty
 
     @unittest.skip('This test is currently just used for investigations.')
-    def test_inputs_constant_outputs_constant(self):
+    def test_investigations(self):
         # Arrange
         freq = '15min'
         time_zone = None  # 'Europe/London'
