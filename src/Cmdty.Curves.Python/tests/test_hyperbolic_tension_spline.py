@@ -367,7 +367,9 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         tau_h = tension_by_section * h_is
         tau_sqrd_hi = tau_h * tension_by_section
         matrix = np.zeros((num_coeffs, num_coeffs))
-        _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_h, tau_sqrd_hi, h_is)
+        tau_sinh = np.sinh(tau_h) * tension_by_section
+        cosh_tau_hi = np.cosh(tau_h)
+        _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi)
         penalty = np.matmul(np.matmul(coeffs_array.T, matrix), coeffs_array) / 2
         return penalty
 

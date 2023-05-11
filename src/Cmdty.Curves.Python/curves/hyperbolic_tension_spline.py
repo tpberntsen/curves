@@ -312,7 +312,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         matrix_size = num_coeffs_to_solve + num_constraints
         matrix = np.zeros((matrix_size, matrix_size))
         vector = np.zeros((matrix_size, 1))
-        _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_h, tau_sqrd_hi, h_is)
+        _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi)
         constraint_matrix = matrix[num_coeffs_to_solve:, 0:num_coeffs_to_solve]
         constraint_vector = vector[num_coeffs_to_solve:]
         _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, back_1st_deriv, cosh_tau_hi, freq_offset,
@@ -445,31 +445,27 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             constraint_vector[-1] = 0.0
 
 
-def _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_h, tau_sqrd_hi, h_is):
-    minus_tau_h = tau_h*-1.0
+def _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi):
     two_tau_sqrd_over_hi = 2.0*tension_by_section_sqrd/h_is     # y_i^2 and y_{i-1}^2 coeff
-    minus_4_tau_sqrd_over_hi = -2.0 * two_tau_sqrd_over_hi      # y_i y_{i-1} coeff
     one_over_tau_sqrd_hi = 1.0 / tau_sqrd_hi
-    # csch (hyperbolic cosecant) = 1/sinh
-    zi_zi_minus1_coeff = 4.0 * (one_over_tau_sqrd_hi + 1.0/(np.sinh(minus_tau_h) * tension_by_section))
-    # coth (hyperbolic cotangent) = 1/tanh
-    zis_sqrd_coeff = -2.0 * (one_over_tau_sqrd_hi + 1.0/(np.tanh(minus_tau_h) * tension_by_section))
+    zi_zi_minus1_coeff = 2.0 * (one_over_tau_sqrd_hi - 1.0/tau_sinh)
+    zis_sqrd_coeff = 2.0*(cosh_tau_hi/tau_sinh - one_over_tau_sqrd_hi)
     num_sections = len(tension_by_section)
     # TODO make matrix population more efficient
     for i in range(0, num_sections):
         idx_lower = i * 2
         idx_upper = idx_lower + 4
         sub_matrix = matrix[idx_lower:idx_upper, idx_lower:idx_upper]
-        _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi[i], minus_4_tau_sqrd_over_hi[i], zi_zi_minus1_coeff[i], zis_sqrd_coeff[i])
+        _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi[i], zi_zi_minus1_coeff[i], zis_sqrd_coeff[i])
 
 
-def _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi, minus_4_tau_sqrd_over_hi, zi_zi_minus1_coeff, zis_sqrd_coeff):
+def _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi, zi_zi_minus1_coeff, zis_sqrd_coeff):
     sub_matrix[0, 0] += zis_sqrd_coeff
-    sub_matrix[0, 2] += zi_zi_minus1_coeff/2.0  # TODO think this can be switched from += to =
+    sub_matrix[0, 2] = zi_zi_minus1_coeff/2.0
     sub_matrix[2, 0] = sub_matrix[0, 2]
     sub_matrix[1, 1] += two_tau_sqrd_over_hi
-    sub_matrix[1, 3] += minus_4_tau_sqrd_over_hi/2.0  # TODO think this can be switched from += to =
-    sub_matrix[3, 1] = sub_matrix[1, 3]
+    sub_matrix[1, 3] = -two_tau_sqrd_over_hi
+    sub_matrix[3, 1] = -two_tau_sqrd_over_hi
     sub_matrix[2, 2] += zis_sqrd_coeff
     sub_matrix[3, 3] += two_tau_sqrd_over_hi
 
