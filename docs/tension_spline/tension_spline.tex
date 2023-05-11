@@ -299,55 +299,82 @@ Superscript is for contract, supersci
 
 \subsection{Smoothness Criteria}
 % TODO add reference to Andersen paper
+We want to find the solution which minimises the following.
+\begin{equation}
+    \int_{t_0}^{t_n} \bigl( p^{\prime\prime}(t)^2 + \tau_i^2 p^{\prime}(t)^2 \bigr) dt = 
+    \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt
+\end{equation}
+
+See Appendix \ref{appendix:max_smooth_integral} for the evaluation of this integral to the
+following.
 
 \begin{multline}
-    min \int_{t_0}^{t_n} \bigl( p^{\prime\prime}(t)^2 + \tau_i^2 p^{\prime}(t)^2 \bigr) dt = 
-    \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt \\
-    = \sum_{i=1}^{n} \frac{(z_{i-1}-z_i)^2 - \tau_i^4 (y_{i-1}-y_i)^2 +\tau_i h_i \left((z_{i-1}^2+z_i^2) 
-    \coth (-\tau_i h_i) - 2 z_{i-1} z_i \csch (-\tau_i h_i)\right)}{-\tau_i^2 h_i} \\
-    = \sum_{i=1}^{n} \frac{\tau_i^4 (y_{i-1}-y_i)^2 - (z_{i-1}-z_i)^2 -\tau_i h_i \left((z_{i-1}^2+z_i^2) 
-    \coth (-\tau_i h_i) - 2 z_{i-1} z_i \csch (-\tau_i h_i)\right)}{\tau_i^2 h_i} \\
+    = z_i^2 \biggl( \frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} -
+    \frac{1}{\tau_i^2 h_i} \biggr) 
+    + z_{i-1}^2 \biggl( \frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} -
+    \frac{1}{\tau_i^2 h_i} \biggr) \\
+    + y_i^2 \frac{\tau_i^2}{h_i} + y_{i-1}^2 \frac{\tau_i^2}{h_i} 
+    + z_i z_{i-1} 2 \biggl( \frac{1}{\tau_i^2 h_i} - \frac{1}{\tau_i \sinh(\tau_i h_i)} \biggr) \\
+    - y_i y_{i-1} \frac{2 \tau_i^2}{h_i}
 \end{multline}
 
-The term inside the summation is a quadratic form, which can be seen from rearranging:
-
-\begin{multline}
-    = \sum_{i=1}^{n} \biggl( -y_{i-1}^2\frac{\tau_i ^2}{t_{i-1}-t_i} 
-    +y_{i-1} y_i\frac{2 \tau_i ^2}{t_{i-1}-t_i}
-    -y_i^2\frac{\tau_i ^2}{t_{i-1}-t_i} \\
-    +z_{i-1}^2 \left(\frac{1}{\tau_i ^2 (t_{i-1}-t_i)}-\frac{t_{i-1} \coth (\tau_i (t_{i-1}-t_i))}{\tau_i (t_{i-1}-t_i)}
-    +\frac{t_i \coth (\tau_i (t_{i-1}-t_i))}{\tau_i  (t_{i-1}-t_i)}\right) \\
-    +z_{i-1} z_i \left(-\frac{2}{\tau_i ^2 (t_{i-1}-t_i)}+\frac{2 t_{i-1} \csch(\tau_i  (t_{i-1}-t_i))}{\tau_i  (t_{i-1}-t_i)}-\frac{2 t_i \csch(\tau_i  (t_{i-1}-t_i))}{\tau_i  (t_{i-1}-t_i)}\right) \\
-    +z_i^2 \left(\frac{1}{\tau_i ^2 (t_{i-1}-t_i)}-\frac{t_{i-1} \coth (\tau_i  (t_{i-1}-t_i))}{\tau_i  (t_{i-1}-t_i)}+\frac{t_i \coth (\tau_i  (t_{i-1}-t_i))}{\tau_i  (t_{i-1}-t_i)}\right) \biggr)
-\end{multline}
-
-Tidying
-TODO, rearrange for coth and csch of negative number
-\begin{multline}
-    = \sum_{i=1}^{n} \biggl( y_{i-1}^2\frac{\tau_i^2}{h_i} 
-    - y_{i-1} y_i\frac{2 \tau_i^2}{h_i}
-    + y_i^2\frac{\tau_i^2}{h_i} \\
-    +z_{i-1}^2 \left(-\frac{1}{ \tau_i^2 h_i}-\frac{\coth (-\tau_i h_i)}{\tau_i} \right) \\
-    +z_{i-1} z_i 2 \left(\frac{1}{\tau_i^2 h_i}+\frac{\csch(-\tau_i h_i)}{\tau_i}\right) \\
-    +z_i^2 \left(-\frac{1}{\tau_i ^2 h_i}-\frac{\coth (-\tau_i h_i)}{\tau_i} \right) \biggr)
-\end{multline}
-
-Writing this in matrix form, as upper triangular, rather than the more typically seen symmetric
-to aid more efficient inversion later.
+Writing this in symmetric matrix form.
 
 \begin{equation}
     = \sum_{i=1}^{n} \begin{bmatrix}
         z_{i-1} \\ y_{i-1} \\ z_i \\ y_i
     \end{bmatrix}^T
     \begin{bmatrix}
-        \left(-\frac{1}{ \tau_i^2 h_i}-\frac{\coth (-\tau_i h_i)}{\tau_i} \right) & 0 & 2 \left(\frac{1}{\tau_i^2 h_i}+\frac{\csch(-\tau_i h_i)}{\tau_i}\right) & 0 \\
-        0 & \frac{\tau_i^2}{h_i} & 0 & -\frac{2 \tau_i^2}{h_i} \\
-        0 & 0 & \left(-\frac{1}{\tau_i ^2 h_i}-\frac{\coth (-\tau_i h_i)}{\tau_i} \right) & 0 \\
-        0 & 0 & 0 & \frac{\tau_i^2}{h_i} \\
+        \left(\frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{\tau_i^2 h_i} \right) & 0 & \left( \frac{1}{\tau_i^2 h_i} - \frac{1}{\tau_i \sinh(\tau_i h_i)} \right) & 0 \\
+        0 & \frac{\tau_i^2}{h_i} & 0 & -\frac{\tau_i^2}{h_i} \\
+        \left(\frac{1}{\tau_i^2 h_i} - \frac{1}{\tau_i \sinh(\tau_i h_i)}\right) & 0 & \left(\frac{\cosh(\tau_i h_i)}{\tau_i \sinh(\tau_i h_i)} - \frac{1}{\tau_i^2 h_i} \right) & 0 \\
+        0 & -\frac{\tau_i^2}{h_i} & 0 & \frac{\tau_i^2}{h_i} \\
     \end{bmatrix}
     \begin{bmatrix}
         z_{i-1} \\ y_{i-1} \\ z_i \\ y_i
     \end{bmatrix}
+\end{equation}
+
+This can be changed from a sum to a single quadratic form.
+
+\begin{equation}
+    = \begin{bmatrix}
+        z_0 \\
+        y_0 \\
+        z_1 \\
+        y_1 \\
+        \vdots \\
+        z_{n-1} \\
+        y_{n-1} \\
+        z_n \\
+        y_n \\
+    \end{bmatrix} ^T
+    \+H   
+    \begin{bmatrix}
+        z_0 \\
+        y_0 \\
+        z_1 \\
+        y_1 \\
+        \vdots \\
+        z_{n-1} \\
+        y_{n-1} \\
+        z_n \\
+        y_n \\
+    \end{bmatrix}
+\end{equation}
+
+\begin{equation}
+    \+H = \begin{bmatrix}
+        \left(\frac{\cosh(\tau_1 h_1)}{\tau_1 \sinh(\tau_1 h_1)} - \frac{1}{\tau_1^2 h_1} \right) & 0 & \left( \frac{1}{\tau_1^2 h_1} - \frac{1}{\tau_1 \sinh(\tau_1 h_1)} \right) & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & \frac{\tau_1^2}{h_1} & 0 & -\frac{\tau_1^2}{h_1} & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        \left( \frac{1}{\tau_1^2 h_1} - \frac{1}{\tau_1 \sinh(\tau_1 h_1)} \right) & 0 & \left(\frac{\cosh(\tau_1 h_1)}{\tau_1 \sinh(\tau_1 h_1)} - \frac{1}{\tau_1^2 h_1} \right) + \left(\frac{\cosh(\tau_2 h_2)}{\tau_2 \sinh(\tau_2 h_2)} - \frac{1}{\tau_2^2 h_2} \right) & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & -\frac{\tau_1^2}{h_1}  & 0 & \frac{\tau_1^2}{h_1} + \frac{\tau_2^2}{h_2} & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\        
+        \vdots & & & & & & \ddots & & & & & & \vdots \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 
+    \end{bmatrix}   
 \end{equation}
 
 \newpage
