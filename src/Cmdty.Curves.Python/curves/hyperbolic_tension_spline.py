@@ -312,7 +312,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         matrix_size = num_coeffs_to_solve + num_constraints
         matrix = np.zeros((matrix_size, matrix_size))
         vector = np.zeros((matrix_size, 1))
-        _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi)
+        _populate_2h_matrix(matrix[:num_coeffs_to_solve, :num_coeffs_to_solve], tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi)
         constraint_matrix = matrix[num_coeffs_to_solve:, 0:num_coeffs_to_solve]
         constraint_vector = vector[num_coeffs_to_solve:]
         _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, back_1st_deriv, cosh_tau_hi, freq_offset,
@@ -445,29 +445,27 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             constraint_vector[-1] = 0.0
 
 
-def _populate_2h_matrix(matrix, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi):
+def _populate_2h_matrix(matrix: np.array, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi):
     two_tau_sqrd_over_hi = 2.0*tension_by_section_sqrd/h_is     # y_i^2 and y_{i-1}^2 coeff
     one_over_tau_sqrd_hi = 1.0 / tau_sqrd_hi
-    zi_zi_minus1_coeff = 2.0 * (one_over_tau_sqrd_hi - 1.0/tau_sinh)
+    zi_zi_minus1_coeff = one_over_tau_sqrd_hi - 1.0/tau_sinh
     zis_sqrd_coeff = 2.0*(cosh_tau_hi/tau_sinh - one_over_tau_sqrd_hi)
+    # TODO pass the below 2 variable in
     num_sections = len(tension_by_section)
-    # TODO make matrix population more efficient
+    num_coeffs = num_sections*2+2
+    diagonal_elements = np.zeros(num_coeffs)
+    diagonal_elements[:-2:2] = zis_sqrd_coeff
+    diagonal_elements[2::2] += zis_sqrd_coeff
+    diagonal_elements[1:-2:2] = two_tau_sqrd_over_hi
+    diagonal_elements[3::2] += two_tau_sqrd_over_hi
+    np.fill_diagonal(matrix, diagonal_elements)
+    # TODO use matrix views to make this more efficient
     for i in range(0, num_sections):
         idx_lower = i * 2
-        idx_upper = idx_lower + 4
-        sub_matrix = matrix[idx_lower:idx_upper, idx_lower:idx_upper]
-        _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi[i], zi_zi_minus1_coeff[i], zis_sqrd_coeff[i])
-
-
-def _populate_2h_submatrix(sub_matrix, two_tau_sqrd_over_hi, zi_zi_minus1_coeff, zis_sqrd_coeff):
-    sub_matrix[0, 0] += zis_sqrd_coeff
-    sub_matrix[0, 2] = zi_zi_minus1_coeff/2.0
-    sub_matrix[2, 0] = sub_matrix[0, 2]
-    sub_matrix[1, 1] += two_tau_sqrd_over_hi
-    sub_matrix[1, 3] = -two_tau_sqrd_over_hi
-    sub_matrix[3, 1] = -two_tau_sqrd_over_hi
-    sub_matrix[2, 2] += zis_sqrd_coeff
-    sub_matrix[3, 3] += two_tau_sqrd_over_hi
+        matrix[idx_lower, idx_lower + 2] = zi_zi_minus1_coeff[i]
+        matrix[idx_lower + 2, idx_lower] = matrix[idx_lower, idx_lower + 2]
+        matrix[idx_lower + 1, idx_lower + 3] = -two_tau_sqrd_over_hi[i]
+        matrix[idx_lower + 3, idx_lower + 1] = matrix[idx_lower + 1, idx_lower + 3]
 
 
 def _default_time_func(period1, period2):
