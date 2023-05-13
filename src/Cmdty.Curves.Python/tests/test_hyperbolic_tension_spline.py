@@ -371,6 +371,35 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         penalty = np.matmul(np.matmul(coeffs_array.T, matrix), coeffs_array) / 2
         return penalty
 
+    def test_back_1st_deriv_as_specified_max_smooth(self):
+        self._back_1st_deriv_as_specified(True, 1E-9)  # TODO why max smoothness has bigger error?
+
+    def test_back_1st_deriv_as_specified_no_max_smooth(self):
+        self._back_1st_deriv_as_specified(False, 1E-14)
+
+    def _back_1st_deriv_as_specified(self, maximum_smoothness, tol):
+        back_1st_deriv = 0.95
+        _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
+                                                        back_1st_deriv=back_1st_deriv, maximum_smoothness=maximum_smoothness)
+        calculated_back_1st_deriv = self._calc_back_1st_derive(spline_params)
+        self.assertAlmostEqual(back_1st_deriv, calculated_back_1st_deriv, delta=tol)
+
+    @staticmethod
+    def _calc_back_1st_derive(spline_params):
+        penultimate_params = spline_params.iloc[-2]
+        tau = penultimate_params['tension']
+        z_i_minus_1 = penultimate_params['z']
+        y_i_minus_1 = penultimate_params['y']
+        last_params = spline_params.iloc[-1]
+        z_i = last_params['z']
+        y_i = last_params['y']
+        h_i = last_params['t'] - penultimate_params['t']
+        tau_h = tau * h_i
+        tau_sqrd_h = tau_h * tau
+        tau_sinh_tau_h = tau * np.sinh(tau_h)
+        return z_i * (np.cosh(tau_h)/tau_sinh_tau_h - 1.0/tau_sqrd_h) + z_i_minus_1 * (1.0/tau_sqrd_h - 1.0/tau_sinh_tau_h) \
+                        + y_i/h_i - y_i_minus_1/h_i
+
     @unittest.skip('This test is currently just used for investigations.')
     def test_investigations(self):
         # Arrange
