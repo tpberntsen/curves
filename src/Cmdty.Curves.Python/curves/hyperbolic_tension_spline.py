@@ -297,7 +297,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     sinh_tau_t_to_end = np.sinh(t_to_section_end * tensions_expanded)
 
     # TODO: research allocation-efficient vectorisation with numpy. Probably just make operations in-place.
-    # TODO: continuous extension of zi_coeffs and zi_minus1_coeffs if tension is zero?
     # Coefficients used in forward price constraint
     zi_coeffs = (sinh_tau_t_from_start / tau_sqrd_sinh_expanded - t_from_section_start / tau_sqrd_hi_expanded) \
                 * weights_x_discounts_x_mult_adjust
@@ -398,14 +397,10 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             contract_section_start_idx = int_index(contract_section_start_period)
             contract_section_end_idx = int_index(contract_section_end_period) + 1
             # Forward price constraints
-            constraint_matrix[contract_idx, spline_boundary_idx * 2] += np.sum(
-                zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 1] += np.sum(
-                yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 2] += np.sum(
-                zi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 3] += np.sum(
-                yi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2] += np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 1] += np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 2] += np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 3] += np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
             spline_boundary_idx += 1
     # First derivative continuity constraints
     one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
@@ -417,13 +412,11 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
         constraint_matrix[row_idx, section_idx * 2] -= (
                     one_over_h_tau_sqrd[section_idx] - 1.0 / tau_sinh[section_idx])  # deriv_z_i_minus2_coff
         constraint_matrix[row_idx, section_idx * 2 + 1] += 1 / h_is[section_idx]  # deriv_y_i_minus2_coff
-        constraint_matrix[row_idx, section_idx * 2 + 2] += one_over_h_tau_sqrd[next_section_idx] - cosh_tau_hi[next_section_idx] / tau_sinh[
-            next_section_idx] \
-                                                           - cosh_tau_hi[section_idx] / tau_sinh[section_idx] + one_over_h_tau_sqrd[
-                                                               section_idx]  # deriv_z_i_minus1_coff
+        constraint_matrix[row_idx, section_idx * 2 + 2] += one_over_h_tau_sqrd[next_section_idx] - cosh_tau_hi[next_section_idx] / \
+                                                    tau_sinh[next_section_idx] - cosh_tau_hi[section_idx] / tau_sinh[section_idx] + \
+                                                   one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus1_coff
         constraint_matrix[row_idx, section_idx * 2 + 3] -= (1 / h_is[next_section_idx] + 1 / h_is[section_idx])  # deriv_y_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0 / tau_sinh[next_section_idx] - one_over_h_tau_sqrd[
-            next_section_idx]  # deriv_z_i_coff
+        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0 / tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx]  # deriv_z_i_coff
         constraint_matrix[row_idx, section_idx * 2 + 5] += 1 / h_is[next_section_idx]  # deriv_y_i_coff
 
     if back_1st_deriv is not None: # TODO do I need not None?
