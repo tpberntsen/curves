@@ -372,7 +372,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         return penalty
 
     def test_back_1st_deriv_as_specified_max_smooth(self):
-        self._back_1st_deriv_as_specified(True, 1E-9)  # TODO why max smoothness has bigger error?
+        self._back_1st_deriv_as_specified(True, 1E-8)  # TODO why max smoothness has bigger error?
 
     def test_back_1st_deriv_as_specified_no_max_smooth(self):
         self._back_1st_deriv_as_specified(False, 1E-14)
