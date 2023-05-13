@@ -337,11 +337,13 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # Read results off solution
     spline_vals = np.zeros(num_result_curve_points)
-    spline_params_data = np.zeros(shape=(num_sections+1, 3))
+    spline_params_data = np.zeros(shape=(num_sections+1, 4))
     spline_params_data[1:, 0] = section_end_times # Knot times
     spline_params_data[:, 1] = solution_to_use[1::2, 0]  # y params
     spline_params_data[:, 2] = solution_to_use[::2, 0]  # z params
-    spline_params = pd.DataFrame(data=spline_params_data, index=spline_knots + [last_period], columns=['t', 'y', 'z'])
+    spline_params_data[:-1, 3] = tension_by_section
+    spline_params_data[-1, 3] = np.nan
+    spline_params = pd.DataFrame(data=spline_params_data, index=spline_knots + [last_period], columns=['t', 'y', 'z', 'tension'])
     for i, section_start in enumerate(spline_knots):
         z_start = solution_to_use[i * 2, 0]
         y_start = solution_to_use[i * 2 + 1, 0]

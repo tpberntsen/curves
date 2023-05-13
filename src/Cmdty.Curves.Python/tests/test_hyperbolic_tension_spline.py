@@ -300,8 +300,6 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             for tension in tensions:
                 new_data['tension'] = tension
                 interp_curve, spline_params = hyperbolic_tension_spline(**new_data)
-                pen_val_1 = self.max_smooth_penalty(spline_params, tension)
-                pen_val_2 = self.max_smooth_penalty_from_private(spline_params, tension)
                 expected_values = np.repeat(self.flat_price, len(interp_curve))
                 np.testing.assert_array_almost_equal(expected_values, interp_curve.values, decimal=decimals_tol)
 
@@ -314,25 +312,25 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 new_data['tension'] = tension
                 new_data['maximum_smoothness'] = True
                 _, max_smooth_spline_params = hyperbolic_tension_spline(**new_data)
-                max_smooth_penalty = self.max_smooth_penalty(max_smooth_spline_params, tension)
+                max_smooth_penalty = self.max_smooth_penalty(max_smooth_spline_params)
                 new_data['maximum_smoothness'] = False
                 _, no_max_smooth_spline_params = hyperbolic_tension_spline(**new_data)
-                no_max_smooth_penalty = self.max_smooth_penalty(no_max_smooth_spline_params, tension)
+                no_max_smooth_penalty = self.max_smooth_penalty(no_max_smooth_spline_params)
                 self.assertLessEqual(max_smooth_penalty, no_max_smooth_penalty)
 
     @staticmethod
-    def max_smooth_penalty(spline_params, tension):
+    def max_smooth_penalty(spline_params):
         sum_penalty = 0.0
         last_params = spline_params.iloc[0]
         for i in range(1, len(spline_params)):
             this_params = spline_params.iloc[i]
             h = this_params['t'] - last_params['t']
-            effective_tension = tension / h
+            effective_tension = last_params['tension']
             z_i = this_params['z']
             y_i = this_params['y']
             z_i_minus_1 = last_params['z']
             y_i_minus_1 = last_params['y']
-            tau_h = tension
+            tau_h = effective_tension * h
             cosh_tau_h = np.cosh(tau_h)
             sinh_tau_h = np.sinh(tau_h)
             z_terms = cosh_tau_h / (effective_tension * sinh_tau_h) - 1.0 / (effective_tension * effective_tension * h)
