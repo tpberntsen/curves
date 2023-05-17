@@ -68,6 +68,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
+            "front_1st_deriv": 0.56,
             "back_1st_deriv": -0.3,
             "maximum_smoothness": False
         },
@@ -79,6 +80,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
             "discount_factor": discount_factor,
+            "front_1st_deriv": 0.56,
             "maximum_smoothness": False
         },
         {
@@ -381,11 +383,11 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         back_1st_deriv = 0.95
         _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
                                                         back_1st_deriv=back_1st_deriv, maximum_smoothness=maximum_smoothness)
-        calculated_back_1st_deriv = self._calc_back_1st_derive(spline_params)
+        calculated_back_1st_deriv = self._calc_back_1st_deriv(spline_params)
         self.assertAlmostEqual(back_1st_deriv, calculated_back_1st_deriv, delta=tol)
 
     @staticmethod
-    def _calc_back_1st_derive(spline_params):
+    def _calc_back_1st_deriv(spline_params):
         penultimate_params = spline_params.iloc[-2]
         tau = penultimate_params['tension']
         z_i_minus_1 = penultimate_params['z']
@@ -399,6 +401,36 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         tau_sinh_tau_h = tau * np.sinh(tau_h)
         return z_i * (np.cosh(tau_h)/tau_sinh_tau_h - 1.0/tau_sqrd_h) + z_i_minus_1 * (1.0/tau_sqrd_h - 1.0/tau_sinh_tau_h) \
                         + y_i/h_i - y_i_minus_1/h_i
+
+    def test_front_1st_deriv_as_specified_max_smooth(self):
+        self._front_1st_deriv_as_specified(True, 1E-12)
+
+    def test_front_1st_deriv_as_specified_no_max_smooth(self):
+        self._front_1st_deriv_as_specified(False, 1E-12)
+
+    def _front_1st_deriv_as_specified(self, maximum_smoothness, tol):
+        front_1st_deriv = 0.95
+        _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
+                                                        front_1st_deriv=front_1st_deriv, maximum_smoothness=maximum_smoothness)
+        calculated_front_1st_deriv = self._calc_front_1st_deriv(spline_params)
+        self.assertAlmostEqual(front_1st_deriv, calculated_front_1st_deriv, delta=tol)
+
+    @staticmethod
+    def _calc_front_1st_deriv(spline_params):
+        t_0_params = spline_params.iloc[0]
+        tau = t_0_params['tension']
+        z_0 = t_0_params['z']
+        y_0 = t_0_params['y']
+        t_1_params = spline_params.iloc[1]
+        z_1 = t_1_params['z']
+        y_1 = t_1_params['y']
+        h = t_1_params['t'] - t_0_params['t']
+        tau_h = tau * h
+        tau_sqrd_h = tau_h * tau
+        tau_sinh_tau_h = tau * np.sinh(tau_h)
+        cosh_tau_h = np.cosh(tau_h)
+        return z_1 * (1.0/tau_sinh_tau_h - 1.0/tau_sqrd_h) + z_0 * (1.0/tau_sqrd_h - cosh_tau_h/tau_sinh_tau_h) \
+                        + y_1 / h - y_0/h
 
     @unittest.skip('This test is currently just used for investigations.')
     def test_investigations(self):
