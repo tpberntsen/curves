@@ -26,6 +26,14 @@ import numpy as np
 import typing as tp
 from curves._common import ContractsType, _last_period, deconstruct_contract, contract_pandas_periods, ShapingTypes
 from datetime import date, datetime
+from enum import Flag, auto
+
+
+class KnotPositions(Flag):
+    CONTRACT_START = auto()
+    CONTRACT_END = auto()
+    CONTRACT_CENTRE = auto()
+    SPACING_CENTRE = auto()
 
 
 class TensionSplineResults(tp.NamedTuple):
@@ -45,11 +53,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               shaping_ratios: tp.Optional[ShapingTypes] = None,
                               shaping_spreads: tp.Optional[ShapingTypes] = None,
-                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None, # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
-                              spline_knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None,
+                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,  # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
+                              spline_knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
+                                    KnotPositions]] = KnotPositions.CONTRACT_START,  # TODO update docstring for KnotPositions enum
                               front_1st_deriv: tp.Optional[float] = None,
                               back_1st_deriv: tp.Optional[float] = None,
-                              maximum_smoothness: tp.Optional[bool] = False # TODO remove this
+                              maximum_smoothness: tp.Optional[bool] = False  # TODO remove this
                               ) -> TensionSplineResults:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using hyperbolic tension spline algorithm.
@@ -178,12 +187,23 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
     first_period = standardised_contracts[0][0]
     last_period = max((x[1] for x in standardised_contracts))
-    if spline_knots is None:  # Default to use contract boundaries but check they are contiguous
-        for i in range(1, num_contracts):
-            if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
-                raise ValueError('contracts should not have delivery periods which overlap. Elements '
-                                 '{} and {} have overlaps.'.format(i - 1, i))
-        spline_knots = [contract[0] for contract in standardised_contracts]
+    freq_offset = pd.tseries.frequencies.to_offset(freq)
+
+    if isinstance(spline_knots, KnotPositions):  # Default to use contract boundaries but check they are contiguous
+        # for i in range(1, num_contracts):
+        #     if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
+        #         raise ValueError('contracts should not have delivery periods which overlap. Elements '
+        #                          '{} and {} have overlaps.'.format(i - 1, i))
+        spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
+        if KnotPositions.CONTRACT_START in spline_knots:
+            for contract in standardised_contracts:
+                spline_knots_set.add(contract[0])
+        if KnotPositions.CONTRACT_END in spline_knots:
+            for contract in standardised_contracts:
+                spline_knots_set.add(contract[1] + freq_offset)
+        if KnotPositions.CONTRACT_CENTRE in spline_knots:
+            for contract in standardised_contracts:
+                pass
     else:
         # TODO allow len(spline_knots) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
         if not maximum_smoothness:
@@ -256,8 +276,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                  'has been returned for period {}.'
                                  .format(tension_val, p))
             return tension_val
-
-    freq_offset = pd.tseries.frequencies.to_offset(freq)
 
     def int_index(del_period):
         return round((del_period - first_period) / freq_offset)
