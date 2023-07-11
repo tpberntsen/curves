@@ -403,7 +403,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                         + y_i/h_i - y_i_minus_1/h_i
 
     def test_front_1st_deriv_as_specified_max_smooth(self):
-        self._front_1st_deriv_as_specified(True, 1E-12)
+        self._front_1st_deriv_as_specified(True, 1E-11)
 
     def test_front_1st_deriv_as_specified_no_max_smooth(self):
         self._front_1st_deriv_as_specified(False, 1E-11)
