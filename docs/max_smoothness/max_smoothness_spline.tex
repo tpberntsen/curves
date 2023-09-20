@@ -6,7 +6,7 @@
 
 \title{Maximum Smoothness Algorithm for Building Commodity Forward Curves}
 \author{Jake C. Fowler}
-\date{June 2019 (Updated March 2023)}
+\date{}
 
 \begin{document}
 \newcommand{\+}[1]{\ensuremath{\mathbf{#1}}}
@@ -21,7 +21,7 @@ The rest of this document will refer to forward prices and curves, even though t
 The methodology is an adaption of that described in \citep{Unknown}. 
 This makes reference to \cite{Benth} and \cite{Lim}, the later reference which uses maximum smoothness
 in the context of building interest rate forward curves.
-% TODO reference online article and Benth
+
 \bigskip
 
 A tension parameter is introduced in this paper, which allows the interpolation to not be
@@ -240,16 +240,17 @@ Where the components in the last row are defined as:
 \end{eqnarray}
 
 \subsection{Smoothness Criteria}
-% TODO references
-Maximum smoothness is typically obtained by by finding the spline 
-parameters which minimise the integral of the second derivative squared. This paper deviates from
+As the linear system $\+{Ax = b}$ has more unknowns than equations we need to choose which of the infinite solutions
+to use. This paper follows a similar same approach to \cite{Benth} by taking the maximum smoothness solution.
+
+The maximum smoothness solution is typically the one which minimise the integral of the second derivative squared. This paper deviates from
 this methodology by also including the squared first derivative in the penalty function being
 minimised. Both the first and second derivative terms penalise oscillations, but in different
 ways. The first derivative penalises the increased total curve length of oscillations, whereas the second
 derivative term penalises changes in curve direction. The non-negative tension parameter 
 $\tau$ is used to control the contribution of curve length to the penalty function being minimised.
 Note that although this spline includes a tension parameter, it's behaviour with respect to this
-parameter is very different to \emph{usual} tension splines which will tend towards linear splines
+parameter is very different to \emph{usual} tension splines, as used in \cite{Fowler}, which tend towards linear splines
 as the tension parameter increases. The effect of the tension parameter $\tau$ in this 
 algorithm is more subtle, with the curve alway remaining smooth, but with oscillations generally
 becoming smaller in amplitude, but with sharper changes in direction when $\tau$ is increased.
@@ -353,7 +354,7 @@ Lagrange multipliers for which we first define the vector $\+\lambda$.
 \begin{equation}
     \Lagr(\+{x, \lambda}) = \+{x^THx + \lambda^T(Ax - b)}
 \end{equation}
-The minima $\displaystyle\min_{x, \lambda}\Lagr(\+{x, \lambda})$ is found as the solution
+As $\+{x^THx}$ is a convex function, the minima $\displaystyle\min_{x, \lambda}\Lagr(\+{x, \lambda})$ is found as the solution
 where the partial derivatives of $\Lagr(\+{x, \lambda})$ with respect to $\+x$ and $\+\lambda$
 are zero.
 
@@ -402,8 +403,11 @@ can be found by solving this system.
 Once \ref{eq:final_linear_prob} is solved, the spline parameters are taken from $\+{x_{min}}$
 and the derived forward prices are calculated by evaluating \ref{eq:foward_function}.
 
-% TODO comment on number of solutions and whether this represents a minima or maxima
-
+\section{Future Work}
+This paper restricts the input contracts to be non-overlapping in their delivery periods,
+but could be modified to allow this, as is done in \cite{Benth} and \cite{Fowler}. Further,
+the spline knots are restricted to the contract boundary points, but this restriction
+could be relaxed to allow arbitrary knot placement, as is done in \cite{Fowler}.
 
 \bibliographystyle{plainnat}
 \bibliography{max_smoothness_spline}
