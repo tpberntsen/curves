@@ -216,7 +216,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 spline_knots_set.add(mid_point)
         # Always include first and last period
         spline_knots_set.add(first_period)
-        spline_knots_set.add(last_period)
         spline_knots_list = sorted(spline_knots_set)
     else:
         # TODO allow len(spline_knots) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
