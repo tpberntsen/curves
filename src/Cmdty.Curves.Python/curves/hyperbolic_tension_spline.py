@@ -53,9 +53,10 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               shaping_ratios: tp.Optional[ShapingTypes] = None,
                               shaping_spreads: tp.Optional[ShapingTypes] = None,
-                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,  # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
+                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
+                              # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
                               spline_knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
-                                    KnotPositions]] = KnotPositions.CONTRACT_START,  # TODO update docstring for KnotPositions enum
+                              KnotPositions]] = KnotPositions.CONTRACT_START,  # TODO update docstring for KnotPositions enum
                               front_1st_deriv: tp.Optional[float] = None,
                               back_1st_deriv: tp.Optional[float] = None,
                               maximum_smoothness: tp.Optional[bool] = False  # TODO remove this
@@ -172,7 +173,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     standardised_contracts = []  # Contract as tuples of (Period or Timestamp, Period or Timestamp, price)
     if isinstance(contracts, pd.Series):
-        for period, price in contracts.items(): # TODO check this works with Series of Timestamps
+        for period, price in contracts.items():  # TODO check this works with Series of Timestamps
             start_period = _to_index_element(period.asfreq(freq, 's'), freq, time_zone)
             end_period = _to_index_element(_last_period(period, freq), freq, time_zone)
             standardised_contracts.append((start_period, end_period, price))
@@ -203,7 +204,20 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 spline_knots_set.add(contract[1] + freq_offset)
         if KnotPositions.CONTRACT_CENTRE in spline_knots:
             for contract in standardised_contracts:
-                pass
+                mid_point = _mid_period_or_timestamp(contract[0], contract[1], freq_offset)
+                spline_knots_set.add(mid_point)
+        if KnotPositions.SPACING_CENTRE in spline_knots:
+            start_and_ends_set = ({contract[0] for contract in standardised_contracts}
+                                  .union({contract[1] + + freq_offset for contract in standardised_contracts}))
+            sorted_start_and_ends_set = sorted(start_and_ends_set)
+            for idx, p2 in enumerate(sorted_start_and_ends_set[1:]):
+                p1 = sorted_start_and_ends_set[idx]
+                mid_point = _mid_period_or_timestamp(p1, p2, freq_offset)
+                spline_knots_set.add(mid_point)
+        # Always include first and last period
+        spline_knots_set.add(first_period)
+        spline_knots_set.add(last_period)
+        spline_knots_list = sorted(spline_knots_set)
     else:
         # TODO allow len(spline_knots) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
         if not maximum_smoothness:
@@ -211,19 +225,19 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 raise ValueError('len(spline_knots) should equal len(contracts). However, len(spline_knots) '
                                  'equals {} and len(contracts) equals {}.'.format(len(spline_knots), num_contracts))
         # TODO put condition on number of knots in maximum smoothness case
-        spline_knots = [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
-        if spline_knots[0] != first_period:
+        spline_knots_list = [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
+        if spline_knots_list[0] != first_period:
             raise ValueError('First element of spline_knots should equal {}, the start of the first contract.'
-                             ' However, it equals {}.'.format(standardised_contracts[0][0], spline_knots[0]))
+                             ' However, it equals {}.'.format(standardised_contracts[0][0], spline_knots_list[0]))
         for i in range(1, num_contracts):
-            if spline_knots[i] <= spline_knots[i - 1]:
+            if spline_knots_list[i] <= spline_knots_list[i - 1]:
                 raise ValueError('spline_knots should be in ascending order. Elements {} and'
                                  '{} have values {} and {}, hence are not in order.'
-                                 .format(i - 1, i, spline_knots[i - 1], spline_knots[i]))
-            if spline_knots[i] > last_period:
+                                 .format(i - 1, i, spline_knots_list[i - 1], spline_knots_list[i]))
+            if spline_knots_list[i] > last_period:
                 raise ValueError('spline_knots should not contain items after the latest contract delivery period.'
                                  'Element {} contains {} which is after the latest delivery of {}.'
-                                 .format(i, spline_knots[i], last_period))
+                                 .format(i, spline_knots_list[i], last_period))
 
     if time_zone is None:
         result_curve_index = pd.period_range(start=first_period, end=last_period, freq=freq)
@@ -280,20 +294,20 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     def int_index(del_period):
         return round((del_period - first_period) / freq_offset)
 
-    num_sections = len(spline_knots)
+    num_sections = len(spline_knots_list)
     # Using np.zeros rather than empty because easier to understand when debugging
     h_is = np.zeros((num_sections,))
     tension_by_section = np.zeros((num_sections,))
 
-    section_period_indices = [] # 2-tuples of indices for start and (exclusive) end indices of result periods for each section
+    section_period_indices = []  # 2-tuples of indices for start and (exclusive) end indices of result periods for each section
     last_section_end_idx = 0
     # TODO vectorise below loop?
-    for i, section_start in enumerate(spline_knots):
-        section_end = last_period if i == num_sections - 1 else spline_knots[i + 1]
+    for i, section_start in enumerate(spline_knots_list):
+        section_end = last_period if i == num_sections - 1 else spline_knots_list[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start) / h_is[i]
         section_start_idx = last_section_end_idx
-        section_end_idx = None if i == num_sections - 1 else int_index(spline_knots[i + 1])
+        section_end_idx = None if i == num_sections - 1 else int_index(spline_knots_list[i + 1])
         last_section_end_idx = section_end_idx
         section_period_indices.append((section_start_idx, section_end_idx))
 
@@ -322,22 +336,25 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     zi_coeffs = (sinh_tau_t_from_start / tau_sqrd_sinh_expanded - t_from_section_start / tau_sqrd_hi_expanded) \
                 * weights_x_discounts_x_mult_adjust
     zi_minus1_coeffs = (sinh_tau_t_to_end / tau_sqrd_sinh_expanded - t_to_section_end / tau_sqrd_hi_expanded) \
-                * weights_x_discounts_x_mult_adjust
+                       * weights_x_discounts_x_mult_adjust
     yi_coeffs = (t_from_section_start / h_is_expanded) * weights_x_discounts_x_mult_adjust
     yi_minus1_coeffs = (t_to_section_end / h_is_expanded) * weights_x_discounts_x_mult_adjust
 
     if maximum_smoothness:
         num_coeffs_to_solve = num_sections * 2 + 2
         num_constraints = num_contracts + num_sections - 1 + (0 if back_1st_deriv is None else 1) \
-            + (0 if front_1st_deriv is None else 1) # TODO update this when shaping_ratios and shaping_spreads are implemented
+                          + (
+                              0 if front_1st_deriv is None else 1)  # TODO update this when shaping_ratios and shaping_spreads are implemented
         matrix_size = num_coeffs_to_solve + num_constraints
         matrix = np.zeros((matrix_size, matrix_size))
         vector = np.zeros((matrix_size, 1))
-        _populate_2h_matrix(matrix[:num_coeffs_to_solve, :num_coeffs_to_solve], tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi)
+        _populate_2h_matrix(matrix[:num_coeffs_to_solve, :num_coeffs_to_solve], tension_by_section, tension_by_section_sqrd, tau_sqrd_hi,
+                            h_is, tau_sinh, cosh_tau_hi)
         constraint_matrix = matrix[num_coeffs_to_solve:, 0:num_coeffs_to_solve]
         constraint_vector = vector[num_coeffs_to_solve:]
-        _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, front_1st_deriv, back_1st_deriv, cosh_tau_hi, freq_offset,
-                                           h_is, int_index, last_period, num_contracts, num_sections, spline_knots, standardised_contracts,
+        _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, front_1st_deriv, back_1st_deriv,
+                                           cosh_tau_hi, freq_offset,
+                                           h_is, int_index, last_period, num_contracts, num_sections, spline_knots_list, standardised_contracts,
                                            tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust,
                                            yi_coeffs, yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness)
         matrix[0:num_coeffs_to_solve:, num_coeffs_to_solve:] = constraint_matrix.T
@@ -347,7 +364,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
         vector = np.zeros((matrix_size, 1))
         _populate_constraint_vector_matrix(matrix, vector, add_season_adjusts, front_1st_deriv, back_1st_deriv, cosh_tau_hi, freq_offset,
-                                           h_is, int_index, last_period, num_contracts, num_sections, spline_knots, standardised_contracts,
+                                           h_is, int_index, last_period, num_contracts, num_sections, spline_knots_list, standardised_contracts,
                                            tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust,
                                            yi_coeffs, yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness)
 
@@ -359,24 +376,25 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # Read results off solution
     spline_vals = np.zeros(num_result_curve_points)
-    spline_params_data = np.zeros(shape=(num_sections+1, 4))
-    spline_params_data[1:, 0] = section_end_times # Knot times
+    spline_params_data = np.zeros(shape=(num_sections + 1, 4))
+    spline_params_data[1:, 0] = section_end_times  # Knot times
     spline_params_data[:, 1] = solution_to_use[1::2, 0]  # y params
     spline_params_data[:, 2] = solution_to_use[::2, 0]  # z params
     spline_params_data[:-1, 3] = tension_by_section
     spline_params_data[-1, 3] = np.nan
-    spline_params = pd.DataFrame(data=spline_params_data, index=spline_knots + [last_period], columns=['t', 'y', 'z', 'tension'])
-    for i, section_start in enumerate(spline_knots):
+    spline_params = pd.DataFrame(data=spline_params_data, index=spline_knots_list + [last_period], columns=['t', 'y', 'z', 'tension'])
+    for i, section_start in enumerate(spline_knots_list):
         z_start = solution_to_use[i * 2, 0]
         y_start = solution_to_use[i * 2 + 1, 0]
         z_end = solution_to_use[i * 2 + 2, 0]
         y_end = solution_to_use[i * 2 + 3, 0]
         tension_squared = tension_by_section_sqrd[i]
         start_idx, end_idx = section_period_indices[i]
-        spline_vals[start_idx:end_idx] =(z_start * sinh_tau_t_to_end[start_idx:end_idx] + z_end * sinh_tau_t_from_start[start_idx:end_idx]) \
-                    / tau_sqrd_sinh_expanded[start_idx:end_idx] + \
-                         ((y_start - z_start / tension_squared) * t_to_section_end[start_idx:end_idx] +
-                          (y_end - z_end / tension_squared) * t_from_section_start[start_idx:end_idx]) / h_is_expanded[start_idx:end_idx]
+        spline_vals[start_idx:end_idx] = (z_start * sinh_tau_t_to_end[start_idx:end_idx] + z_end * sinh_tau_t_from_start[start_idx:end_idx]) \
+                                         / tau_sqrd_sinh_expanded[start_idx:end_idx] + \
+                                         ((y_start - z_start / tension_squared) * t_to_section_end[start_idx:end_idx] +
+                                          (y_end - z_end / tension_squared) * t_from_section_start[start_idx:end_idx]) / h_is_expanded[
+                                                                                                                         start_idx:end_idx]
     # TODO: handling of periods with zero weight, e.g. power offpeak hours when interpolating peak. Could be:
     # periods aren't included in index
     # NaN price for zero-weight periods
@@ -389,9 +407,10 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
 
 def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, front_1st_deriv, back_1st_deriv,
-               cosh_tau_hi, freq_offset, h_is, int_index, last_period, num_contracts, num_sections, spline_knots, standardised_contracts,
-               tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust, yi_coeffs,
-               yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness):
+                                       cosh_tau_hi, freq_offset, h_is, int_index, last_period, num_contracts, num_sections, spline_knots,
+                                       standardised_contracts,
+                                       tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust, yi_coeffs,
+                                       yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness):
     # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
     for i, (start, end, price) in enumerate(standardised_contracts):
         contract_start_idx = int_index(start)
@@ -400,7 +419,7 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
         add_season_adjusts_slice = add_season_adjusts[contract_start_idx:contract_end_idx]
         weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
         constraint_vector[i] = price * np.sum(weights_times_discounts_slice) - \
-                                   np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
+                               np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
     # Forward price constraints
     # This is made more complicated by flexibility of allowing contracts and spline sections to differ
     first_spline_section_idx = 0
@@ -421,10 +440,14 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             contract_section_start_idx = int_index(contract_section_start_period)
             contract_section_end_idx = int_index(contract_section_end_period) + 1
             # Forward price constraints
-            constraint_matrix[contract_idx, spline_boundary_idx * 2] += np.sum(zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 1] += np.sum(yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 2] += np.sum(zi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 3] += np.sum(yi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2] += np.sum(
+                zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 1] += np.sum(
+                yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 2] += np.sum(
+                zi_coeffs[contract_section_start_idx:contract_section_end_idx])
+            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 3] += np.sum(
+                yi_coeffs[contract_section_start_idx:contract_section_end_idx])
             spline_boundary_idx += 1
     # First derivative continuity constraints
     one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
@@ -434,18 +457,19 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
         next_section_idx = section_idx + 1
         # TODO vectorise these outside of the loop?
         constraint_matrix[row_idx, section_idx * 2] -= (
-                    one_over_h_tau_sqrd[section_idx] - 1.0 / tau_sinh[section_idx])  # deriv_z_i_minus2_coff
+                one_over_h_tau_sqrd[section_idx] - 1.0 / tau_sinh[section_idx])  # deriv_z_i_minus2_coff
         constraint_matrix[row_idx, section_idx * 2 + 1] += 1 / h_is[section_idx]  # deriv_y_i_minus2_coff
         constraint_matrix[row_idx, section_idx * 2 + 2] += one_over_h_tau_sqrd[next_section_idx] - cosh_tau_hi[next_section_idx] / \
-                                                    tau_sinh[next_section_idx] - cosh_tau_hi[section_idx] / tau_sinh[section_idx] + \
-                                                   one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus1_coff
+                                                           tau_sinh[next_section_idx] - cosh_tau_hi[section_idx] / tau_sinh[section_idx] + \
+                                                           one_over_h_tau_sqrd[section_idx]  # deriv_z_i_minus1_coff
         constraint_matrix[row_idx, section_idx * 2 + 3] -= (1 / h_is[next_section_idx] + 1 / h_is[section_idx])  # deriv_y_i_minus1_coff
-        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0 / tau_sinh[next_section_idx] - one_over_h_tau_sqrd[next_section_idx]  # deriv_z_i_coff
+        constraint_matrix[row_idx, section_idx * 2 + 4] += 1.0 / tau_sinh[next_section_idx] - one_over_h_tau_sqrd[
+            next_section_idx]  # deriv_z_i_coff
         constraint_matrix[row_idx, section_idx * 2 + 5] += 1 / h_is[next_section_idx]  # deriv_y_i_coff
 
     if front_1st_deriv is not None:
         front_1st_deriv_idx = -3 if not maximum_smoothness else (-1 if back_1st_deriv is None else -2)
-        constraint_matrix[front_1st_deriv_idx, 0] = one_over_h_tau_sqrd[0] - cosh_tau_hi[0]/tau_sinh[0]  # z_0
+        constraint_matrix[front_1st_deriv_idx, 0] = one_over_h_tau_sqrd[0] - cosh_tau_hi[0] / tau_sinh[0]  # z_0
         constraint_matrix[front_1st_deriv_idx, 1] = -1.0 / h_is[0]  # y_0
         constraint_matrix[front_1st_deriv_idx, 2] = 1.0 / tau_sinh[0] - one_over_h_tau_sqrd[0]  # z_1
         constraint_matrix[front_1st_deriv_idx, 3] = 1.0 / h_is[0]  # y_1
@@ -472,13 +496,13 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
 
 
 def _populate_2h_matrix(matrix: np.array, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi):
-    two_tau_sqrd_over_hi = 2.0*tension_by_section_sqrd/h_is     # y_i^2 and y_{i-1}^2 coeff
+    two_tau_sqrd_over_hi = 2.0 * tension_by_section_sqrd / h_is  # y_i^2 and y_{i-1}^2 coeff
     one_over_tau_sqrd_hi = 1.0 / tau_sqrd_hi
-    zi_zi_minus1_coeff = one_over_tau_sqrd_hi - 1.0/tau_sinh
-    zis_sqrd_coeff = 2.0*(cosh_tau_hi/tau_sinh - one_over_tau_sqrd_hi)
+    zi_zi_minus1_coeff = one_over_tau_sqrd_hi - 1.0 / tau_sinh
+    zis_sqrd_coeff = 2.0 * (cosh_tau_hi / tau_sinh - one_over_tau_sqrd_hi)
     # TODO pass the below 2 variable in
     num_sections = len(tension_by_section)
-    num_coeffs = num_sections*2+2
+    num_coeffs = num_sections * 2 + 2
     diagonal_elements = np.zeros(num_coeffs)
     diagonal_elements[:-2:2] = zis_sqrd_coeff
     diagonal_elements[2::2] += zis_sqrd_coeff
@@ -517,3 +541,10 @@ def _create_expanded_np_array(array_from, size, copy_slice_indices):
         slice_indices = copy_slice_indices[i]
         array_to[slice_indices[0]:slice_indices[1]] = array_from[i]
     return array_to
+
+
+def _mid_period_or_timestamp(p1, p2, freq_offset):
+    diff = p2 - p1
+    num_periods = diff.n / freq_offset.n if isinstance(p1, pd.Period) else diff / freq_offset
+    time_to_mid = int(num_periods / 2) * freq_offset
+    return p1 + time_to_mid
