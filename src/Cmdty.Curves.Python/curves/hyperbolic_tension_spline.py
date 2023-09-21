@@ -190,11 +190,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     last_period = max((x[1] for x in standardised_contracts))
     freq_offset = pd.tseries.frequencies.to_offset(freq)
 
-    if isinstance(spline_knots, KnotPositions):  # Default to use contract boundaries but check they are contiguous
-        # for i in range(1, num_contracts):
-        #     if standardised_contracts[i - 1][1] >= standardised_contracts[i][0]:
-        #         raise ValueError('contracts should not have delivery periods which overlap. Elements '
-        #                          '{} and {} have overlaps.'.format(i - 1, i))
+    if isinstance(spline_knots, KnotPositions):
         spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
         if KnotPositions.CONTRACT_START in spline_knots:
             for contract in standardised_contracts:
@@ -208,7 +204,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 spline_knots_set.add(mid_point)
         if KnotPositions.SPACING_CENTRE in spline_knots:
             start_and_ends_set = ({contract[0] for contract in standardised_contracts}
-                                  .union({contract[1] + + freq_offset for contract in standardised_contracts}))
+                                  .union({contract[1] + freq_offset for contract in standardised_contracts}))
             sorted_start_and_ends_set = sorted(start_and_ends_set)
             for idx, p2 in enumerate(sorted_start_and_ends_set[1:]):
                 p1 = sorted_start_and_ends_set[idx]
@@ -218,7 +214,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         spline_knots_set.add(first_period)
         spline_knots_list = sorted(spline_knots_set)
     else:
-        # TODO allow len(spline_knots) to have 2 more elements to use as constraints instead of start/end 2nd derivative constraints
         if not maximum_smoothness:
             if len(spline_knots) != num_contracts:
                 raise ValueError('len(spline_knots) should equal len(contracts). However, len(spline_knots) '
