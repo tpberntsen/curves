@@ -59,6 +59,16 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         (cp.summer(2020), 19.9),
         (cp.gas_year(2020), 20.01)
     ]
+    # TODO add str to shaping_spreads and shaping_ratios once type hints have been updated
+    shaping_spreads = [
+        (cp.winter(2020), cp.summer(2021), 4.21),
+        ((date(2020, 12, 1), date(2020, 12, 31)), cp.jan(2021), -0.87)
+    ]
+    shaping_ratios = [
+        (cp.q_1(2020), cp.q_4(2019), 1.08)
+        # TODO add more
+    ]
+
     contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
                                  index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
     daily_test_case_data = [
@@ -71,7 +81,9 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "average_weight": lambda x: 0.1,
             "front_1st_deriv": 0.56,
             "back_1st_deriv": -0.3,
-            "maximum_smoothness": False
+            "maximum_smoothness": False,
+            "shaping_spreads" : shaping_spreads,
+            "shaping_ratios" : shaping_ratios
         },
         {
             "freq": 'D',
@@ -90,7 +102,9 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "tension": flat_tension,
             "discount_factor": discount_factor,
             "back_1st_deriv": -0.3,
-            "maximum_smoothness": False
+            "maximum_smoothness": False,
+            "shaping_spreads" : shaping_spreads,
+            "shaping_ratios" : shaping_ratios
         },
         {
             "freq": 'D',

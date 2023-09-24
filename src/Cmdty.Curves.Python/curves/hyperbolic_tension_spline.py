@@ -45,6 +45,7 @@ class TensionSplineResults(tp.NamedTuple):
 _years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
 
 
+# Update type hints to include str for contract periods
 def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               freq: str,
                               tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
@@ -83,6 +84,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 [period start] specifies the start of the contract delivery period.
                 [period end] specifies the inclusive end of the contract delivery period.
             [period], [period start] and [period end] can be any of the following types:
+                str
                 pandas.Period
                 pandas.Timestamp
                 date
@@ -119,6 +121,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 [denominator period] is the delivery period corresponding to the denomintor part of the ratio.
                 [ratio] (float) is the ratio between the forward prices.
             [numerator period] and [denominator period] can be any of the following types:
+                str
                 pandas.Period
                 date
                 datetime
@@ -131,6 +134,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 [period short] is the delivery period for the short part of the spread.
                 [spread] (float) is the spread between the forward prices.
             [period long] and [period short] can be any of the following types:
+                str
                 pandas.Period
                 date
                 datetime
@@ -187,8 +191,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             standardised_contracts.append((start_period, end_period, price))
 
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
-    shaping_ratios_list = _standardise_shaping(shaping_ratios)
-    shaping_spreads_list = _standardise_shaping(shaping_spreads)
+    shaping_ratios_list = _standardise_shaping(shaping_ratios, freq, time_zone)
+    shaping_spreads_list = _standardise_shaping(shaping_spreads, freq, time_zone)
 
     first_period = standardised_contracts[0][0]
     last_period = max((x[1] for x in standardised_contracts))
@@ -560,12 +564,12 @@ def _mid_period_or_timestamp(p1, p2, freq_offset):
     return p1 + time_to_mid
 
 
-def _standardise_shaping(shaping_info, freq):
+def _standardise_shaping(shaping_info, freq, tz):
     shaping_info_list = []
     if shaping_info is not None:
         for (period1, period2, shaping_factor) in shaping_info:
             period1_start_period, period1_end_period = contract_pandas_periods(period1, freq)
             period2_start_period, period2_end_period = contract_pandas_periods(period2, freq)
-            shaping_info_list.append((_to_index_element(period1_start_period), _to_index_element(period1_end_period),
-                                    _to_index_element(period2_start_period), _to_index_element(period2_end_period), shaping_factor))
+            shaping_info_list.append((_to_index_element(period1_start_period, freq, tz), _to_index_element(period1_end_period, freq, tz),
+                    _to_index_element(period2_start_period, freq, tz), _to_index_element(period2_end_period, freq, tz), shaping_factor))
     return shaping_info_list
