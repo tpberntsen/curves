@@ -115,9 +115,9 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             between the prices of different periods on the derived forward curve in the form:
                 ([numerator period], [denominator period], [ratio])
             Where:
-                [ratio] (float) is the ratio between the forward prices.
                 [numerator period] is the delivery period corresponding to the numerator part of the ratio.
                 [denominator period] is the delivery period corresponding to the denomintor part of the ratio.
+                [ratio] (float) is the ratio between the forward prices.
             [numerator period] and [denominator period] can be any of the following types:
                 pandas.Period
                 date
@@ -127,9 +127,9 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             between the prices of different periods on the derived forward curve in the form:
                 ([period long], [period short], [spread])
             Where:
-                [spread] (float) is the spread between the forward prices.
                 [period long] is the delivery period for the long part of the spread.
                 [period short] is the delivery period for the short part of the spread.
+                [spread] (float) is the spread between the forward prices.
             [period long] and [period short] can be any of the following types:
                 pandas.Period
                 date
@@ -187,9 +187,13 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             standardised_contracts.append((start_period, end_period, price))
 
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
+    shaping_ratios_list = _standardise_shaping(shaping_ratios)
+    shaping_spreads_list = _standardise_shaping(shaping_spreads)
+
     first_period = standardised_contracts[0][0]
     last_period = max((x[1] for x in standardised_contracts))
     freq_offset = pd.tseries.frequencies.to_offset(freq) # TODO find why Pycharm is warning about frequencies and fix
+
 
     # TODO this looks like it will break if latest contract is for a single period. Add test.
     if isinstance(spline_knots, KnotPositions):
@@ -531,7 +535,7 @@ def _default_time_func(period1, period2):
     return time_delta.total_seconds() * _years_per_second  # Convert to years with ACT/365
 
 
-def _to_index_element(period, freq, tz):
+def _to_index_element(period, freq, tz) -> tp.Union[pd.Period, pd.Timestamp]:
     if tz is None:
         return pd.Period(period, freq=freq)
     else:
@@ -554,3 +558,14 @@ def _mid_period_or_timestamp(p1, p2, freq_offset):
     num_periods = diff.n / freq_offset.n if isinstance(p1, pd.Period) else diff / freq_offset
     time_to_mid = int(num_periods / 2) * freq_offset
     return p1 + time_to_mid
+
+
+def _standardise_shaping(shaping_info, freq):
+    shaping_info_list = []
+    if shaping_info is not None:
+        for (period1, period2, shaping_factor) in shaping_info:
+            period1_start_period, period1_end_period = contract_pandas_periods(period1, freq)
+            period2_start_period, period2_end_period = contract_pandas_periods(period2, freq)
+            shaping_info_list.append((_to_index_element(period1_start_period), _to_index_element(period1_end_period),
+                                    _to_index_element(period2_start_period), _to_index_element(period2_end_period), shaping_factor))
+    return shaping_info_list

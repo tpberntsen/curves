@@ -27,7 +27,8 @@ import System as dotnet
 import pandas as pd
 import re
 from datetime import datetime, date
-from typing import Union, Tuple, Iterable, Collection
+from typing import Union, Tuple, Iterable
+import typing as tp # TODO consolidate with above line
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.TimePeriodValueTypes")))
 from Cmdty.TimePeriodValueTypes import QuarterHour, HalfHour, Hour, Day, Month, Quarter, TimePeriodFactory
@@ -159,7 +160,7 @@ ShapingTypes = Iterable[
               Tuple[datetime, datetime], float]]]
 
 
-def contract_pandas_periods(input_period, freq):
+def contract_pandas_periods(input_period, freq) -> tp.Tuple[pd.Period, pd.Period]:
     if isinstance(input_period, tuple):
         start = pd.Period(input_period[0], freq=freq)
         end = pd.Period(input_period[1], freq=freq)
