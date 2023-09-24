@@ -140,11 +140,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             as time zone information is necessary to determine lost or gain hours due to clock changes. If omitted,
             defaults to UTC-like behaviour with no clock changes. It is not advisable to specify time_zone if
             interpolating to daily or lower granularity.
-        spline_knots (iterable, optional): Knots of the spline constructed, i.e. the points in time which serve as boundaries
-            between the piecewise hyperbolic functions. If provided, must have the same number of elements as contracts, with
-            the first element equal to the start of the element of contracts with earliest delivery start. Must be provided
-            by caller if contracts argument contains elements with overlapping delivery periods. Defaults to a collection of
-            the starts of each input contract plus the end of the last contract.
+        spline_knots (iterable, KnotPositions, optional): If an iterable, the internal knots of the spline constructed,
+            i.e. the points in time which serve as boundaries between the piecewise hyperbolic functions.
+            Can also be an instance of the KnotPositions flag enum, which provides a convenient way of specifying knots relative
+            to the boundaries of the input contracts. If omitted, defaults to KnotPositions.CONTRACT_START_AND_END, in which case the
+            start period and end period + 1 of each input contract are used as the internal knots.
         front_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the very start of the
             curve must be. If this parameter is omitted no constraint is applied.
         back_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the end of the
@@ -189,7 +189,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     standardised_contracts = sorted(standardised_contracts, key=lambda x: x[0])  # Sort by start
     first_period = standardised_contracts[0][0]
     last_period = max((x[1] for x in standardised_contracts))
-    freq_offset = pd.tseries.frequencies.to_offset(freq)
+    freq_offset = pd.tseries.frequencies.to_offset(freq) # TODO find why Pycharm is warning about frequencies and fix
 
     # TODO this looks like it will break if latest contract is for a single period. Add test.
     if isinstance(spline_knots, KnotPositions):
@@ -220,18 +220,15 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         spline_knots_list = sorted(spline_knots_set)
     else:
         if not maximum_smoothness:
-            if len(spline_knots) != num_contracts:
-                raise ValueError('len(spline_knots) should equal len(contracts). However, len(spline_knots) '
-                                 'equals {} and len(contracts) equals {}.'.format(len(spline_knots), num_contracts))
+            if len(spline_knots) + 1 != num_contracts:
+                raise ValueError('len(spline_knots) + 1 should equal len(contracts). However, len(spline_knots) + 1 '
+                                 'equals {} and len(contracts) equals {}.'.format(len(spline_knots) + 1, num_contracts))
         # TODO put condition on number of knots in maximum smoothness case
-        spline_knots_list = [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
-        if spline_knots_list[0] != first_period:
-            raise ValueError('First element of spline_knots should equal {}, the start of the first contract.'
-                             ' However, it equals {}.'.format(standardised_contracts[0][0], spline_knots_list[0]))
+        spline_knots_list = [first_period] + [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
         for i in range(1, num_contracts):
-            if spline_knots_list[i] <= spline_knots_list[i - 1]:
-                raise ValueError('spline_knots should be in ascending order. Elements {} and'
-                                 '{} have values {} and {}, hence are not in order.'
+            if spline_knots_list[i] < spline_knots_list[i - 1]:
+                raise ValueError('spline_knots should be distinct and in ascending order. Elements {} and'
+                                 '{} have values {} and {}, hence this is not true.'
                                  .format(i - 1, i, spline_knots_list[i - 1], spline_knots_list[i]))
             if spline_knots_list[i] > last_period:
                 raise ValueError('spline_knots should not contain items after the latest contract delivery period.'

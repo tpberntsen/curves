@@ -165,7 +165,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                     (cp.q_1(2020), 18.66),
                     (cp.q_2(2020), 19.68),
                 ],
-                "spline_knots": ['2020-01-01', '2020-02-15'],
+                "spline_knots": ['2020-02-15'],
                 "tension": 12.5,
                 "discount_factor": discount_factor,
                 "maximum_smoothness": False
@@ -178,7 +178,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                     (cp.q_2(2020), 19.65),
                     (cp.jul(2020), 15.66)
                 ],
-                "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+                "spline_knots": ['2020-02-15', '2020-07-12', '2020-12-02'],
                 "tension": 12.5,
                 "discount_factor": discount_factor,
                 "maximum_smoothness": False
@@ -300,7 +300,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 (cp.q_1(2020), flat_price),
                 (cp.q_2(2020), flat_price),
             ],
-            "spline_knots": ['2020-01-01', '2020-02-15'],
+            "spline_knots": ['2020-02-15'],
             "discount_factor": discount_factor,
         },
         {
@@ -311,7 +311,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 (cp.q_2(2020), flat_price),
                 (cp.jul(2020), flat_price)
             ],
-            "spline_knots": ['2020-01-01', '2020-02-15', '2020-07-12', '2020-12-02'],
+            "spline_knots": ['2020-02-15', '2020-07-12', '2020-12-02'],
             "discount_factor": discount_factor,
         }
     ]
