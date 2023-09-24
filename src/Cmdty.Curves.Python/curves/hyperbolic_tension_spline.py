@@ -32,6 +32,7 @@ from enum import Flag, auto
 class KnotPositions(Flag):
     CONTRACT_START = auto()
     CONTRACT_END = auto()
+    CONTRACT_START_AND_END = CONTRACT_START | CONTRACT_END
     CONTRACT_CENTRE = auto()
     SPACING_CENTRE = auto()
 
@@ -56,7 +57,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
                               # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
                               spline_knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
-                              KnotPositions]] = KnotPositions.CONTRACT_START,  # TODO update docstring for KnotPositions enum
+                              KnotPositions]] = KnotPositions.CONTRACT_START_AND_END,  # TODO update docstring for KnotPositions enum
                               front_1st_deriv: tp.Optional[float] = None,
                               back_1st_deriv: tp.Optional[float] = None,
                               maximum_smoothness: tp.Optional[bool] = False  # TODO remove this
@@ -190,6 +191,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     last_period = max((x[1] for x in standardised_contracts))
     freq_offset = pd.tseries.frequencies.to_offset(freq)
 
+    # TODO this looks like it will break if latest contract is for a single period. Add test.
     if isinstance(spline_knots, KnotPositions):
         spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
         if KnotPositions.CONTRACT_START in spline_knots:
@@ -197,7 +199,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 spline_knots_set.add(contract[0])
         if KnotPositions.CONTRACT_END in spline_knots:
             for contract in standardised_contracts:
-                spline_knots_set.add(contract[1] + freq_offset)
+                if contract[1] < last_period:
+                    spline_knots_set.add(contract[1] + freq_offset)
         if KnotPositions.CONTRACT_CENTRE in spline_knots:
             for contract in standardised_contracts:
                 mid_point = _mid_period_or_timestamp(contract[0], contract[1], freq_offset)
@@ -212,6 +215,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                 spline_knots_set.add(mid_point)
         # Always include first and last period
         spline_knots_set.add(first_period)
+        if last_period in spline_knots_set:
+            spline_knots_set.remove(last_period)
         spline_knots_list = sorted(spline_knots_set)
     else:
         if not maximum_smoothness:
@@ -297,6 +302,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     last_section_end_idx = 0
     # TODO vectorise below loop?
     for i, section_start in enumerate(spline_knots_list):
+        # TODO should section_end be changed to last_period + 1?
         section_end = last_period if i == num_sections - 1 else spline_knots_list[i + 1]
         h_is[i] = _default_time_func(section_start, section_end)
         tension_by_section[i] = get_tension(section_start) / h_is[i]
@@ -334,11 +340,14 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     yi_coeffs = (t_from_section_start / h_is_expanded) * weights_x_discounts_x_mult_adjust
     yi_minus1_coeffs = (t_to_section_end / h_is_expanded) * weights_x_discounts_x_mult_adjust
 
+    num_coeffs_to_solve = num_sections * 2 + 2
+
     if maximum_smoothness:
-        num_coeffs_to_solve = num_sections * 2 + 2
         num_constraints = num_contracts + num_sections - 1 + (0 if back_1st_deriv is None else 1) \
-                          + (
-                              0 if front_1st_deriv is None else 1)  # TODO update this when shaping_ratios and shaping_spreads are implemented
+                          + (0 if front_1st_deriv is None else 1)  # TODO update this when shaping_ratios and shaping_spreads are implemented
+        if num_constraints > num_coeffs_to_solve:
+            raise ValueError('The number of constraints should be less than or equal to the number of coefficients to solve. However '
+                             'num_constraints = {} and num_coeffs_to_solve = {}.'.format(num_constraints, num_coeffs_to_solve))
         matrix_size = num_coeffs_to_solve + num_constraints
         matrix = np.zeros((matrix_size, matrix_size))
         vector = np.zeros((matrix_size, 1))
@@ -354,9 +363,14 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         matrix[0:num_coeffs_to_solve:, num_coeffs_to_solve:] = constraint_matrix.T
         # TODO use block matrix inversion with spare matrices
     else:
-        matrix_size = num_sections * 2 + 2
-        matrix = np.zeros((matrix_size, matrix_size))  # TODO: make this banded matrix
-        vector = np.zeros((matrix_size, 1))
+        num_constraints = num_contracts + num_sections + 2 # 1 boundary 1st deriv constraints (which get replaced with other constraints if not present)
+        if num_constraints != num_coeffs_to_solve:
+            raise ValueError('If maximum_smoothness is false, the number of constraints should equal the number of coefficients to solve. '
+                             'However num_constraints = {} and num_coeffs_to_solve = {}.'.format(num_constraints, num_coeffs_to_solve))
+
+        # Not maximum smoothness, so constraint matrix has to be square
+        matrix = np.zeros((num_coeffs_to_solve, num_coeffs_to_solve))  # TODO: make this banded matrix
+        vector = np.zeros((num_coeffs_to_solve, 1))
         _populate_constraint_vector_matrix(matrix, vector, add_season_adjusts, front_1st_deriv, back_1st_deriv, cosh_tau_hi, freq_offset,
                                            h_is, int_index, last_period, num_contracts, num_sections, spline_knots_list, standardised_contracts,
                                            tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust,
@@ -477,9 +491,10 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
         constraint_vector[-1] = back_1st_deriv
     # Put on extra constraints to make matrix square if not using maximum smoothness
     if not maximum_smoothness:
+        # Extra constraint to make constraint matrix square
+        constraint_matrix[-2, -2] = 1.0  # 2nd derivative zero at end, i.e. z_n = 0
         if front_1st_deriv is None:
             constraint_matrix[-3, 0] = 1.0  # 2nd derivative zero at start, i.e z_0 = 0
-        constraint_matrix[-2, -2] = 1.0  # 2nd derivative zero at end, i.e. z_n = 0
         if back_1st_deriv is None:  # Extra constraint to put in place of back 1st derivative
             constraint_matrix[-1, -5] = 1.0 / (h_is[-1] + h_is[-2])  # y_{n-2}
             constraint_matrix[-1, -4] = one_over_h_tau_sqrd[-1] - cosh_tau_hi[-1] / tau_sinh[-1]  # z_{n-1}

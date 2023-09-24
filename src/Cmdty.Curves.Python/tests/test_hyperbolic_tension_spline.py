@@ -20,7 +20,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
 # FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 # OTHER DEALINGS IN THE SOFTWARE.
-from datetime import date
+
 import unittest
 import pandas as pd
 import numpy as np
@@ -48,12 +48,13 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     flat_tension = 0.75
 
     contracts_list = [
-        (date(2019, 1, 1), 31.39),  # date
+        (date(2019, 1, 1), 31.39),
         ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
-        ((date(2019, 1, 3), date(2019, 1, 7)), 29.3),
-        ((date(2019, 1, 8), date(2019, 1, 31)), 24.66),
-        (cp.quarter(year=2019, quarter_num=2), 18.3),
-        (cp.quarter(year=2019, quarter_num=3), 17.1),
+        ((date(2019, 1, 1), date(2019, 1, 7)), 29.3),
+        ((date(2019, 1, 1), date(2019, 1, 31)), 31.66),
+        (cp.quarter(year=2019, quarter_num=1), 18.3),
+        (cp.quarter(year=2019, quarter_num=2), 17.1),
+        (cp.summer(2019), 19.9),
         (cp.winter(2019), 22.4),
         (cp.summer(2020), 19.9),
         (cp.gas_year(2020), 20.01)
@@ -266,6 +267,25 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     flat_price = 32.87
     flat_price_test_case_data = [
+        {
+            "freq": 'D',
+            "contracts": [
+                (cp.q_1(2020), flat_price),
+                (cp.jan(2020), flat_price),
+                (cp.q_2(2020), flat_price),
+            ],
+            "discount_factor": discount_factor,
+        },
+        {
+            "freq": 'D',
+            "contracts": [
+                (cp.cal_year(2020), flat_price),
+                (cp.q_1(2020), flat_price),
+                (cp.q_2(2020), flat_price),
+                (cp.jul(2020), flat_price)
+            ],
+            "discount_factor": discount_factor,
+        },
         {
             "freq": 'D',
             "contracts": [
