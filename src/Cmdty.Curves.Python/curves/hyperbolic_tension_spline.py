@@ -198,24 +198,29 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     last_period = max((x[1] for x in standardised_contracts))
     freq_offset = pd.tseries.frequencies.to_offset(freq) # TODO find why Pycharm is warning about frequencies and fix
 
+    starts_ends = {(contract[0], contract[1]) for contract in standardised_contracts} \
+                  .union({(shaping_ratio[0], shaping_ratio[1]) for shaping_ratio in shaping_ratios_list}) \
+                  .union({(shaping_ratio[2], shaping_ratio[3]) for shaping_ratio in shaping_ratios_list}) \
+                  .union({(shaping_spread[0], shaping_spread[1]) for shaping_spread in shaping_spreads_list}) \
+                  .union({(shaping_spread[2], shaping_spread[3]) for shaping_spread in shaping_spreads_list})
 
     # TODO this looks like it will break if latest contract is for a single period. Add test.
     if isinstance(spline_knots, KnotPositions):
         spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
         if KnotPositions.CONTRACT_START in spline_knots:
-            for contract in standardised_contracts:
-                spline_knots_set.add(contract[0])
+            for start, _ in starts_ends:
+                spline_knots_set.add(start)
         if KnotPositions.CONTRACT_END in spline_knots:
-            for contract in standardised_contracts:
-                if contract[1] < last_period:
-                    spline_knots_set.add(contract[1] + freq_offset)
+            for _, end in starts_ends:
+                if end < last_period:
+                    spline_knots_set.add(end + freq_offset)
         if KnotPositions.CONTRACT_CENTRE in spline_knots:
-            for contract in standardised_contracts:
-                mid_point = _mid_period_or_timestamp(contract[0], contract[1], freq_offset)
+            for start, end in starts_ends:
+                mid_point = _mid_period_or_timestamp(start, end, freq_offset)
                 spline_knots_set.add(mid_point)
         if KnotPositions.SPACING_CENTRE in spline_knots:
-            start_and_ends_set = ({contract[0] for contract in standardised_contracts}
-                                  .union({contract[1] + freq_offset for contract in standardised_contracts}))
+            start_and_ends_set = ({start for start, _ in starts_ends}
+                        .union({end + freq_offset for _, end in starts_ends}))
             sorted_start_and_ends_set = sorted(start_and_ends_set)
             for idx, p2 in enumerate(sorted_start_and_ends_set[1:]):
                 p1 = sorted_start_and_ends_set[idx]
@@ -346,10 +351,13 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     yi_minus1_coeffs = (t_to_section_end / h_is_expanded) * weights_x_discounts_x_mult_adjust
 
     num_coeffs_to_solve = num_sections * 2 + 2
+    num_shaping_ratios = len(shaping_ratios_list)
+    num_shaping_spreads = len(shaping_spreads_list)
 
     if maximum_smoothness:
-        num_constraints = num_contracts + num_sections - 1 + (0 if back_1st_deriv is None else 1) \
-                          + (0 if front_1st_deriv is None else 1)  # TODO update this when shaping_ratios and shaping_spreads are implemented
+        num_constraints = num_contracts + num_shaping_ratios + num_shaping_spreads + num_sections - 1 + \
+                          (0 if back_1st_deriv is None else 1) \
+                          + (0 if front_1st_deriv is None else 1)
         if num_constraints > num_coeffs_to_solve:
             raise ValueError('The number of constraints should be less than or equal to the number of coefficients to solve. However '
                              'num_constraints = {} and num_coeffs_to_solve = {}.'.format(num_constraints, num_coeffs_to_solve))
@@ -369,7 +377,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         matrix[0:num_coeffs_to_solve:, num_coeffs_to_solve:] = constraint_matrix.T
         # TODO use block matrix inversion with spare matrices
     else:
-        num_constraints = num_contracts + num_sections + 2 # 1 boundary 1st deriv constraints (which get replaced with other constraints if not present)
+        num_constraints = num_contracts + num_shaping_ratios + num_shaping_spreads + num_sections + 2 # 1 boundary 1st deriv constraints (which get replaced with other constraints if not present)
         if num_constraints != num_coeffs_to_solve:
             raise ValueError('If maximum_smoothness is false, the number of constraints should equal the number of coefficients to solve. '
                              'However num_constraints = {} and num_coeffs_to_solve = {}.'.format(num_constraints, num_coeffs_to_solve))
@@ -447,35 +455,35 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
         while not (spline_knots_updated[first_spline_section_idx] <= contract_start < spline_knots_updated[first_spline_section_idx + 1]):
             first_spline_section_idx += 1
         # Loop through spline sections which overlap contract
-        spline_boundary_idx = first_spline_section_idx
-        while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
-            section_start = spline_knots[spline_boundary_idx]
-            section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
-            contract_section_start_period = contract_start if contract_start >= section_start else section_start
-            contract_section_end_period = contract_end if contract_end <= section_end else section_end
-            contract_section_start_idx = int_index(contract_section_start_period)
-            contract_section_end_idx = int_index(contract_section_end_period) + 1
-            # Forward price constraints
-            constraint_matrix[contract_idx, spline_boundary_idx * 2] += np.sum(
-                zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 1] += np.sum(
-                yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 2] += np.sum(
-                zi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            constraint_matrix[contract_idx, spline_boundary_idx * 2 + 3] += np.sum(
-                yi_coeffs[contract_section_start_idx:contract_section_end_idx])
-            spline_boundary_idx += 1
+        _populate_matrix_row(constraint_matrix, contract_end, contract_idx, contract_start, freq_offset, int_index,
+                             last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
+                             zi_coeffs, zi_minus1_coeffs, 1.0)
     # Shaping constraints
     num_shaping_ratios = len(shaping_ratios)
     num_shaping_spreads = len(shaping_spreads)
+    # Shaping spreads
     for idx, (long_period_start, long_period_end, short_period_start, short_period_end, spread) in enumerate(shaping_spreads):
         row_idx = idx + num_contracts
         constraint_vector[row_idx] = spread
-        first_spline_section_idx = 0
-
+        first_spline_section_idx = _find_first_spline_section_idx(long_period_start, spline_knots_updated)
+        _populate_matrix_row(constraint_matrix, long_period_end, row_idx, long_period_start, freq_offset, int_index,
+                             last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
+                             zi_coeffs, zi_minus1_coeffs, 1.0)
+        first_spline_section_idx = _find_first_spline_section_idx(short_period_start, spline_knots_updated)
+        _populate_matrix_row(constraint_matrix, short_period_end, row_idx, short_period_start, freq_offset, int_index,
+                             last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
+                             zi_coeffs, zi_minus1_coeffs, -1.0)
 
     for idx, (num_period_start, num_period_end, denom_period_start, denom_period_end, ratio) in enumerate(shaping_ratios):
         row_idx = idx + num_contracts + num_shaping_spreads
+        first_spline_section_idx = _find_first_spline_section_idx(num_period_start, spline_knots_updated)
+        _populate_matrix_row(constraint_matrix, num_period_end, row_idx, num_period_start, freq_offset, int_index,
+                             last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
+                             zi_coeffs, zi_minus1_coeffs, 1.0)
+        first_spline_section_idx = _find_first_spline_section_idx(denom_period_start, spline_knots_updated)
+        _populate_matrix_row(constraint_matrix, denom_period_end, row_idx, denom_period_start, freq_offset, int_index,
+                             last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
+                             zi_coeffs, zi_minus1_coeffs, -ratio)
 
     # First derivative continuity constraints
     one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
@@ -522,6 +530,35 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             constraint_matrix[-1, -2] = 1.0 / tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
             constraint_matrix[-1, -1] = 1.0 / h_is[-1] - 1.0 / (h_is[-1] + h_is[-2])  # y_n
             constraint_vector[-1] = 0.0
+
+
+def _find_first_spline_section_idx(contract_start, spline_knots_updated):
+    first_spline_section_idx = 0
+    while not (spline_knots_updated[first_spline_section_idx] <= contract_start < spline_knots_updated[first_spline_section_idx + 1]):
+        first_spline_section_idx += 1
+    return first_spline_section_idx
+
+
+def _populate_matrix_row(constraint_matrix, contract_end, row_idx, contract_start, freq_offset, int_index, last_period,
+                         num_sections, spline_boundary_idx, spline_knots, yi_coeffs, yi_minus1_coeffs, zi_coeffs,
+                         zi_minus1_coeffs, multiplier):
+    while spline_boundary_idx < num_sections and spline_knots[spline_boundary_idx] <= contract_end:
+        section_start = spline_knots[spline_boundary_idx]
+        section_end = spline_knots[spline_boundary_idx + 1] - freq_offset if spline_boundary_idx < num_sections - 1 else last_period
+        contract_section_start_period = contract_start if contract_start >= section_start else section_start
+        contract_section_end_period = contract_end if contract_end <= section_end else section_end
+        contract_section_start_idx = int_index(contract_section_start_period)
+        contract_section_end_idx = int_index(contract_section_end_period) + 1
+        # Forward price constraints
+        constraint_matrix[row_idx, spline_boundary_idx * 2] += np.sum(
+            zi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx]) * multiplier
+        constraint_matrix[row_idx, spline_boundary_idx * 2 + 1] += np.sum(
+            yi_minus1_coeffs[contract_section_start_idx:contract_section_end_idx]) * multiplier
+        constraint_matrix[row_idx, spline_boundary_idx * 2 + 2] += np.sum(
+            zi_coeffs[contract_section_start_idx:contract_section_end_idx]) * multiplier
+        constraint_matrix[row_idx, spline_boundary_idx * 2 + 3] += np.sum(
+            yi_coeffs[contract_section_start_idx:contract_section_end_idx]) * multiplier
+        spline_boundary_idx += 1
 
 
 def _populate_2h_matrix(matrix: np.array, tension_by_section, tension_by_section_sqrd, tau_sqrd_hi, h_is, tau_sinh, cosh_tau_hi):

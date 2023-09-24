@@ -164,6 +164,9 @@ def contract_pandas_periods(input_period, freq) -> tp.Tuple[pd.Period, pd.Period
     if isinstance(input_period, tuple):
         start = pd.Period(input_period[0], freq=freq)
         end = pd.Period(input_period[1], freq=freq)
+        if start > end: # TODO push this up to get better error message about which argument is causing this?
+            raise ValueError('Contract start must be earlier than or equal to contract end. '
+                             'However start is {} and end is {}.'.format(start, end))
     else:
         if isinstance(input_period, pd.Period):
             start = input_period.asfreq(freq, 's')
