@@ -25,7 +25,7 @@ import unittest
 import pandas as pd
 import numpy as np
 from datetime import date, datetime
-from curves import hyperbolic_tension_spline
+from curves import hyperbolic_tension_spline, KnotPositions
 from curves import contract_period as cp
 from math import exp
 from tests._test_common import weighted_average_slice_curve
@@ -106,7 +106,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "freq": "30min",
             "contracts": [
                 (datetime(2019, 3, 31, hour=0, minute=0), datetime(2019, 3, 31, hour=8, minute=30), 56.84),
-                (datetime(2019, 3, 31, hour=9, minute=0), datetime(2019, 3, 31, hour=18, minute=0), 57.05),
+                (datetime(2019, 3, 31, hour=0, minute=0), datetime(2019, 3, 31, hour=18, minute=0), 57.05),
                 (datetime(2019, 3, 31, hour=18, minute=30), datetime(2019, 3, 31, hour=23, minute=30), 60.11),
                 # Covers clock change
                 (datetime(2019, 4, 1, hour=0, minute=0), datetime(2019, 4, 1, hour=12, minute=30), 43.11),
@@ -122,7 +122,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "contracts": [
                 (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=45), 56.84),
                 (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
-                (datetime(2019, 6, 7, hour=18, minute=15), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
+                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
             ],
             "tension": flat_tension,
             "discount_factor": discount_factor,
@@ -157,29 +157,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         intraday_data_max_smooth = self._set_max_smoothness_true(self.intraday_test_case_data)
         self._interpolate_and_assert_average_back_to_inputs(intraday_data_max_smooth, 1E-6)
 
-    def test_hyperbolic_tension_spline_contracts_overlap_averages_back_to_inputs(self):
-        inputs = [
-            {
-                "freq": 'D',
-                "contracts": [
-                    (cp.jan(2020), 21.3),
-                    (cp.q_1(2020), 18.66),
-                ],
-                "spline_knots": ['2020-01-01', '2020-02-01'],
-                "tension": 12.5,
-                "discount_factor": discount_factor,
-                "back_1st_deriv": -0.3,
-                "maximum_smoothness": False
-            },
-        ]
-        # Test without maximum smoothness
-        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
-        # Test with maximum smoothness
-        for d in inputs:
-            d["maximum_smoothness"] = True
-        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-11)
-
-    def test_hyperbolic_tension_spline_knots_specified_averages_back_to_inputs(self):
+    def test_hyperbolic_tension_spline_knots_collection_averages_back_to_inputs(self):
         inputs = [
             {
                 "freq": 'D',
@@ -211,6 +189,36 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         # Test with maximum smoothness
         for d in inputs:
             d["maximum_smoothness"] = True
+        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-10)
+
+    def test_hyperbolic_tension_spline_knots_enum_averages_back_to_inputs(self):
+        # Only tested with maximum_smoothness True because otherwise the number of constraints won't match number of unknowns
+        inputs = [
+            {
+                "freq": 'D',
+                "contracts": [
+                    (cp.q_1(2020), 18.66),
+                    (cp.q_2(2020), 19.68),
+                ],
+                "spline_knots": KnotPositions.CONTRACT_CENTRE,
+                "tension": 12.5,
+                "discount_factor": discount_factor,
+                "maximum_smoothness": True
+            },
+            {
+                "freq": 'D',
+                "contracts": [
+                    (cp.cal_year(2020), 21.3),
+                    (cp.q_1(2020), 18.66),
+                    (cp.q_2(2020), 19.65),
+                    (cp.jul(2020), 15.66)
+                ],
+                "spline_knots": KnotPositions.SPACING_CENTRE,
+                "tension": 12.5,
+                "discount_factor": discount_factor,
+                "maximum_smoothness": True
+            }
+        ]
         self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-10)
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data, tol):
@@ -363,7 +371,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             last_params = this_params
         return sum_penalty
 
-    # TODO delete this?
+    # TODO delete this as unused
     @staticmethod
     def max_smooth_penalty_from_private(spline_params, tension):
         zs = spline_params['z'].values
