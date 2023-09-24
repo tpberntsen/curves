@@ -364,7 +364,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                            cosh_tau_hi, freq_offset,
                                            h_is, int_index, last_period, num_contracts, num_sections, spline_knots_list, standardised_contracts,
                                            tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust,
-                                           yi_coeffs, yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness)
+                                           yi_coeffs, yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness,
+                                           shaping_ratios_list, shaping_spreads_list)
         matrix[0:num_coeffs_to_solve:, num_coeffs_to_solve:] = constraint_matrix.T
         # TODO use block matrix inversion with spare matrices
     else:
@@ -379,7 +380,8 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         _populate_constraint_vector_matrix(matrix, vector, add_season_adjusts, front_1st_deriv, back_1st_deriv, cosh_tau_hi, freq_offset,
                                            h_is, int_index, last_period, num_contracts, num_sections, spline_knots_list, standardised_contracts,
                                            tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust,
-                                           yi_coeffs, yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness)
+                                           yi_coeffs, yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness,
+                                           shaping_ratios_list, shaping_spreads_list)
 
     solution = np.linalg.solve(matrix, vector)
     if maximum_smoothness:
@@ -423,7 +425,8 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
                                        cosh_tau_hi, freq_offset, h_is, int_index, last_period, num_contracts, num_sections, spline_knots,
                                        standardised_contracts,
                                        tau_sinh, tension_by_section, weights_times_discounts, weights_x_discounts_x_mult_adjust, yi_coeffs,
-                                       yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness):
+                                       yi_minus1_coeffs, zi_coeffs, zi_minus1_coeffs, maximum_smoothness,
+                                       shaping_ratios, shaping_spreads):
     # Looking online it seems that Pandas index searching isn't particularly efficient, so do this manually
     for i, (start, end, price) in enumerate(standardised_contracts):
         contract_start_idx = int_index(start)
@@ -462,10 +465,22 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             constraint_matrix[contract_idx, spline_boundary_idx * 2 + 3] += np.sum(
                 yi_coeffs[contract_section_start_idx:contract_section_end_idx])
             spline_boundary_idx += 1
+    # Shaping constraints
+    num_shaping_ratios = len(shaping_ratios)
+    num_shaping_spreads = len(shaping_spreads)
+    for idx, (long_period_start, long_period_end, short_period_start, short_period_end, spread) in enumerate(shaping_spreads):
+        row_idx = idx + num_contracts
+        constraint_vector[row_idx] = spread
+        first_spline_section_idx = 0
+
+
+    for idx, (num_period_start, num_period_end, denom_period_start, denom_period_end, ratio) in enumerate(shaping_ratios):
+        row_idx = idx + num_contracts + num_shaping_spreads
+
     # First derivative continuity constraints
     one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
     for section_idx in range(0, num_sections - 1):
-        row_idx = num_contracts + section_idx
+        row_idx = num_contracts + num_shaping_spreads + num_shaping_ratios + section_idx
         # TODO doc using 1-based indexing for sections gets annoying now
         next_section_idx = section_idx + 1
         # TODO vectorise these outside of the loop?
