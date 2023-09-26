@@ -262,6 +262,27 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                                                                        discounted_average_weight)
                     self.assertAlmostEqual(curve_average_price, contract_price, delta=tol)
 
+    def test_shaping_spreads_curve_has_expected_spreads(self):
+        shaping_spreads = [
+            (cp.jan(2024), cp.mar(2024), 2.45),
+            (cp.jan(2024), cp.feb(2024), 1.05),
+            (cp.mar(2024), cp.jul(2024), 1.68),
+        ]
+        contracts = [
+            (cp.q_4(2023), 58.65),
+            (cp.q_1(2024), 57.09),
+            (cp.q_2(2024), 53.06),
+            (cp.q_3(2024), 52.17),
+        ]
+        # TODO add weighting and adjustment functions into here
+        daily_curve, _ = hyperbolic_tension_spline(contracts, freq='D', shaping_spreads=shaping_spreads,
+                                                   discount_factor=discount_factor, tension=0.9, maximum_smoothness=True)
+        for shaping_long_period, shaping_short_period, spread in shaping_spreads:
+            long_period_interpolated_price = weighted_average_slice_curve(daily_curve, 'D', shaping_long_period, discount_factor)
+            short_period_interpolated_price = weighted_average_slice_curve(daily_curve, 'D', shaping_short_period, discount_factor)
+            interpolated_spread = long_period_interpolated_price - short_period_interpolated_price
+            self.assertAlmostEqual(interpolated_spread, spread, delta=1E-12)
+
     def test_input_contracts_in_linear_trend_results_linear_no_max_smoothness(self):
         self._input_contracts_in_linear_trend_results_linear(False, 10)
 

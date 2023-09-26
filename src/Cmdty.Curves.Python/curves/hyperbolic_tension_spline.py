@@ -464,15 +464,23 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
     # Shaping spreads
     for idx, (long_period_start, long_period_end, short_period_start, short_period_end, spread) in enumerate(shaping_spreads):
         row_idx = idx + num_contracts
-        constraint_vector[row_idx] = spread
+        long_add_season_adjust_vector_term, long_start_idx, long_end_idx = _calc_add_season_adjust_vector_term(
+                                                                            add_season_adjusts, int_index, long_period_start,
+                                                                            long_period_end, weights_x_discounts_x_mult_adjust)
+        short_add_season_adjust_vector_term, short_start_idx, short_end_idx = _calc_add_season_adjust_vector_term(
+                                                                            add_season_adjusts, int_index, short_period_start,
+                                                                            short_period_end, weights_x_discounts_x_mult_adjust)
+        constraint_vector[row_idx] = spread - long_add_season_adjust_vector_term + short_add_season_adjust_vector_term
         first_spline_section_idx = _find_first_spline_section_idx(long_period_start, spline_knots_updated)
+        long_sum_weighting = np.sum(weights_times_discounts[long_start_idx:long_end_idx])
         _populate_matrix_row(constraint_matrix, long_period_end, row_idx, long_period_start, freq_offset, int_index,
                              last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
-                             zi_coeffs, zi_minus1_coeffs, 1.0)
+                             zi_coeffs, zi_minus1_coeffs, 1.0/long_sum_weighting)
         first_spline_section_idx = _find_first_spline_section_idx(short_period_start, spline_knots_updated)
+        short_sum_weighting = np.sum(weights_times_discounts[short_start_idx:short_end_idx])
         _populate_matrix_row(constraint_matrix, short_period_end, row_idx, short_period_start, freq_offset, int_index,
                              last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
-                             zi_coeffs, zi_minus1_coeffs, -1.0)
+                             zi_coeffs, zi_minus1_coeffs, -1.0/short_sum_weighting)
 
     for idx, (num_period_start, num_period_end, denom_period_start, denom_period_end, ratio) in enumerate(shaping_ratios):
         row_idx = idx + num_contracts + num_shaping_spreads
@@ -530,6 +538,16 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
             constraint_matrix[-1, -2] = 1.0 / tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
             constraint_matrix[-1, -1] = 1.0 / h_is[-1] - 1.0 / (h_is[-1] + h_is[-2])  # y_n
             constraint_vector[-1] = 0.0
+
+
+def _calc_add_season_adjust_vector_term(add_season_adjusts, int_index, period_start, period_end,
+                                        weights_x_discounts_x_mult_adjust):
+    contract_start_idx = int_index(period_start)
+    contract_end_idx = int_index(period_end) + 1
+    add_season_adjusts_slice = add_season_adjusts[contract_start_idx:contract_end_idx]
+    weights_x_discounts_x_mult_adjust_slice = weights_x_discounts_x_mult_adjust[contract_start_idx:contract_end_idx]
+    add_season_adjust_vector_term = np.dot(add_season_adjusts_slice, weights_x_discounts_x_mult_adjust_slice)
+    return add_season_adjust_vector_term, contract_start_idx, contract_end_idx
 
 
 def _find_first_spline_section_idx(contract_start, spline_knots_updated):
