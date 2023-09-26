@@ -484,14 +484,23 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
 
     for idx, (num_period_start, num_period_end, denom_period_start, denom_period_end, ratio) in enumerate(shaping_ratios):
         row_idx = idx + num_contracts + num_shaping_spreads
+        num_add_season_adjust_vector_term, num_start_idx, num_end_idx = _calc_add_season_adjust_vector_term(
+                                                                            add_season_adjusts, int_index, num_period_start,
+                                                                            num_period_end, weights_x_discounts_x_mult_adjust)
+        denom_add_season_adjust_vector_term, denom_start_idx, denom_end_idx = _calc_add_season_adjust_vector_term(
+                                                                            add_season_adjusts, int_index, denom_period_start,
+                                                                            denom_period_end, weights_x_discounts_x_mult_adjust)
+        constraint_vector[row_idx] = -num_add_season_adjust_vector_term + denom_add_season_adjust_vector_term * ratio
         first_spline_section_idx = _find_first_spline_section_idx(num_period_start, spline_knots_updated)
         _populate_matrix_row(constraint_matrix, num_period_end, row_idx, num_period_start, freq_offset, int_index,
                              last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
                              zi_coeffs, zi_minus1_coeffs, 1.0)
         first_spline_section_idx = _find_first_spline_section_idx(denom_period_start, spline_knots_updated)
+        num_sum_weighting = np.sum(weights_times_discounts[num_start_idx:num_end_idx])
+        denom_sum_weighting = np.sum(weights_times_discounts[denom_start_idx:denom_end_idx])
         _populate_matrix_row(constraint_matrix, denom_period_end, row_idx, denom_period_start, freq_offset, int_index,
                              last_period, num_sections, first_spline_section_idx, spline_knots, yi_coeffs, yi_minus1_coeffs,
-                             zi_coeffs, zi_minus1_coeffs, -ratio)
+                             zi_coeffs, zi_minus1_coeffs, -ratio*num_sum_weighting/denom_sum_weighting)
 
     # First derivative continuity constraints
     one_over_h_tau_sqrd = 1.0 / (h_is * tension_by_section * tension_by_section)
