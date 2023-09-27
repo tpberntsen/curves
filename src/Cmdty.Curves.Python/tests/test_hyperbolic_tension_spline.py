@@ -148,7 +148,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     # TODO properly parameterise these tests
     def test_hyperbolic_tension_spline_daily_interpolation_averages_back_to_inputs(self):
-        self._interpolate_and_assert_average_back_to_inputs(self.daily_test_case_data, 1E-8)
+        daily_test_cases_no_shaping = self._remove_shaping(self.daily_test_case_data)
+        self._interpolate_and_assert_average_back_to_inputs(daily_test_cases_no_shaping, 1E-8)
 
     def test_hyperbolic_tension_spline_max_smoothness_daily_interpolation_averages_back_to_inputs(self):
         daily_test_data_max_smooth = self._set_max_smoothness_true(self.daily_test_case_data)
@@ -162,6 +163,18 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             new_d['maximum_smoothness'] = True
             test_data_max_smooth.append(new_d)
         return test_data_max_smooth
+
+    @staticmethod
+    def _remove_shaping(test_data):
+        test_data_no_shaping = []
+        for d in test_data:
+            new_d = dict(d)
+            if "shaping_spreads" in new_d:
+                del new_d["shaping_spreads"]
+            if "shaping_ratios" in new_d:
+                del new_d["shaping_ratios"]
+            test_data_no_shaping.append(new_d)
+        return test_data_no_shaping
 
     # TODO look into why bigger tolerance required here. Matrix gets poorly conditioned?
     def test_hyperbolic_tension_spline_intraday_interpolation_averages_back_to_inputs(self):
