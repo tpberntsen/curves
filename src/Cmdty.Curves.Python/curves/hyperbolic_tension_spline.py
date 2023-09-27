@@ -57,7 +57,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               shaping_spreads: tp.Optional[ShapingTypes] = None,
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
                               # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
-                              spline_knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
+                              knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
                               KnotPositions]] = KnotPositions.CONTRACT_START_AND_END,  # TODO update docstring for KnotPositions enum
                               front_1st_deriv: tp.Optional[float] = None,
                               back_1st_deriv: tp.Optional[float] = None,
@@ -144,7 +144,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             as time zone information is necessary to determine lost or gain hours due to clock changes. If omitted,
             defaults to UTC-like behaviour with no clock changes. It is not advisable to specify time_zone if
             interpolating to daily or lower granularity.
-        spline_knots (iterable, KnotPositions, optional): If an iterable, the internal knots of the spline constructed,
+        knots (iterable, KnotPositions, optional): If an iterable, the internal knots of the spline constructed,
             i.e. the points in time which serve as boundaries between the piecewise hyperbolic functions.
             Can also be an instance of the KnotPositions flag enum, which provides a convenient way of specifying knots relative
             to the boundaries of the input contracts. If omitted, defaults to KnotPositions.CONTRACT_START_AND_END, in which case the
@@ -205,20 +205,20 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                   .union({(shaping_spread[2], shaping_spread[3]) for shaping_spread in shaping_spreads_list})
 
     # TODO this looks like it will break if latest contract is for a single period. Add test.
-    if isinstance(spline_knots, KnotPositions):
+    if isinstance(knots, KnotPositions):
         spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
-        if KnotPositions.CONTRACT_START in spline_knots:
+        if KnotPositions.CONTRACT_START in knots:
             for start, _ in starts_ends:
                 spline_knots_set.add(start)
-        if KnotPositions.CONTRACT_END in spline_knots:
+        if KnotPositions.CONTRACT_END in knots:
             for _, end in starts_ends:
                 if end < last_period:
                     spline_knots_set.add(end + freq_offset)
-        if KnotPositions.CONTRACT_CENTRE in spline_knots:
+        if KnotPositions.CONTRACT_CENTRE in knots:
             for start, end in starts_ends:
                 mid_point = _mid_period_or_timestamp(start, end, freq_offset)
                 spline_knots_set.add(mid_point)
-        if KnotPositions.SPACING_CENTRE in spline_knots:
+        if KnotPositions.SPACING_CENTRE in knots:
             start_and_ends_set = ({start for start, _ in starts_ends}
                         .union({end + freq_offset for _, end in starts_ends}))
             sorted_start_and_ends_set = sorted(start_and_ends_set)
@@ -233,11 +233,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
         spline_knots_list = sorted(spline_knots_set)
     else:
         if not maximum_smoothness:
-            if len(spline_knots) + 1 != num_contracts:
+            if len(knots) + 1 != num_contracts:
                 raise ValueError('len(spline_knots) + 1 should equal len(contracts). However, len(spline_knots) + 1 '
-                                 'equals {} and len(contracts) equals {}.'.format(len(spline_knots) + 1, num_contracts))
+                                 'equals {} and len(contracts) equals {}.'.format(len(knots) + 1, num_contracts))
         # TODO put condition on number of knots in maximum smoothness case
-        spline_knots_list = [first_period] + [_to_index_element(sb, freq, time_zone) for sb in spline_knots]
+        spline_knots_list = [first_period] + [_to_index_element(sb, freq, time_zone) for sb in knots]
         for i in range(1, num_contracts):
             if spline_knots_list[i] < spline_knots_list[i - 1]:
                 raise ValueError('spline_knots should be distinct and in ascending order. Elements {} and'
