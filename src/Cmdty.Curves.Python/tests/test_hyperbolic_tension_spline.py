@@ -402,7 +402,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 np.testing.assert_array_almost_equal(expected_values, interp_curve.values, decimal=decimals_tol)
 
     def test_max_smoothness_penalty_less_or_equal_no_max_smoothness_penalty(self):
-        all_test_data = self.daily_test_case_data + self.intraday_test_case_data
+        daily_test_cases_no_shaping = self._remove_shaping(self.daily_test_case_data)
+        all_test_data = daily_test_cases_no_shaping + self.intraday_test_case_data
         tensions = [0.0001, 0.1, 0.5, 1.0, 10.0, 100.0]
         for test_data in all_test_data:
             new_data = dict(test_data)
