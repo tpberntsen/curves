@@ -24,8 +24,7 @@ more .NET types.
 * For non-Windows OS default to trying .NET (Core), rather than Mono as default runtime.
 
 ### 2.0.0 (not yet released)
-* BREAKING CHANGES:
-	* max_smooth_interp return type includes spline_parameters attribute.
+* Add return_spline_coeff parameter to max_smooth_interp function.
 * Include target_curve parameter to bootstrap_contracts function.
 * Added return_target_curve parameter to bootstrap_contracts function.
 * Add tension parameter to maximum smoothness spline.

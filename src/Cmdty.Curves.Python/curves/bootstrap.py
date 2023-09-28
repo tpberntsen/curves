@@ -47,7 +47,7 @@ def bootstrap_contracts(contracts: ContractsType,
                         shaping_spreads: Optional[ShapingTypes] = None,
                         allow_redundancy: Optional[bool] = False,
                         target_curve: pd.Series = None,
-                        return_target_curve: bool = False) \
+                        return_target_curve: Optional[bool] = False) \
         -> Union[Tuple[pd.Series, List[Contract]], Tuple[pd.Series, List[Contract], pd.Series]]:
     """
     Bootstraps a collection of commodity forward/swap/futures prices by removing the overlapping periods and optionally applies shaping.

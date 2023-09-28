@@ -99,7 +99,7 @@ class TestMaxSmoothnessSpline(unittest.TestCase):
     # TODO properly parameterise these tests
     def test_max_smooth_interp_averages_back_to_inputs(self):
         for test_data in self.test_case_data:
-            interp_curve, _ = max_smooth_interp(**test_data)
+            interp_curve, _ = max_smooth_interp(**test_data, return_spline_coeff=True)
             average_weight = test_data['average_weight'] if 'average_weight' in test_data else lambda x: 1.0
             test_contracts = test_data['contracts']
             if isinstance(test_contracts, pd.Series):

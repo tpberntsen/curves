@@ -24,18 +24,13 @@
 import clr
 import pandas as pd
 import numpy as np
-from typing import Optional, Callable, Union, NamedTuple
+from typing import Optional, Callable, Union, NamedTuple, Tuple
 from System import Func, Double
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, transform_two_period_func, \
     net_time_series_to_pandas_series, contract_period, deconstruct_contract, ContractsType, net_time_period_to_pandas_period
 from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCurveBuilderExtensions, ISplineAddOptionalParameters
-
-
-class MaxSmoothSplineResults(NamedTuple):
-    forward_curve: pd.Series
-    spline_coefficients: pd.DataFrame
 
 
 def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
@@ -46,7 +41,8 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
                       time_func: Optional[Callable[[pd.Period, pd.Period], float]] = None,
                       front_1st_deriv: Optional[float] = None,
                       back_1st_deriv: Optional[float] = None,
-                      tension: Optional[float] = None) -> MaxSmoothSplineResults:
+                      tension: Optional[float] = None,
+                      return_spline_coeff: Optional[bool] = False) -> Union[pd.Series, Tuple[pd.Series, pd.DataFrame]]:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using maximum smoothness algorithm.
 
@@ -99,12 +95,15 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
         tension (float, optional): Non-negative parameter, which specifies the proportional amount to which curve length is penalised
             when finding the maximum smoothness spline. Increase the tension argument to reduce the amplitude of oscillations in the
             fitted spline. Defaults to 0 if omitted.
+        return_spline_coeff (bool, optional): Flag to determine whether the solved spline coefficients should be returned as the second
+            element in a 2-tuple. Defaults to False if omitted.
 
     Returns:
-        (pandas.Series, pandas.DataFrame): Named tuple with the following elements:
-        forward_curve: Smooth contiguous curve with values consistent with prices within the contracts parameter.
-            Index of type PeriodIndex and freqstr equal to the freq parameter.
-        spline_coefficients: pandas.DataFrame containing solved spline coefficients.
+        Either pandas.Series, or 2-tuple of (pandas.Series, pandas.DataFrame) if return_spline_coeff argument is True.
+        In either case the pandas.Series is a smooth contiguous curve with values consistent with prices within the contracts parameter.
+        This pandas series will have index of type PeriodIndex and freqstr equal to the freq parameter.
+        If return_spline_coeff is True a 2-tuple will be returned with the 2nd element being a pandas.DataFrame containing
+        the solved spline coefficients.
 
     Note:
         The underlying algorithm uses a fourth-order spline, solved with the constraint of averaging back to the input contract
@@ -146,8 +145,11 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
         spline_builder.WithTensionParameter(tension)
     spline_results = spline_builder.BuildCurve()
     curve = net_time_series_to_pandas_series(spline_results.Curve, freq)
-    spline_parameters = _net_solved_spline_parameters_to_data_frame(spline_results.SolvedSplineParameters, freq)
-    return MaxSmoothSplineResults(curve, spline_parameters)
+    if return_spline_coeff:
+        spline_parameters = _net_solved_spline_parameters_to_data_frame(spline_results.SolvedSplineParameters, freq)
+        return curve, spline_parameters
+    else:
+        return curve
 
 
 def _net_solved_spline_parameters_to_data_frame(net_solved_spline_parameters, freq):
