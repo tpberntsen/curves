@@ -28,7 +28,7 @@ from pathlib import Path
 clr.AddReference(str(Path("curves/lib/Cmdty.Curves")))
 from Cmdty.Curves import Bootstrapper, IBootstrapper, BootstrapperExtensions, IBootstrapperAddOptionalParameters, \
     IBetween, Shaping, IIs, IAnd
-from typing import NamedTuple, List, Optional, Callable
+from typing import NamedTuple, List, Optional, Callable, Union, Tuple
 from curves._common import FREQ_TO_PERIOD_TYPE, transform_time_func, net_time_series_to_pandas_series, contract_period, \
     net_time_period_to_pandas_period, deconstruct_contract, ContractsType, series_to_double_time_series, ShapingTypes
 import pandas as pd
@@ -40,24 +40,20 @@ class Contract(NamedTuple):
     price: float
 
 
-class BootstrapResults(NamedTuple):
-    piecewise_curve: pd.Series
-    bootstrapped_contracts: List[Contract]
-    target_curve: pd.Series
-
-
 def bootstrap_contracts(contracts: ContractsType,
                         freq: str,
                         average_weight: Optional[Callable[[pd.Period], float]] = None,
                         shaping_ratios: Optional[ShapingTypes] = None,
                         shaping_spreads: Optional[ShapingTypes] = None,
                         allow_redundancy: Optional[bool] = False,
-                        target_curve: pd.Series = None) -> BootstrapResults:
+                        target_curve: pd.Series = None,
+                        return_target_curve: bool = False) \
+        -> Union[Tuple[pd.Series, List[Contract]], Tuple[pd.Series, List[Contract], pd.Series]]:
     """
     Bootstraps a collection of commodity forward/swap/futures prices by removing the overlapping periods and optionally applies shaping.
 
     Args:
-        contracts (iterable): iterable of tuples, with each tuple describing a forward delivery period and price in one
+        contracts (iterable): Iterable of tuples, with each tuple describing a forward delivery period and price in one
             of the following forms:
                 ([period], [price]) 
                 ([period start], [period end], [price])
@@ -80,7 +76,7 @@ def bootstrap_contracts(contracts: ContractsType,
             a callable which returns the number of calendar days in the month, e.g.:
                 lambda p: p.asfreq('D', 'e').day
             Defaults to None, in which case each period has equal weighting.
-        shaping_ratios (iterable, optional): iterable of tuples, with each tuple describing a constraint on the ratio
+        shaping_ratios (iterable, optional): Iterable of tuples, with each tuple describing a constraint on the ratio
             between the prices of different periods on the derived forward curve in the form:
                 ([numerator period], [denominator period], [ratio])
             Where:
@@ -92,7 +88,7 @@ def bootstrap_contracts(contracts: ContractsType,
                 date
                 datetime
                 A 2-tuple of any of the above three types, with the elements specifying the period start and end respectively.
-        shaping_spreads (iterable, optional): iterable of tuples, with each tuple describing a constraint on the spread
+        shaping_spreads (iterable, optional): Iterable of tuples, with each tuple describing a constraint on the spread
             between the prices of different periods on the derived forward curve in the form:
                 ([period long], [period short], [spread])
             Where:
@@ -107,19 +103,23 @@ def bootstrap_contracts(contracts: ContractsType,
         allow_redundancy (bool, optional): Flag indicating whether the input contracts are allowed to have redundancy
             without an exception being thrown. An example of redundancy is contracts including prices for
             quarter and also all three constituent months of the same quarter. Defaults to False.
-        target_curve (pd.Series, optional): curve for which the  piecewise_curve is calculated to be closest to, in
+        target_curve (pd.Series, optional): Curve for which the  piecewise_curve is calculated to be closest to, in
             terms of Euclidian distance. If omitted, defaults to a curve where the price of each point is the price of
             the shortest input contract which overlaps the point delivery period. Corresponds to x^{target} in the
             following doc: https://github.com/cmdty/curves/blob/master/docs/bootstrap/bootstrapping_commodity_forwards.pdf
+        return_target_curve (bool, optional): Flag determining whether the target curve, described above, should be returned as the third
+            element in a 3-tuple. Defaults to False if omitted.
 
     Returns:
-        (pandas.Series, list of tuples): named tuple with the following elements:
-        piecewise_curve: A contiguous forward curve, consistent with the contracts parameter.
+        Either (pandas.Series, list of tuples) 2-tuple, or (pandas.Series, list of tuples, pandas.Series) 3-tuple if return_target_curve
+            argument is True. The elements of the tuple are:
+        0: A contiguous forward curve, consistent with the contracts parameter.
             This pandas.Series will have an index of type PeriodIndex and freq equal to the freq parameter.
-        bootstrapped_contracts: Equivalent to contracts parameter, but with overlapping periods removed, represented by a 3-item named tuple (start, end, price):
+        1: Equivalent to contracts parameter, but with overlapping periods removed, represented by a 3-item named tuple (start, end, price):
             start (pandas.Period): Inclusive start of the contract delivery period.
             end (pandas.Period): Inclusive end of the contract delivery period.
             price (float): Forward price of commodity delivered over periods specified by start and end.
+        2: The curve to which piecewise_curve is calculated to be closest to, in terms of Euclidian distance.
     """
     if freq not in FREQ_TO_PERIOD_TYPE:
         raise ValueError(
@@ -163,4 +163,7 @@ def bootstrap_contracts(contracts: ContractsType,
     for contract in dotnet_bootstrap_results.BootstrappedContracts:
         bootstrapped_contracts.append(Contract(net_time_period_to_pandas_period(contract.Start, freq),
                                                net_time_period_to_pandas_period(contract.End, freq), contract.Price))
-    return BootstrapResults(piecewise_curve, bootstrapped_contracts, target_curve)
+    if return_target_curve:
+        return piecewise_curve, bootstrapped_contracts, target_curve
+    else:
+        return piecewise_curve, bootstrapped_contracts
