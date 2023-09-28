@@ -35,7 +35,7 @@ from Cmdty.Curves import MaxSmoothnessSplineCurveBuilder, MaxSmoothnessSplineCur
 
 class MaxSmoothSplineResults(NamedTuple):
     forward_curve: pd.Series
-    spline_parameters: pd.DataFrame
+    spline_coefficients: pd.DataFrame
 
 
 def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
@@ -101,8 +101,10 @@ def max_smooth_interp(contracts: Union[ContractsType, pd.Series],
             fitted spline. Defaults to 0 if omitted.
 
     Returns:
-        pandas.Series: Series with index of type PeriodIndex and freqstr equal to the freq parameter. This Series will
-            represent a smooth contiguous curve with values consistent with prices within the contracts parameter.
+        (pandas.Series, pandas.DataFrame): Named tuple with the following elements:
+        forward_curve: Smooth contiguous curve with values consistent with prices within the contracts parameter.
+            Index of type PeriodIndex and freqstr equal to the freq parameter.
+        spline_coefficients: pandas.DataFrame containing solved spline coefficients.
 
     Note:
         The underlying algorithm uses a fourth-order spline, solved with the constraint of averaging back to the input contract
