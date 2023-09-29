@@ -203,7 +203,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     def _interpolate_and_assert_average_back_to_inputs(self, test_case_data, tol):
         for test_data in test_case_data:
-            interp_curve, _ = hyperbolic_tension_spline(**test_data)
+            interp_curve = hyperbolic_tension_spline(**test_data)
             average_weight = test_data['average_weight'] if 'average_weight' in test_data else lambda x: 1.0
             if 'discount_factor' in test_data:
                 discount_factor_func = test_data['discount_factor']
@@ -241,7 +241,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             (cp.q_3(2024), 52.17),
         ]
         # TODO add weighting and adjustment functions into here
-        daily_curve, _ = hyperbolic_tension_spline(contracts, freq='D', shaping_spreads=shaping_spreads,
+        daily_curve = hyperbolic_tension_spline(contracts, freq='D', shaping_spreads=shaping_spreads,
                                                    discount_factor=discount_factor, tension=0.9)
         for shaping_long_period, shaping_short_period, spread in shaping_spreads:
             long_period_interpolated_price = weighted_average_slice_curve(daily_curve, 'D', shaping_long_period, discount_factor)
@@ -261,7 +261,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             (cp.q_3(2024), 29.24),
         ]
         # TODO add weighting and adjustment functions into here
-        daily_curve, _ = hyperbolic_tension_spline(contracts, freq='D', shaping_ratios=shaping_ratios,
+        daily_curve = hyperbolic_tension_spline(contracts, freq='D', shaping_ratios=shaping_ratios,
                                                    discount_factor=discount_factor, tension=0.9)
         for shaping_num_period, shaping_denom_period, ratio in shaping_ratios:
             num_period_interpolated_price = weighted_average_slice_curve(daily_curve, 'D', shaping_num_period, discount_factor)
@@ -285,7 +285,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         expected_hourly_diffs = np.repeat(hourly_slope,  num_daily_curve_points*24-1)
         tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
         for tension in tensions:
-            hourly_curve, _ = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension)
+            hourly_curve = hyperbolic_tension_spline(daily_curve, freq='H', tension=tension)
             hourly_diffs = np.diff(hourly_curve)
             np.testing.assert_array_almost_equal(expected_hourly_diffs, hourly_diffs, decimal=decimals_tol)
 
@@ -339,7 +339,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             new_data = dict(data)
             for tension in tensions:
                 new_data['tension'] = tension
-                interp_curve, spline_params = hyperbolic_tension_spline(**new_data)
+                interp_curve = hyperbolic_tension_spline(**new_data)
                 expected_values = np.repeat(self.flat_price, len(interp_curve))
                 np.testing.assert_array_almost_equal(expected_values, interp_curve.values, decimal=decimals_tol)
 
@@ -347,7 +347,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         tol = 1E-8
         back_1st_deriv = 0.95
         _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
-                                                     back_1st_deriv=back_1st_deriv)
+                                                     back_1st_deriv=back_1st_deriv, return_spline_coeff=True)
         calculated_back_1st_deriv = self._calc_back_1st_deriv(spline_params)
         self.assertAlmostEqual(back_1st_deriv, calculated_back_1st_deriv, delta=tol)
 
@@ -371,7 +371,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         tol = 1E-11
         front_1st_deriv = 0.95
         _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
-                                                     front_1st_deriv=front_1st_deriv)
+                                                     front_1st_deriv=front_1st_deriv, return_spline_coeff=True)
         calculated_front_1st_deriv = self._calc_front_1st_deriv(spline_params)
         self.assertAlmostEqual(front_1st_deriv, calculated_front_1st_deriv, delta=tol)
 

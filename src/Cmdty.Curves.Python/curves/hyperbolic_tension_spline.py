@@ -37,11 +37,6 @@ class KnotPositions(Flag):
     SPACING_CENTRE = auto()
 
 
-class TensionSplineResults(tp.NamedTuple):
-    forward_curve: pd.Series
-    spline_parameters: pd.DataFrame
-
-
 _years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
 
 
@@ -60,8 +55,9 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
                               KnotPositions]] = KnotPositions.CONTRACT_START_AND_END,  # TODO update docstring for KnotPositions enum
                               front_1st_deriv: tp.Optional[float] = None,
-                              back_1st_deriv: tp.Optional[float] = None
-                              ) -> TensionSplineResults:
+                              back_1st_deriv: tp.Optional[float] = None,
+                              return_spline_coeff: tp.Optional[bool] = False
+                              ) -> tp.Union[pd.Series, tp.Tuple[pd.Series, pd.DataFrame]]:
     """
     Creates a smooth interpolated curve from a collection of commodity forward/swap/futures prices using hyperbolic tension spline algorithm.
 
@@ -152,14 +148,16 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             curve must be. If this parameter is omitted no constraint is applied.
         back_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the end of the
             curve must be. If this parameter is omitted no constraint is applied.
+        return_spline_coeff (bool, optional): Flag to determine whether the solved spline coefficients should be returned as the second
+            element in a 2-tuple. Defaults to False if omitted.
 
     Returns:
-            (pandas.Series, pandas.DataFrame): named tuple with the following elements:
-            forward_curve: contiguous forward curve, consistent with the contracts parameter.
-                This pandas.Series will have an index of type PeriodIndex or DatetimeIndex (if caller provides time_zone)
-                 and freq equal to the freq parameter.
-            spline_parameters: pandas.DataFrame containing the time t variable and solved z_i and y_i
-                spline parameters at each spline knot.
+        Either pandas.Series, or 2-tuple of (pandas.Series, pandas.DataFrame) if return_spline_coeff argument is True.
+        In either case the pandas.Series is a smooth contiguous curve with values consistent with prices within the contracts parameter.
+        This pandas.Series will have an index of type PeriodIndex or DatetimeIndex (if caller provides time_zone)
+        and freq equal to the freq parameter.
+        If return_spline_coeff is True a 2-tuple will be returned with the 2nd element being a pandas.DataFrame containing
+        the solved spline coefficients solved z_i and y_i at each spline knot.
 
     Notes:
         Whether time_zone is provided by the caller determines whether pandas Period or Timestamp type is used to
@@ -388,13 +386,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     # Read results off solution
     spline_vals = np.zeros(num_result_curve_points)
-    spline_params_data = np.zeros(shape=(num_sections + 1, 4))
-    spline_params_data[1:, 0] = section_end_times  # Knot times
-    spline_params_data[:, 1] = solution_to_use[1::2, 0]  # y params
-    spline_params_data[:, 2] = solution_to_use[::2, 0]  # z params
-    spline_params_data[:-1, 3] = tension_by_section
-    spline_params_data[-1, 3] = np.nan
-    spline_params = pd.DataFrame(data=spline_params_data, index=spline_knots_list + [last_period], columns=['t', 'y', 'z', 'tension'])
     for i, section_start in enumerate(spline_knots_list):
         z_start = solution_to_use[i * 2, 0]
         y_start = solution_to_use[i * 2 + 1, 0]
@@ -415,7 +406,17 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
     # TODO: skip adjustments if these aren't provided
     result_curve_prices = (spline_vals + add_season_adjusts) * mult_season_adjusts
     result_curve = pd.Series(data=result_curve_prices, index=result_curve_index)
-    return TensionSplineResults(result_curve, spline_params)
+    if return_spline_coeff:
+        spline_coeff_data = np.zeros(shape=(num_sections + 1, 4))
+        spline_coeff_data[1:, 0] = section_end_times  # Knot times
+        spline_coeff_data[:, 1] = solution_to_use[1::2, 0]  # y params
+        spline_coeff_data[:, 2] = solution_to_use[::2, 0]  # z params
+        spline_coeff_data[:-1, 3] = tension_by_section
+        spline_coeff_data[-1, 3] = np.nan
+        spline_coeffs = pd.DataFrame(data=spline_coeff_data, index=spline_knots_list + [last_period], columns=['t', 'y', 'z', 'tension'])
+        return result_curve, spline_coeffs
+    else:
+        return result_curve
 
 
 def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add_season_adjusts, front_1st_deriv, back_1st_deriv,
