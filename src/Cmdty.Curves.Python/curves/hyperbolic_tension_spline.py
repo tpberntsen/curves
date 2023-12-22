@@ -30,6 +30,7 @@ from enum import Flag, auto
 
 
 class KnotPositions(Flag):
+    NONE = auto()
     CONTRACT_START = auto()
     CONTRACT_END = auto()
     CONTRACT_START_AND_END = CONTRACT_START | CONTRACT_END
@@ -50,10 +51,9 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               add_season_adjust: tp.Optional[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float]] = None,
                               shaping_ratios: tp.Optional[ShapingTypes] = None,
                               shaping_spreads: tp.Optional[ShapingTypes] = None,
-                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None,
-                              # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
-                              knots: tp.Optional[tp.Union[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]],
-                              KnotPositions]] = KnotPositions.CONTRACT_START_AND_END,  # TODO update docstring for KnotPositions enum
+                              time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None, # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
+                              knot_positions: tp.Optional[KnotPositions] = KnotPositions.CONTRACT_START_AND_END,
+                              knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None,  # TODO update docstring for KnotPositions enum
                               front_1st_deriv: tp.Optional[float] = None,
                               back_1st_deriv: tp.Optional[float] = None,
                               return_spline_coeff: tp.Optional[bool] = False
@@ -139,11 +139,12 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             as time zone information is necessary to determine lost or gain hours due to clock changes. If omitted,
             defaults to UTC-like behaviour with no clock changes. It is not advisable to specify time_zone if
             interpolating to daily or lower granularity.
-        knots (iterable, KnotPositions, optional): If an iterable, the internal knots of the spline constructed,
-            i.e. the points in time which serve as boundaries between the piecewise hyperbolic functions.
-            Can also be an instance of the KnotPositions flag enum, which provides a convenient way of specifying knots relative
+        knot_positions (KnotPositions, optional): An instance of the KnotPositions flag enum, which specifies the spline knots
+            (points in time which serve as boundaries between the piecewise hyperbolic functions) relative
             to the boundaries of the input contracts. If omitted, defaults to KnotPositions.CONTRACT_START_AND_END, in which case the
             start period and end period + 1 of each input contract are used as the internal knots.
+        knots (iterable, optional): The knots of the spline constructed, in addition to those generated based on the knot_positions
+            argument. Iterable containing any of the following types: str, pd.Period, pd.Timestamp, date and datetime.
         front_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the very start of the
             curve must be. If this parameter is omitted no constraint is applied.
         back_1st_deriv (float, optional): Constraint specifying what the first derivative of the spline at the end of the
@@ -202,44 +203,41 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                   .union({(shaping_spread[2], shaping_spread[3]) for shaping_spread in shaping_spreads_list})
 
     # TODO this looks like it will break if latest contract is for a single period. Add test.
-    if isinstance(knots, KnotPositions):
-        spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
-        if KnotPositions.CONTRACT_START in knots:
-            for start, _ in starts_ends:
-                spline_knots_set.add(start)
-        if KnotPositions.CONTRACT_END in knots:
-            for _, end in starts_ends:
-                if end < last_period:
-                    spline_knots_set.add(end + freq_offset)
-        if KnotPositions.CONTRACT_CENTRE in knots:
-            for start, end in starts_ends:
-                mid_point = _mid_period_or_timestamp(start, end, freq_offset)
-                spline_knots_set.add(mid_point)
-        if KnotPositions.SPACING_CENTRE in knots:
-            start_and_ends_set = ({start for start, _ in starts_ends}
-                        .union({end + freq_offset for _, end in starts_ends}))
-            sorted_start_and_ends_set = sorted(start_and_ends_set)
-            for idx, p2 in enumerate(sorted_start_and_ends_set[1:]):
-                p1 = sorted_start_and_ends_set[idx]
-                mid_point = _mid_period_or_timestamp(p1, p2, freq_offset)
-                spline_knots_set.add(mid_point)
-        # Always include first and last period
-        spline_knots_set.add(first_period)
-        if last_period in spline_knots_set:
-            spline_knots_set.remove(last_period)
-        spline_knots_list = sorted(spline_knots_set)
-    else:
-        # TODO put condition on number of knots in maximum smoothness case
-        spline_knots_list = [first_period] + [_to_index_element(sb, freq, time_zone) for sb in knots]
-        for i in range(1, num_contracts):
-            if spline_knots_list[i] < spline_knots_list[i - 1]:
-                raise ValueError('spline_knots should be distinct and in ascending order. Elements {} and'
-                                 '{} have values {} and {}, hence this is not true.'
-                                 .format(i - 1, i, spline_knots_list[i - 1], spline_knots_list[i]))
-            if spline_knots_list[i] > last_period:
-                raise ValueError('spline_knots should not contain items after the latest contract delivery period.'
-                                 'Element {} contains {} which is after the latest delivery of {}.'
-                                 .format(i, spline_knots_list[i], last_period))
+    spline_knots_set = set()  # Not worth adding dependency to Sorted Containers package
+    if KnotPositions.CONTRACT_START in knot_positions:
+        for start, _ in starts_ends:
+            spline_knots_set.add(start)
+    if KnotPositions.CONTRACT_END in knot_positions:
+        for _, end in starts_ends:
+            if end < last_period:
+                spline_knots_set.add(end + freq_offset)
+    if KnotPositions.CONTRACT_CENTRE in knot_positions:
+        for start, end in starts_ends:
+            mid_point = _mid_period_or_timestamp(start, end, freq_offset)
+            spline_knots_set.add(mid_point)
+    if KnotPositions.SPACING_CENTRE in knot_positions:
+        start_and_ends_set = ({start for start, _ in starts_ends}
+                    .union({end + freq_offset for _, end in starts_ends}))
+        sorted_start_and_ends_set = sorted(start_and_ends_set)
+        for idx, p2 in enumerate(sorted_start_and_ends_set[1:]):
+            p1 = sorted_start_and_ends_set[idx]
+            mid_point = _mid_period_or_timestamp(p1, p2, freq_offset)
+            spline_knots_set.add(mid_point)
+    # Always include first and last period
+    spline_knots_set.add(first_period)
+    if last_period in spline_knots_set:
+        spline_knots_set.remove(last_period)
+
+    if knots is not None:
+        for knot in knots:
+            standarised_knot = _to_index_element(knot, freq, time_zone)
+            if standarised_knot > last_period:
+                raise ValueError('spline_knots should not contain items after the latest contract delivery period. '
+                                 'Specified knot {} is after the latest delivery of {}.'
+                                 .format(knot, last_period))
+            spline_knots_set.add(standarised_knot)
+
+    spline_knots_list = sorted(spline_knots_set)
 
     if time_zone is None:
         result_curve_index = pd.period_range(start=first_period, end=last_period, freq=freq)
