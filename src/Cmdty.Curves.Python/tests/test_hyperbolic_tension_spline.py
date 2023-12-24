@@ -136,29 +136,50 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         }
     ]
 
-    intraday_test_case_data = [
-        {
-            "freq": "30min",
-            "contracts": [
+    thirty_min_contracts = [
                 (datetime(2019, 3, 31, hour=0, minute=0), datetime(2019, 3, 31, hour=8, minute=30), 56.84),
                 (datetime(2019, 3, 31, hour=0, minute=0), datetime(2019, 3, 31, hour=18, minute=0), 57.05),
                 (datetime(2019, 3, 31, hour=18, minute=30), datetime(2019, 3, 31, hour=23, minute=30), 60.11),
                 # Covers clock change
                 (datetime(2019, 4, 1, hour=0, minute=0), datetime(2019, 4, 1, hour=12, minute=30), 43.11),
-            ],
+            ]
+    fifteen_min_contracts = [
+                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=45), 56.84),
+                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
+                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
+            ]
+
+    intraday_test_case_data = [
+        {
+            "freq": "30min",
+            "contracts": thirty_min_contracts,
             "tension": flat_tension,
             "discount_factor": discount_factor,
             "time_zone": 'Europe/London',
             # "back_1st_deriv" : 0.0 TODO figure out why adding this constrain causes bigger error
         },
         {
+            "freq": "30min",
+            "contracts": thirty_min_contracts,
+            "tension": _switching_tension_function(0.3, pd.Timestamp(datetime(2019, 3, 31, hour=18, minute=30),
+                                                                     freq='30min', tz='Europe/London'), 13.5),
+            "discount_factor": discount_factor,
+            "time_zone": 'Europe/London',
+            # "back_1st_deriv" : 0.0 TODO figure out why adding this constrain causes bigger error
+        },
+        {
             "freq": "15min",
-            "contracts": [
-                (datetime(2019, 6, 7, hour=7, minute=0), datetime(2019, 6, 7, hour=8, minute=45), 56.84),
-                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=18, minute=0), 57.05),
-                (datetime(2019, 6, 7, hour=9, minute=0), datetime(2019, 6, 7, hour=23, minute=45), 60.11),
-            ],
+            "contracts": fifteen_min_contracts,
             "tension": flat_tension,
+            "discount_factor": discount_factor,
+            "time_zone": 'Europe/Paris',
+            "back_1st_deriv": -0.3,
+        },
+        {
+            "freq": "15min",
+            "contracts": fifteen_min_contracts,
+            "tension": _switching_tension_function(9.3, pd.Timestamp(datetime(2019, 6, 7, hour=12, minute=0),
+                                                                     freq='30min', tz='Europe/London'), 0.5),
             "discount_factor": discount_factor,
             "time_zone": 'Europe/Paris',
             "back_1st_deriv": -0.3,
