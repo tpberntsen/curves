@@ -43,6 +43,10 @@ def discount_factor(delivery_period):
     return exp(-time_to_settle * interest_rate)
 
 
+def _switching_tension_function(tension1, switch_period, tension2):
+    return lambda p: tension1 if p <= switch_period else tension2
+
+
 class TestHyperbolicTensionSpline(unittest.TestCase):
     flat_tension = 0.75
 
@@ -85,8 +89,30 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         },
         {
             "freq": 'D',
+            "contracts": contracts_list,
+            "tension": _switching_tension_function(0.3, pd.Period('2019-10-01', freq='D'), 13.5),
+            "mult_season_adjust": lambda x: 1.0,
+            "add_season_adjust": lambda x: 0.1,
+            "average_weight": lambda x: 0.1,
+            "front_1st_deriv": 0.56,
+            "back_1st_deriv": -0.3,
+            "shaping_spreads": shaping_spreads,
+            "shaping_ratios": shaping_ratios
+        },
+        {
+            "freq": 'D',
             "contracts": contracts_series,
             "tension": flat_tension,
+            "mult_season_adjust": lambda x: 1.0,
+            "add_season_adjust": lambda x: 0.1,
+            "average_weight": lambda x: 0.1,
+            "discount_factor": discount_factor,
+            "front_1st_deriv": 0.56,
+        },
+        {
+            "freq": 'D',
+            "contracts": contracts_series,
+            "tension": _switching_tension_function(0.3, pd.Period('2020-07-01', freq='D'), 13.5),
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
             "average_weight": lambda x: 0.1,
