@@ -80,8 +80,8 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "average_weight": lambda x: 0.1,
             "front_1st_deriv": 0.56,
             "back_1st_deriv": -0.3,
-            "shaping_spreads" : shaping_spreads,
-            "shaping_ratios" : shaping_ratios
+            "shaping_spreads": shaping_spreads,
+            "shaping_ratios": shaping_ratios
         },
         {
             "freq": 'D',
@@ -338,7 +338,13 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     def test_contracts_all_same_price_flat_curve(self):
         decimals_tol = 11
-        tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
+        flat_tensions = [0.0001, 0.01, 0.1, 0.5, 1.0, 2.0, 10.0, 100.0]
+        tension_switch_period = pd.Period('2020-04-01', freq='D')
+        time_varying_tensions = [
+            lambda day: 0.75 if day < tension_switch_period else 30.5,
+            lambda day: 5.6 if day < tension_switch_period else 1.1
+        ]
+        tensions = flat_tensions + time_varying_tensions
         for data in self.flat_price_test_case_data:
             new_data = dict(data)
             for tension in tensions:
