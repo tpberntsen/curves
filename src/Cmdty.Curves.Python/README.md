@@ -60,7 +60,7 @@ Period('2019-02', 'M'), Period('2019-03', 'M'), 19.103
 ```
 
 ### Spline Interpolation
-In order to facility creating a curve with higher granularity than the input contracts, the curves package includes the max_smooth_interp function. 
+In order to facilitate creating a curve with higher granularity than the input contracts, the curves package includes the max_smooth_interp function. 
 This uses a maximum smoothness algorithm to interpolate input contracts with a fourth-order spline, whilst maintaining the average price constraints 
 inherent in the input contract prices.
 
@@ -90,39 +90,11 @@ contracts = [
 
 pc_for_spline, bc_for_spline = bootstrap_contracts(contracts, freq='D')
 smooth_curve = max_smooth_interp(bc_for_spline, freq='D')
+smooth_curve.plot(title='Interpolated Daily Curve', legend=True, label='Daily Forward Price')
 
-print(smooth_curve)
 ```
+![Max Smooth Daily Curve](https://github.com/cmdty/curves/raw/master/assets/pypi_readme_max_smooth_daily_curve.png)
 
-The above code prints to the following:
-```
-2019-05-31    34.875000
-2019-06-01    33.404383
-2019-06-02    32.335617
-2019-06-03    31.800171
-2019-06-04    31.676636
-2019-06-05    31.804146
-2019-06-06    32.057113
-2019-06-07    32.337666
-2019-06-08    32.575648
-2019-06-09    32.728620
-2019-06-10    32.781858
-2019-06-11    32.745075
-                ...    
-2021-09-19    26.727181
-2021-09-20    26.652039
-2021-09-21    26.576895
-2021-09-22    26.501749
-2021-09-23    26.426602
-2021-09-24    26.351454
-2021-09-25    26.276305
-2021-09-26    26.201156
-2021-09-27    26.126006
-2021-09-28    26.050856
-2021-09-29    25.975706
-2021-09-30    25.900556
-Freq: D, Length: 854, dtype: float64
-```
 
 ### Curve Granularity
 The granularity of the derived curves is controlled by the string passed in as the freq parameter. For returned values 
