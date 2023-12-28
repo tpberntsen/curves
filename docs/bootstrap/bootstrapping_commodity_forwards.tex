@@ -4,7 +4,7 @@
 \usepackage{url}
 \usepackage{hyperref}
 
-\title{Bootstrapping and Shaping of Commodity Forward, Swap and Futures Prices}
+\title{Piecewise Flat Interpolation of Overlapping Commodity Forward Prices}
 \author{Jake C. Fowler}
 \date{}
 
@@ -17,8 +17,8 @@ THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
 
 
 \begin{abstract}
-    This paper presents an algorithm for bootstrapping and shaping of the linear commodity
-    instruments: forwards, swaps and futures. First the joint bootstrapping and shaping
+    This paper presents an algorithm for the piecewise flat interpolation of the linear commodity
+    instruments: forwards, swaps and futures. First the 
     problem is formulated as a system of linear equations. This system is not guaranteed to have
     a unique solution, so a pseudoinverse is used to find
     find the least squares solution. Next a case where this solution does not give
@@ -32,7 +32,7 @@ THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
 
 
 \section{Introduction and Terminology}
-This document presents an algorithm for the boostrapping and shaping of commodity forwards, futures and swap 
+This document presents an algorithm for the piecewise flat interpolation of commodity forwards, futures and swap 
 contracts. It is applicable for linear commodity contracts contingent on either a continuous delivery
 of physical commodity, financial payoff based on the average of an index throughout the
 contract delivery period. The rest of this document will refer to just \emph{forward} prices and curves, even though the same 
@@ -64,8 +64,6 @@ of a physical asset with embedded optionality.
 
 % TODO note that not lower bound because not realisable
 
-Finally bootstrapping can be used to derive the inputs to an interpolation method which
-is then used to calculate a smoothed higher granularity forward curve.
 
 % TODO more details on the input to interpolation
 
