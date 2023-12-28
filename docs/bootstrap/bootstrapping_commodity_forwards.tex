@@ -426,69 +426,18 @@ good results. In the case where there is more than one contract has the same min
 which in practice would be unusual, then the price of the contract which is delivers earliest 
 should be used.
 
+\bigskip
 
-\section{Future Work}
-\subsection{Choice of Target Vector}
 More research into choice of the target vector can be done, including an analysis of both
 the intuitive and mathematical reasoning behind the logic for calculating $\+x^{target}$ 
 presented in this paper, as well as alternative strategies. The results of varying  
 $\+x^{target}$ should be analysed with real market data to assess usage in practice.
 
-\bigskip
-
-\subsection{Combined Spline Interpolation and Bootstrapping}
-The whole approach to bootstrapping in this paper should also be compared to algorithms
-which perform both boostrapping and interpolation, such as \cite{Fowler} and \cite{Benth}. In the case of
-partially overalapping contracts, the inclusion of the nullspace component and target
-vector presented in this paper is used to impose a shape on the resulting boostrapped
-prices, but one could argue that using a spline is more suitable due to the smooth 
-structure of a spline giving a more desirable shape. A piecewise flat curve could
-then be averaged back from the result of the spline, and the use of a bootstapper
-to create the input to another spline algorithm is no longer needed. Two downside of
-using a combined bootstrapping and interpolation algorithm can be seen. The first
-is that introduces additional complication in the case where only a piecewise flat
-curve is required from the bootstrapping. The second is that a higher order polynomial
-is required to ensure that the number of of unknowns (polynomial coefficients) is at
-least as large as the number of constraints in the linear system solved in the spline
-calculation. This is because the number of piecewise polynomials being solved for can 
-vary when the input contracts are allowed to overlap. The higher the order of the
-piecewise polynomials, the more tendency it has to oscillate.
-The author has observed undesirable oscillations when using a 4th order polynomial,
-as used in \cite{Benth}, when interpolating natural gas and power forward curves. 
-In practice it is unlikely that a polynomial should change it's
-slope more than once when interpolating commodity forward curve data.
 
 % TODO mathematical interpretation of partially overlapping contracts and
 % projection into nullspace of the target vector
 
 \bigskip
-
-\subsection{Efficient Handling of Collinear Rows}
-The handling of shaping constraints which are collinear with the forward price constraints
-(and prior shaping constraints) in an efficient manner is an area which requires more work. 
-For example if the forward
-prices for Q1-23, Jan-23, and Feb-23 are all present, then the shaping ratio or spread
-from Q1-2023 to Mar-23 is redundant because the 3 prices already specify the Mar-23 
-forward price. Mathematically, the addition of the shaping constraint row to matrix
-$\+A$ will not change the rank of $\+A$. In such situations the shaping row will
-never be required and ideally the bootstrapping algorithm should detect this and 
-not append the shaping constraint row to $\+A$. The calculation could involve fully 
-recalculating the rank of $\+A$ after each constraint row has been appended, or whether
-each new row is a linear combination of existing rows, but this could be expensive.
-There should be a more efficient algorithm which for each new row makes use of the 
-calculations used to check previous rows. Some research into rank-revealing QR
-factorisations might yield an approach.
-
-Similarly, checking whether forward price constraints are collinear with other
-forward price constraints could be desired, although the case for discarding
-redundant forward price constraints is less clear cut than it is for shaping 
-constraints.
-The algorithm caller would have to be aware of the dependency of the results on
-the order in which the forward prices and shaping factors are fed in. To make 
-the results deterministic, an ordering first step would be required.
-
-Such handling of constraint collinearity would be required for a truly formulaic
-bootstrapping algorithm.
 
 
 \bibliographystyle{plainnat}
