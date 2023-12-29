@@ -50,7 +50,7 @@ def _switching_tension_function(tension1, switch_period, tension2):
 class TestHyperbolicTensionSpline(unittest.TestCase):
     flat_tension = 0.75
 
-    contracts_list = [
+    contracts_list_for_daily = [
         (date(2019, 1, 1), 31.39),
         ((date(2019, 1, 2), date(2019, 1, 2)), 32.7),
         ((date(2019, 1, 1), date(2019, 1, 7)), 29.3),
@@ -72,12 +72,12 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         # TODO add more
     ]
 
-    contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
-                                 index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
+    monthly_contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
+                                         index=pd.period_range(start=pd.Period(year=2020, month=5, freq='M'), periods=5))
     daily_test_case_data = [
         {
             "freq": 'D',
-            "contracts": contracts_list,
+            "contracts": contracts_list_for_daily,
             "tension": flat_tension,
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
@@ -89,7 +89,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         },
         {
             "freq": 'D',
-            "contracts": contracts_list,
+            "contracts": contracts_list_for_daily,
             "tension": _switching_tension_function(0.3, pd.Period('2019-10-01', freq='D'), 13.5),
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
@@ -101,7 +101,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         },
         {
             "freq": 'D',
-            "contracts": contracts_series,
+            "contracts": monthly_contracts_series,
             "tension": flat_tension,
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
@@ -111,7 +111,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         },
         {
             "freq": 'D',
-            "contracts": contracts_series,
+            "contracts": monthly_contracts_series,
             "tension": _switching_tension_function(0.3, pd.Period('2020-07-01', freq='D'), 13.5),
             "mult_season_adjust": lambda x: 1.0,
             "add_season_adjust": lambda x: 0.1,
@@ -121,7 +121,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         },
         {
             "freq": 'D',
-            "contracts": contracts_list,
+            "contracts": contracts_list_for_daily,
             "tension": flat_tension,
             "discount_factor": discount_factor,
             "back_1st_deriv": -0.3,
@@ -130,9 +130,34 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
         },
         {
             "freq": 'D',
-            "contracts": contracts_series,
+            "contracts": monthly_contracts_series,
             "tension": flat_tension,
             "discount_factor": discount_factor,
+        }
+    ]
+
+    quarterly_contracts_series = pd.Series(data=[23.53, 53.245, 35.56, 39.242, 19.024],
+                         index=pd.period_range(start=pd.Period(year=2020, month=1, freq='Q'), periods=5))
+
+    contracts_list_for_monthly = [
+        (cp.quarter(year=2019, quarter_num=1), 18.3),
+        (cp.quarter(year=2019, quarter_num=2), 17.1),
+        (cp.summer(2019), 19.9),
+        (cp.winter(2019), 22.4),
+        (cp.summer(2020), 19.9),
+        (cp.gas_year(2020), 20.01)
+    ]
+
+    monthly_test_case_data = [
+        {
+            "freq": 'M',
+            "contracts": contracts_list_for_monthly,
+            "tension": flat_tension,
+        },
+        {
+            "freq": 'M',
+            "contracts": quarterly_contracts_series,
+            "tension": flat_tension,
         }
     ]
 
@@ -187,6 +212,9 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     ]
 
     # TODO properly parameterise these tests
+    def test_hyperbolic_tension_spline_monthly_interpolation_averages_back_to_inputs(self):
+        self._interpolate_and_assert_average_back_to_inputs(self.monthly_test_case_data, 1E-12)
+
     def test_hyperbolic_tension_spline_daily_interpolation_averages_back_to_inputs(self):
         self._interpolate_and_assert_average_back_to_inputs(self.daily_test_case_data, 1E-7)
 
@@ -403,7 +431,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     def test_back_1st_deriv_as_specified(self):
         tol = 1E-8
         back_1st_deriv = 0.95
-        _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
+        _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list_for_daily, tension=self.flat_tension,
                                                      back_1st_deriv=back_1st_deriv, return_spline_coeff=True)
         calculated_back_1st_deriv = self._calc_back_1st_deriv(spline_params)
         self.assertAlmostEqual(back_1st_deriv, calculated_back_1st_deriv, delta=tol)
@@ -427,7 +455,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
     def test_front_1st_deriv_as_specified(self):
         tol = 1E-11
         front_1st_deriv = 0.95
-        _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list, tension=self.flat_tension,
+        _, spline_params = hyperbolic_tension_spline(freq='D', contracts=self.contracts_list_for_daily, tension=self.flat_tension,
                                                      front_1st_deriv=front_1st_deriv, return_spline_coeff=True)
         calculated_front_1st_deriv = self._calc_front_1st_deriv(spline_params)
         self.assertAlmostEqual(front_1st_deriv, calculated_front_1st_deriv, delta=tol)

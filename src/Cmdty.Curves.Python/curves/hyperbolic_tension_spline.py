@@ -41,7 +41,7 @@ class KnotPositions(Flag):
 _years_per_second = 1.0 / 60.0 / 60.0 / 24.0 / 365.0
 
 
-# Update type hints to include str for contract periods
+# TODO Update type hints to include str for contract periods
 def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               freq: str,
                               tension: tp.Union[tp.Callable[[tp.Union[pd.Period, pd.Timestamp]], float], float],
@@ -241,14 +241,20 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
 
     if time_zone is None:
         result_curve_index = pd.period_range(start=first_period, end=last_period, freq=freq)
-        datetime_index = pd.date_range(start=first_period.start_time, end=last_period.start_time,
-                                       freq=freq)
+        datetime_index = result_curve_index.to_timestamp()
         t_from_start = (datetime_index - first_period.start_time).total_seconds().to_numpy() * _years_per_second
         del datetime_index
+
+        def int_index(del_period):
+            return round((del_period - first_period).n / freq_offset.n)
     else:
         result_curve_index = pd.date_range(start=first_period, end=last_period,
                                            freq=freq, tz=time_zone)
         t_from_start = (result_curve_index - first_period).total_seconds().to_numpy() * _years_per_second
+
+        def int_index(del_period):
+            return round((del_period - first_period) / freq_offset)
+
     num_result_curve_points = len(result_curve_index)
 
     # Calculate vectors of coefficients
@@ -290,9 +296,6 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                                  'has been returned for period {}.'
                                  .format(tension_val, p))
             return tension_val
-
-    def int_index(del_period):
-        return round((del_period - first_period) / freq_offset)
 
     num_sections = len(spline_knots_list)
     # Using np.zeros rather than empty because easier to understand when debugging
