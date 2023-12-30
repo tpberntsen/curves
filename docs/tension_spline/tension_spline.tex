@@ -436,6 +436,13 @@ and basis of the nullspace) which minimised the squared difference to market
 prices using an SVD. As a second step, a specific solution (as coefficients of the 
 nullspace basis) which then maximises the smoothness is then solved for.
 
+\subsection{Alternative Tension Spline}
+There are alternative tension splines to the hyperbolic spline used in this 
+document, for example the Cardinal Spline. The hyperbolic tension spline was chosen
+over the Cardinal Spline for no particularly reason. It is likely that there are pros
+and cons of the hyperbolic and Cardinal splines over each other for use in constructing commodity
+forward curves. A future project would be to implement a similar algorithm to the one
+in this document, but using the Cardinal Spline, and comparing the practicalities of each approach.
 
 \newpage
 \appendix
