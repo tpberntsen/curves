@@ -278,6 +278,16 @@ We want to find the solution which minimises the following.
     \sum_{i=1}^{n}\int_{t_{i - 1}}^{t_i}p^{\prime\prime}_i(t)^2 + \tau_i^2 p^{\prime}(t)^2 dt
 \end{equation}
 
+The integral over $p^{\prime\prime}(t)^2$ penalises the change in curve direction
+seen in oscillations. The $p^{\prime}(t)^2$ term penalises total curve length
+of oscillations. A reason for this being weighted by $\tau_i^2 $ can be seen as follows.
+In the case of high tension parameter, the pieceswise function will be virtually linear,
+hence $p^{\prime\prime}(t)^2$ will be tiny, so there is no point in penalising for this.
+Rather, we would rather penalise for the amplitute of
+zigzagging which can be seen when interpolating with a piecewise linear function.
+
+\bigskip
+
 See Appendix \ref{appendix:max_smooth_integral} for the evaluation of this integral to the
 following.
 
