@@ -288,6 +288,16 @@ zigzagging which can be seen when interpolating with a piecewise linear function
 
 \bigskip
 
+Note that the final forward curve is actually read off discrete points from the piecewise
+function, hence the penalty function is more appropriately represented as a summation
+of $p^{\prime\prime}(t)^2 + \tau_i^2 p^{\prime}(t)^2$ over these discrete points, rather 
+than an integral. However, as shown below, the integral 
+can be evaluated to a convenient form, and given we are usually interpolating to a high
+granularity, the spacing of the discrete points will be small, so the integral will be 
+a close approximation of a summation.
+
+\bigskip
+
 See Appendix \ref{appendix:max_smooth_integral} for the evaluation of this integral to the
 following.
 
