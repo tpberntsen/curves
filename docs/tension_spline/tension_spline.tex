@@ -350,6 +350,73 @@ This can be changed from a sum to a single quadratic form.
     \end{bmatrix}   
 \end{equation}
 
+\section{Future Work}
+\subsection{Collinear Inputs}
+Any redundancy seen in the input market data (e.g. contracts for Q-1, Jan, Feb and Mar delivery all present)
+will result in matrix TODO above being singular, hence the linear system cannot be solved.
+Theoretically redundant input forward prices should be consistent and arbitrage free.
+However, real-world market frictions such as bid-offer spread, transaction costs and limited
+liquidity mean that small theoretically arbitragable inconsistencies between collinear forward
+prices are likely to be seen.
+
+If the curves are built using a highly automated curve building tool this will be a problem.
+This section presents some ideas on how to tackle this.
+
+\subsubsection{Preprocess Input Contracts}
+It could make sense to discard a suffient set of input contracts 
+such that the linear system is solvable. Firstly the criteria for which contracts
+are kept needs to be defined. As we are looking to build a curve with increased granularity
+this could be to prioritise contracts with shorter delivery period. Alternatively, the
+criteria could be based on liquidity.
+
+Once the criteria has been defined, the input forward prices and shaping factors would
+be ordered, starting with the most favourable to be retained. The inputs would then
+be looped through, a matrix constructed containing the volume profiles, and then the rank
+of this matrix calculated. If the addition of any input does not increase the rank of
+the volume matrix, then this input is collinear with inputs that have more favourable 
+selection criteria, hence should be discarded. Some additional thought would likely
+yield a more efficient algorithm which does not involve fully recalculating the rank 
+after the addition of each input contract. For example a rank calculation which makes
+use of intermediate results in prior rank calculations.
+
+\bigskip
+
+One disadvantage of this approach is that market price information is being lost. The
+criteria for discarding contracts could lead prices which aren't good
+representations of the actual liquid prices being used.
+
+\subsubsection{Numerical Minimisation}
+An approach which uses and retains all input market data will need to account
+for the fact that the interpolated curve will not exactly average back to all input
+forward prices. The obvious approach is to solve for a curve which minimises the
+weighted sum of squared differences between input forward prices and the averaged 
+interpolated curve. However, this problem is complicated by the linear system
+already having rank less than the number of unknowns being solved for, which is why
+the maximum smoothness solution is choosen from the infinite available solutions.
+We need to find an objective function which accounts for minimising both the squared
+difference to inputs contracts and maximises smoothness by minimising integral 
+TODO equation reference. A simple objective function would be the weighted average
+of these two terms. A numerical minimisation routine would then be used to find the
+spline parameters which minimised this objective function. It's likely that the
+derivative of this objective function has an analytical form, hence a form of
+gradient descent could be used.
+
+\bigskip
+
+One problem with this approach is that the weighting in the objetive function
+needs to be arbitrarily specified to determine the relative importance of smoothness
+and closeness to input contract prices.
+
+\subsubsection{Two Step Solution}
+To avoid the arbitrary weigting factor in the objective function in the approach 
+described above one could consider that minimising the squared difference of interpolated
+curve to the input forward prices is more important than maximising the smoothness.
+A two-step solution would be to first find the general solution form (arbitrary solution
+and basis of the nullspace) which minimised the squared difference to market
+prices using an SVD. As a second step, a specific solution (as coefficients of the 
+nullspace basis) which then maximises the smoothness is then solved for.
+
+
 \newpage
 \appendix
 \appendixpage
