@@ -391,6 +391,64 @@ This can be changed from a sum to a single quadratic form.
     \end{bmatrix}   
 \end{equation}
 
+\section{Minimisation Problem}
+\newcommand{\Lagr}{\mathcal{L}}
+
+The sections above show that finding the maximum smoothness curve comes down to finding
+the coefficients, vector $\+x$, which minimises $\+{x^THx}$, subject to the linear constraints
+$\+{Ax=b}$. This problem is well suited to the method of 
+Lagrange multipliers for which we first define the vector $\+\lambda$ and Lagrangian function
+$\Lagr(\+{x, \lambda})$.
+
+\begin{equation}
+    \+\lambda = \begin{bmatrix}
+        \lambda_1 \\
+        \lambda_2 \\
+        \vdots \\
+        \lambda_{4n-2} \\
+        \lambda_{4n-1} \\
+    \end{bmatrix}
+\end{equation}
+
+
+\begin{equation}
+    \Lagr(\+{x, \lambda}) = \+{x^THx + \lambda^T(Ax - b)}
+\end{equation}
+As $\+{x^THx}$ is a convex function, the minima $\displaystyle\min_{x, \lambda}\Lagr(\+{x, \lambda})$ is found as the solution
+where the partial derivatives of $\Lagr(\+{x, \lambda})$ with respect to $\+x$ and $\+\lambda$
+are zero.
+
+\begin{equation}
+    \frac{\Lagr(\+{x, \lambda})}{\partial{\+x}} = \+{2Hx + A^T\lambda} = 0
+\end{equation}
+
+\begin{equation}
+    \frac{\Lagr(\+{x, \lambda})}{\partial{\+\lambda}} = \+{Ax - b} = 0
+\end{equation}
+These can be arranged into a single linear system:
+
+\begin{equation}
+    \begin{bmatrix}
+        \+{2H} & \+{A^T} \\
+        \+{A} & \+{0}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \+{x_{min}} \\
+        \+{\lambda_{min}}
+    \end{bmatrix} = 
+    \begin{bmatrix}
+        \+{0} \\
+        \+{b}
+    \end{bmatrix}
+\end{equation}
+Hence the vector of spline coefficients for the maximum smoothness curve, $\+{x_{min}}$,
+can be found by solving this system.
+
+\bigskip
+
+The forward curve can then be calculated be evaluating the spline using the
+$\+{x_{min}}$ parameters and then finally evaluating function (TODO add reference).
+
 \section{Future Work}
 \subsection{Collinear Inputs}
 Any redundancy seen in the input market data (e.g. contracts for Q-1, Jan, Feb and Mar delivery all present)
