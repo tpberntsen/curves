@@ -448,6 +448,16 @@ One problem with this approach is that the weighting in the objetive function
 needs to be arbitrarily specified to determine the relative importance of smoothness
 and closeness to input contract prices.
 
+\bigskip
+
+Another complication is that that the first derivative continuity constraints must
+be exactly met for a solution to be acceptable. This leaves us in the unusual situation
+of having a linear system where some constraints must be exactly met, whilst for other
+linear constraints we are happy with the least squares solution. As a starting point
+to solve this problem, the set of coefficient vectors which exactly obey the first 
+derivative continuity can be found by finding the nullspace of a matrix containing
+these constraints.
+
 \subsubsection{Two Step Solution}
 To avoid the arbitrary weigting factor in the objective function in the approach 
 described above one could consider that minimising the squared difference of interpolated
