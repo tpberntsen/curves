@@ -19,6 +19,27 @@
 THIS DOCUMENT IS CURRENTLY WORK IN PROGRESS
 
 \section{Introduction}
+\subsection{Reason for Interpolating Commodity Forward Curves}
+The aim of a curve interpolation routine is to take a collection of traded forward prices, and tranform these into a forward curve
+of homogenous granularity. Typically the derived curve can constructed to be in 
+a granularity higher than what is traded in the market. But why would anyone want
+to derive interpolated forward prices given that we cannot actually trade at these
+prices? Often physical positions and structured deals will have a volume profile
+which is at a higher granularity than forward market prices. For example natural
+gas storage which can be withdrawn quickly over one or two weeks. If such a deal
+were to be valued using traded contracts, and the Q1 price is the highest granularity
+of such traded contracts, then such a deal would be undervalued.
+
+\bigskip
+
+The interpolated forward curve should consist of prices, prior to bid-offer and
+any other adjustment, at which we are willing to mark positions and execute trades
+for volume profiles at higher granularity to the traded forward market.
+
+Next we need to think about the functional form of this interpolation. 
+
+TODO: example of why we don't want to interpolate piecewise flat.
+TODO: replicate high-granularity positions by rolling forward price hedges.
 
 \section{Deriving the Algorithm}
 \subsection{Functional Form}
