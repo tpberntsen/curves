@@ -29,3 +29,14 @@ more .NET types.
 * Added return_target_curve parameter to bootstrap_contracts function.
 * Add tension parameter to maximum smoothness spline.
 * Add hyberbolic_tension_spline function.
+
+---
+## NuGet Package Releases
+### 2.0.0
+* Updates bootstrapper algorithm:
+	* Change from least-squares solution to find a solution that is closest to a target curve, rather than zero. 
+	Each point on the target curve is derived as the price of the smallest contract that each period is within.
+	* Zero price is used as piecewise flat price for curve points in gaps. This fixes a bug, where the last price not in a gap is filled in.
+* Both bootstrapper and spline return records.
+* Spline returns type includes solved parameters.
+* Tension parameter added as input to spline, although doesn't work that well.

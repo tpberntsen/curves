@@ -25,6 +25,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices.ComTypes;
 using Cmdty.TimePeriodValueTypes;
 using Cmdty.TimeSeries;
 
@@ -49,7 +50,7 @@ namespace Cmdty.Curves.Samples.Spline
                 [DayOfWeek.Sunday] = 0.91
             };
             
-            DoubleCurve<Day> curve = new MaxSmoothnessSplineCurveBuilder<Day>()
+            (DoubleCurve<Day> curve, IReadOnlyList<SplineParameters<Day>> solvedSplineParameters) = new MaxSmoothnessSplineCurveBuilder<Day>()
                 .AddContract(Month.CreateJuly(2019), 77.98)
                 .AddContract(Month.CreateAugust(2019), 76.01)
                 .AddContract(Month.CreateSeptember(2019), 78.74)
@@ -85,7 +86,7 @@ namespace Cmdty.Curves.Samples.Spline
                 Contract<Month>.Create(Quarter.CreateQuarter4(2020), 74.92),
             };
 
-            DoubleCurve<Month> curveBusDayWeight = new MaxSmoothnessSplineCurveBuilder<Month>()
+            (DoubleCurve<Month> curveBusDayWeight, _) = new MaxSmoothnessSplineCurveBuilder<Month>()
                 .AddContracts(contracts)
                 .WithWeighting(busDayWeight)
                 .BuildCurve();

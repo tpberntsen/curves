@@ -66,7 +66,7 @@ namespace Cmdty.Curves.Samples.Bootstrap
 
             // Shaping applied as a ratio between Feb and Mar
             const double ratio = 1.1;
-            var (pieceWiseCurveWithRatio, _) = new Bootstrapper<Month>()
+            (DoubleCurve<Month> pieceWiseCurveWithRatio, _, _) = new Bootstrapper<Month>()
                 .AddContract(jan20, 19.05)
                 .AddContract(Quarter.CreateQuarter1(2020), 17.22)
                 .AddShaping(Shaping<Month>.Ratio.Between(feb20).And(mar20).Is(ratio))
@@ -85,7 +85,7 @@ namespace Cmdty.Curves.Samples.Bootstrap
 
             // Shaping applied as a spread between Feb and Mar
             const double spread = 0.21;
-            var (pieceWiseCurveWithSpread, _) = new Bootstrapper<Month>()
+            (DoubleCurve<Month> pieceWiseCurveWithSpread, _, _) = new Bootstrapper<Month>()
                 .AddContract(jan20, 19.05)
                 .AddContract(Quarter.CreateQuarter1(2020), 17.22)
                 .AddShaping(Shaping<Month>.Spread.Between(feb20).And(mar20).Is(spread))
@@ -125,7 +125,7 @@ namespace Cmdty.Curves.Samples.Bootstrap
             Console.WriteLine();
 
             // Using AllowRedundancy() allows the calculation to perform without checks on redundancy
-            var (pieceWiseCurveWithRedundancy, _) = new Bootstrapper<Month>()
+            (DoubleCurve<Month> pieceWiseCurveWithRedundancy, _, _) = new Bootstrapper<Month>()
                             .AddContract(jan20, 22.95)
                             .AddContract(feb20, 21.05)
                             .AddContract(Quarter.CreateQuarter1(2020), 19.05)
@@ -150,7 +150,7 @@ namespace Cmdty.Curves.Samples.Bootstrap
 
             var holidays = new List<Day>(){new Day(2020, 1, 1)};
             Func<Month, double> busDayWeight = Weighting.BusinessDayCount<Month>(holidays);
-            var (pieceWiseCurveBusDayWeight, _) = new Bootstrapper<Month>()
+            (DoubleCurve<Month> pieceWiseCurveBusDayWeight, _, _) = new Bootstrapper<Month>()
                             .AddContract(jan20, 19.05)
                             .AddContract(Quarter.CreateQuarter1(2020), 17.22)
                             .WithAverageWeighting(busDayWeight)
