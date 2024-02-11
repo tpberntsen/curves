@@ -187,7 +187,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "freq": "30min",
             "contracts": thirty_min_contracts,
             "tension": _switching_tension_function(0.3, pd.Timestamp(datetime(2019, 3, 31, hour=18, minute=30),
-                                                                     freq='30min', tz='Europe/London'), 13.5),
+                                                                     tz='Europe/London'), 13.5),
             "discount_factor": discount_factor,
             "time_zone": 'Europe/London',
             # "back_1st_deriv" : 0.0 TODO figure out why adding this constrain causes bigger error
@@ -204,7 +204,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
             "freq": "15min",
             "contracts": fifteen_min_contracts,
             "tension": _switching_tension_function(9.3, pd.Timestamp(datetime(2019, 6, 7, hour=12, minute=0),
-                                                                     freq='30min', tz='Europe/London'), 0.5),
+                                                                     tz='Europe/London'), 0.5),
             "discount_factor": discount_factor,
             "time_zone": 'Europe/Paris',
             "back_1st_deriv": -0.3,
