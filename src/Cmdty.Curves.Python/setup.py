@@ -66,7 +66,7 @@ setuptools.setup(
     ],
     install_requires=[
         'pythonnet==3.0.3',
-        'pandas>=1.0.0'
+        'pandas>=1.0.3'
         ],
     python_requires='>=3.7, <3.13',
     package_data={'curves' : [
