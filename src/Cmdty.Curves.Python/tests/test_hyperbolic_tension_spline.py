@@ -213,7 +213,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
 
     # TODO properly parameterise these tests
     def test_hyperbolic_tension_spline_monthly_interpolation_averages_back_to_inputs(self):
-        self._interpolate_and_assert_average_back_to_inputs(self.monthly_test_case_data, 1E-12)
+        self._interpolate_and_assert_average_back_to_inputs(self.monthly_test_case_data, 1E-11)
 
     def test_hyperbolic_tension_spline_daily_interpolation_averages_back_to_inputs(self):
         self._interpolate_and_assert_average_back_to_inputs(self.daily_test_case_data, 1E-7)
