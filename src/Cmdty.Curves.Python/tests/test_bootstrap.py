@@ -89,7 +89,7 @@ class TestBootstrap(unittest.TestCase):
                                                                       target_curve=target_curve)
         for input_contract in input_contracts:
             (period, contract_price) = deconstruct_contract(input_contract)
-            output_weighted_average_price = weighted_average_slice_curve(piecewise_curve, 'D', period)
+            output_weighted_average_price = weighted_average_slice_curve(piecewise_curve, 'M', period)
             self.assertAlmostEqual(output_weighted_average_price, contract_price, delta=1E-10)
 
     def test_bootstrap_contracts_averages_back_to_inputs_halfhourly(self):

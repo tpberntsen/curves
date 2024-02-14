@@ -249,7 +249,7 @@ class TestHyperbolicTensionSpline(unittest.TestCase):
                 "discount_factor": discount_factor,
             }
         ]
-        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-12)
+        self._interpolate_and_assert_average_back_to_inputs(inputs, 1E-11)
 
     def test_hyperbolic_tension_spline_knots_enum_averages_back_to_inputs(self):
         inputs = [

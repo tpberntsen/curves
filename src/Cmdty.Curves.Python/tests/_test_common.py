@@ -30,7 +30,7 @@ def _num_calendar_days(period):
     return (period.asfreq('D', 'e') - period.asfreq('D', 's')).delta.days + 1
 
 
-def weighted_average_slice_curve(curve, freq, input_period, weighting=_num_calendar_days):
+def weighted_average_slice_curve(curve, freq, input_period, weighting=_num_calendar_days): # TODO: get rid of freq parameter and use curve.index.freq?
     if isinstance(input_period, tuple):
         start = input_period[0]
         end = input_period[1]
@@ -41,6 +41,12 @@ def weighted_average_slice_curve(curve, freq, input_period, weighting=_num_calen
         else:
             start = input_period
             end = input_period
+    if isinstance(curve.index, pd.PeriodIndex):
+        start = pd.Period(start, freq=curve.index.freq)
+        end = pd.Period(end, freq=curve.index.freq)
+    else:
+        start = pd.Timestamp(start, tzinfo=curve.index.tzinfo)
+        end = pd.Timestamp(end, tzinfo=curve.index.tzinfo)
     curve_slice = curve[start:end]
     return weighted_average(curve_slice, weighting)
 
