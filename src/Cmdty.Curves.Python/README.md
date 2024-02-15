@@ -2,7 +2,7 @@
 
 The curves package contains a set of tools for building commodity forward, swaps, and futures curves.
 
-More specifically, the problem being solved is to take a collection of traded forward prices, and tranform these into a 
+More specifically, the problem being solved is to take a collection of traded forward prices, and transform these into a 
 forward curve of homogenous granularity. Additionally the derived curve can constructed to be in a granularity higher 
 than what is traded in the market.
 
@@ -93,36 +93,33 @@ smooth_curve = max_smooth_interp(bc_for_spline, freq='D')
 smooth_curve.plot(title='Interpolated Daily Curve', legend=True, label='Daily Forward Price')
 
 ```
+
 ![Max Smooth Daily Curve](https://github.com/cmdty/curves/raw/master/assets/pypi_readme_max_smooth_daily_curve.png)
 
+### Hyperbolic Tension Spline
+The latest addition to the library is the hyperbolic tension spline. This model is intended it supersede
+both the bootstrap_contracts and max_smooth_interp at a future date. Apart from the addition of a tension parameter, the implementation of the new tension spline differs from the maximum smoothness spline in the following ways:
 
-### Curve Granularity
-The granularity of the derived curves is controlled by the string passed in as the freq parameter. For returned values 
-which are of type pandas.Series, this parameter is used when constructing these objects, with more details on the these 
-frequency strings found in the pandas documentation 
-[here](https://pandas.pydata.org/pandas-docs/stable/user_guide/timeseries.html#dateoffset-objects).
-The package level dict variable FREQ_TO_PERIOD_TYPE contains a mapping between freq parameter values and the underlying 
-managed types from the [.NET Time Period Library](https://github.com/cmdty/time-period-value-types) used to represent 
-the resulting curve index type, and hence granularity. As such, the keys of 
-FREQ_TO_PERIOD_TYPE can be used to determine the set of admissible values for the freq parameter.
+* Functionality to interpolate overlapping contracts and apply shaping spreads and ratios. 
+The bootstrap_contracts needs to be called prior to spline interpolation to remove overlaps and 
+apply shaping. However, these aspects of the interpolation are incorporated directly into the linear 
+system being solved for the tension spline, as should have been done with the maximum smoothness spline.
+* Written purely in Python, rather than the core being implemented in C#. This has many benefits, including:
+    * No restriction on the granularity of curves which can be produced, other than what can be represented by a Pandas frequency.
+    * Easier to view and debug the core calculations.
+* Ability to specify the time zone of the interpolated curve. This is important for sub-daily granularity
+interpolation, typically seen for power curve construction.
+* Arbitrary positioning of the spline knots, as determined by the caller.
 
-```python
-from curves import FREQ_TO_PERIOD_TYPE
-FREQ_TO_PERIOD_TYPE
-```
-Displays the following:
-```
-{'15min': Cmdty.TimePeriodValueTypes.QuarterHour,
- '30min': Cmdty.TimePeriodValueTypes.HalfHour,
- 'H': Cmdty.TimePeriodValueTypes.Hour,
- 'D': Cmdty.TimePeriodValueTypes.Day,
- 'M': Cmdty.TimePeriodValueTypes.Month,
- 'Q': Cmdty.TimePeriodValueTypes.Quarter}
-```
+
+
+See [tension_spline.pdf](https://github.com/cmdty/curves/blob/master/docs/tension_spline/tension_spline.pdf)
+for technical documentation and [hyberbolic_tension_spline.ipynb](https://github.com/cmdty/curves/blob/master/samples/python/hyperbolic_tension_spline.ipynb)
+for more details of usage.
 
 ### .NET Dependency For non-Windows OS
 As Cmdty.Curves is mostly written in C# it requires the .NET runtime to be installed to execute.
-The dlls are targetting [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0) which is compatible with .NET Framework versions 4.6.1
+The dlls are targeting [.NET Standard 2.0](https://learn.microsoft.com/en-us/dotnet/standard/net-standard?tabs=net-standard-2-0) which is compatible with .NET Framework versions 4.6.1
 upwards. A version of .NET Framework meeting this restriction should be installed on most
 Windows computers, so nothing extra is required.
 
