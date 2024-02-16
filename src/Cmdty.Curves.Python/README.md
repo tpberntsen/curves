@@ -98,7 +98,8 @@ smooth_curve.plot(title='Interpolated Daily Curve', legend=True, label='Daily Fo
 
 ### Hyperbolic Tension Spline
 The latest addition to the library is the hyperbolic tension spline. This model is intended it supersede
-both the bootstrap_contracts and max_smooth_interp at a future date. Apart from the addition of a tension parameter, the implementation of the new tension spline differs from the maximum smoothness spline in the following ways:
+both the bootstrap_contracts and max_smooth_interp at a future date. Apart from the addition of a tension parameter, the 
+implementation of the new tension spline differs from the maximum smoothness spline in the following ways:
 
 * Functionality to interpolate overlapping contracts and apply shaping spreads and ratios. 
 The bootstrap_contracts needs to be called prior to spline interpolation to remove overlaps and 
@@ -115,7 +116,8 @@ interpolation, typically seen for power curve construction.
 
 See [tension_spline.pdf](https://github.com/cmdty/curves/blob/master/docs/tension_spline/tension_spline.pdf)
 for technical documentation and [hyberbolic_tension_spline.ipynb](https://github.com/cmdty/curves/blob/master/samples/python/hyperbolic_tension_spline.ipynb)
-for more details of usage.
+for more details of usage. The docstring to the hyperbolic_tension_spline also contains
+comprehensive information on all parameters.
 
 ### .NET Dependency For non-Windows OS
 As Cmdty.Curves is mostly written in C# it requires the .NET runtime to be installed to execute.

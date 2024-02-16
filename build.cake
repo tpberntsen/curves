@@ -214,7 +214,7 @@ var publishPyPiTask = Task("Publish-PyPI")
 {
     string pyPiPassword = GetEnvironmentVariable("PYPI_PASSWORD");
     StartProcessThrowOnError("python", "-m twine upload src/Cmdty.Curves.Python/dist/*",
-                                        "--username cmdty", "--password " + pyPiPassword);
+                                        "--username __token__", "--password " + pyPiPassword);
 });
 
 var publishNuGetTask = Task("Publish-NuGet")
