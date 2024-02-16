@@ -38,8 +38,8 @@ for volume profiles at higher granularity to the traded forward market.
 
 Next we need to think about the functional form of this interpolation. 
 
-TODO: example of why we don't want to interpolate piecewise flat.
-TODO: replicate high-granularity positions by rolling forward price hedges.
+% TODO: example of why we don't want to interpolate piecewise flat.
+% TODO: replicate high-granularity positions by rolling forward price hedges.
 
 \section{Deriving the Algorithm}
 \subsection{Functional Form}
@@ -242,54 +242,54 @@ $z_i$, $z_{-1}$, $y_i$ and $y_{i-1}$.
 
 This constraint should be held for $j=1 \hdots n$.
 
-\subsubsection{Matrix Form of Constraints}
+%\subsubsection{Matrix Form of Constraints}
 %Equations \ref{eq:continuity_constraint}, \ref{eq:1st_deriv_constraint}, \ref{eq:2nd_deriv_constraint} and
 % \ref{eq:price_constraint} can be expressed as the linear system $\+{Ax = b}$ where:
 
 
-Start with forward price constraint as less lags (probably)
+% Start with forward price constraint as less lags (probably)
 
-\begin{equation}
-    \alpha^j_i = 
-\end{equation}
+% \begin{equation}
+%     \alpha^j_i = 
+% \end{equation}
 
-Superscript is for contract, supersci
+% Superscript is for contract, supersci
 
-\begin{equation*}
-    \begin{bmatrix}
-        1 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
-        \alpha^1_0 & \beta^1_0 & \gamma^1_0 & \delta^1_0 & \alpha^1_1 & \beta^1_1 & \hdots & 0 & 0 & \alpha^1_n & \beta^1_n & \gamma^1_n & \delta^1_n \\
-        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
-        \alpha^2_0 & \beta^2_0 & \gamma^2_0 & \delta^2_0 & \alpha^2_1 & \beta^2_1 & \hdots & 0 & 0 & \alpha^2_n & \beta^2_n & \gamma^2_n & \delta^2_n \\        
-        \vdots & & & & & & \ddots & & & & & & \vdots \\
-        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
-        \alpha^n_0 & \beta^n_0 & \gamma^n_0 & \delta^n_0 & \alpha^n_1 & \beta^n_1 & \hdots & 0 & 0 & \alpha^n_n & \beta^n_n & \gamma^n_n & \delta^n_n \\
-        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
-        0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 1 & 0 
-    \end{bmatrix}
-    \begin{bmatrix}
-        z_0 \\
-        y_0 \\
-        z_1 \\
-        y_1 \\
-        \vdots \\
-        z_{n-1} \\
-        y_{n-1} \\
-        z_n \\
-        y_n \\
-    \end{bmatrix} =
-    \begin{bmatrix}
-        0 \\
-        f_i \\
-        0 \\
-        0 \\
-        \vdots \\
-        0 \\
-        0 \\
-        0 \\
-        0 \\
-    \end{bmatrix}
-\end{equation*}
+% \begin{equation*}
+%     \begin{bmatrix}
+%         1 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+%         \alpha^1_0 & \beta^1_0 & \gamma^1_0 & \delta^1_0 & \alpha^1_1 & \beta^1_1 & \hdots & 0 & 0 & \alpha^1_n & \beta^1_n & \gamma^1_n & \delta^1_n \\
+%         0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+%         \alpha^2_0 & \beta^2_0 & \gamma^2_0 & \delta^2_0 & \alpha^2_1 & \beta^2_1 & \hdots & 0 & 0 & \alpha^2_n & \beta^2_n & \gamma^2_n & \delta^2_n \\        
+%         \vdots & & & & & & \ddots & & & & & & \vdots \\
+%         0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+%         \alpha^n_0 & \beta^n_0 & \gamma^n_0 & \delta^n_0 & \alpha^n_1 & \beta^n_1 & \hdots & 0 & 0 & \alpha^n_n & \beta^n_n & \gamma^n_n & \delta^n_n \\
+%         0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
+%         0 & 0 & 0 & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 1 & 0 
+%     \end{bmatrix}
+%     \begin{bmatrix}
+%         z_0 \\
+%         y_0 \\
+%         z_1 \\
+%         y_1 \\
+%         \vdots \\
+%         z_{n-1} \\
+%         y_{n-1} \\
+%         z_n \\
+%         y_n \\
+%     \end{bmatrix} =
+%     \begin{bmatrix}
+%         0 \\
+%         f_i \\
+%         0 \\
+%         0 \\
+%         \vdots \\
+%         0 \\
+%         0 \\
+%         0 \\
+%         0 \\
+%     \end{bmatrix}
+% \end{equation*}
 
 \subsection{Smoothness Criteria}
 % TODO add reference to Andersen paper
@@ -377,6 +377,7 @@ This can be changed from a sum to a single quadratic form.
     \end{bmatrix}
 \end{equation}
 
+TODO fix formatting and fill in bottom right of matrix.
 \begin{equation}
     \+H = \begin{bmatrix}
         \left(\frac{\cosh(\tau_1 h_1)}{\tau_1 \sinh(\tau_1 h_1)} - \frac{1}{\tau_1^2 h_1} \right) & 0 & \left( \frac{1}{\tau_1^2 h_1} - \frac{1}{\tau_1 \sinh(\tau_1 h_1)} \right) & 0 & 0 & 0 & \hdots & 0 & 0 & 0 & 0 & 0 & 0 \\
