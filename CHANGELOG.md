@@ -23,13 +23,13 @@ Update .NET Cmdty.TimeSeries reference to avoid clash with cmdty-storage package
 more .NET types.
 * For non-Windows OS default to trying .NET (Core), rather than Mono as default runtime.
 
-### 1.4.0 (not yet released)
+### 2.0.0
+* Add hyberbolic_tension_spline function.
 * Update pythonnet dependency to <3.1.0. This allows the latest version 3.0.3 with is compatible with Python up to version 3.12.
 * Add return_spline_coeff parameter to max_smooth_interp function.
 * Include target_curve parameter to bootstrap_contracts function.
 * Added return_target_curve parameter to bootstrap_contracts function.
 * Add tension parameter to maximum smoothness spline.
-* Add hyberbolic_tension_spline function.
 
 ---
 ## NuGet Package Releases
