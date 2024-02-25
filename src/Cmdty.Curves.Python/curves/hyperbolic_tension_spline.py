@@ -53,7 +53,7 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
                               shaping_spreads: tp.Optional[ShapingTypes] = None,
                               time_zone: tp.Optional[tp.Union[str, tp.Type['pytz.timezone'], tp.Type['dateutil.tz.tzfile']]] = None, # TODO test that pytz.timezone and dateutil.tz.tzfile type hints work as expected
                               knot_positions: tp.Optional[KnotPositions] = KnotPositions.CONTRACT_START_AND_END,
-                              knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None,  # TODO update docstring for KnotPositions enum
+                              knots: tp.Optional[tp.Iterable[tp.Union[str, pd.Period, pd.Timestamp, date, datetime]]] = None,
                               front_1st_deriv: tp.Optional[float] = None,
                               back_1st_deriv: tp.Optional[float] = None,
                               return_spline_coeff: tp.Optional[bool] = False
@@ -87,8 +87,11 @@ def hyperbolic_tension_spline(contracts: tp.Union[ContractsType, pd.Series],
             The delivery periods of all input contracts can be contiguous, overlapping or have gaps. If there are
             overlaps then the spline_knots argument must be provided.
         freq (str): Describes the granularity of curve being constructed using pandas Offset Alias notation.
-        tension (float or callable): parameter which specifies the "tension" TODO complete this
-            A higher tension value makes the curve less smooth, and closer to piecewise linear function.
+        tension (float or callable): parameter which specifies the "tension" A higher tension value makes the curve less smooth, and
+            closer to piecewise linear function. Provide a float for a constant tension. For time-varying tension pass in a callable
+            accepting either a pandas Period or Timestamp, returning the tension as a float. This callable will be called once for each
+            spline section, with the Period or Timestamp at the start knot of the section as the argument. See Notes section below on
+            whether Period or Timestamp should be used. Tension needs to be a positive number.
         discount_factor (callable, optional): Callable which maps from delivery period to the discount factor for the settlement
             date of this period. This function will be called with an argument of either pandas Period or Timestamp to
             describe the delivery period, at the granularity of the interpolated curve. The discount factor is necessary
@@ -524,7 +527,6 @@ def _populate_constraint_vector_matrix(constraint_matrix, constraint_vector, add
         constraint_matrix[-1, -2] = cosh_tau_hi[-1] / tau_sinh[-1] - one_over_h_tau_sqrd[-1]  # z_n
         constraint_matrix[-1, -1] = 1.0 / h_is[-1]  # y_n
         constraint_vector[-1] = back_1st_deriv
-
 
 
 def _calc_add_season_adjust_vector_term(add_season_adjusts, int_index, period_start, period_end,
