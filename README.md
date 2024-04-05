@@ -407,8 +407,8 @@ the pip install command.
 ## Get in Touch and/or Give a Star
 It's always motivating to hear how the models are being used, especially by practitioners in the 
 energy trading sector.
-So don't hesitate to [get in touch](mailto:jake@cmdty.co.uk?subject=Cmdty%20Storage%20Model) 
-to discuss storage modelling or suggest future enhancements. Also, show your appreciation by giving this repo a star!
+So don't hesitate to [get in touch](mailto:jake@cmdty.co.uk?subject=Cmdty%20Curves) 
+to discuss commodity forward curve construction or suggest future enhancements. Also, show your appreciation by giving this repo a star!
 
 ## License
 
